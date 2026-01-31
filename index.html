@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lista de Ebó</title>
+  <link rel="stylesheet" href="style.css.css">
+</head>
+
+<body>
+
+<!-- =========================
+     TELA 1: LOGIN
+========================= -->
+<section class="login-card" id="authCard">
+
+  <h3>Bem-vindo</h3>
+  <p class="hint" style="text-align:center; margin-top:6px;">
+    Faça seu login.
+  </p>
+
+  <div class="auth-grid">
+    <div>
+      <label class="label">Usuário</label>
+      <input id="authUser" type="text" placeholder="usuário" autocomplete="username" />
+      <div class="hint">Você entra com usuário + senha (sem e-mail).</div>
+    </div>
+
+    <div>
+      <label class="label">Senha</label>
+      <input id="authSenha" type="password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+
+    <div class="auth-actions">
+      <button class="btn-secondary" id="btnEntrar">Entrar</button>
+    </div>
+  </div>
+
+  <div class="hint" id="authMsg"></div>
+</section>
+
+<!-- =========================
+     TELA 2: APP
+========================= -->
+<div class="app-container">
+<div id="postLogin" style="display:none;">
+
+  <!-- =========================
+       PAINEL / TOPO
+  ========================= -->
+  <section class="card">
+    <div class="section-head">
+      <div>
+        <div class="saved-title">Painel</div>
+        <div class="saved-meta" id="userBadge">—</div>
+      </div>
+
+      <div class="actions-row" style="margin:0;">
+        <div class="firebase-pill" id="firebaseStatus">Firebase: não conectado</div>
+        <button class="btn-danger" onclick="sair()" id="btnSair">Sair</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================
+       GERAR LISTA DE EBÓ
+  ========================= -->
+  <section class="card">
+    <h2>Gerar lista de ebó</h2>
+
+    <label class="label">Nome do ebó</label>
+    <input
+      id="eboNome"
+      type="text"
+      placeholder="Ex: Ebó Exu"
+      oninput="autoCarregarListaDebounced()"
+    />
+
+    <label class="label" style="margin-top:12px;">
+      Quantidade de Pessoas
+    </label>
+    <input
+      id="numPratos"
+      type="number"
+      min="1"
+      placeholder="Ex: 7, 9, 11, 21"
+      value="1"
+    />
+
+    <div class="actions-row">
+      <button class="btn-secondary" onclick="adicionarListaAcumulada()">Adicionar lista</button>
+      <button class="btn-tertiary" onclick="gerarListaFinalAcumulada()">Gerar Lista</button>
+      <button onclick="imprimirListaGerada()">Imprimir</button>
+    </div>
+
+    <div class="hint">
+      A lista será calculada multiplicando as quantidades cadastradas pela quantidade de pratos.
+    </div>
+  </section>
+
+  <!-- =========================
+       LISTAS ADICIONADAS
+  ========================= -->
+  <section class="card">
+    <div class="section-head">
+      <h2 style="margin:0;">Listas adicionadas</h2>
+      <div class="actions-row" style="margin:0;">
+        <button class="btn-danger btn-mini" onclick="limparListasAcumuladas()">Limpar tudo</button>
+      </div>
+    </div>
+
+    <div class="hint">
+      Aqui aparecem as listas que você adicionou. Você pode remover individualmente.
+    </div>
+
+    <div id="listasContainer"></div>
+  </section>
+
+  <!-- =========================
+       GERENCIAR LISTAS
+  ========================= -->
+  <section class="card">
+    <div class="section-head">
+      <h2>Gerenciar listas</h2>
+    </div>
+
+    <div class="actions-row">
+      <button class="btn-secondary" onclick="cadastrarLista()">Cadastrar lista</button>
+
+      <input
+        id="pesquisaListas"
+        type="text"
+        placeholder="Procurar lista pelo nome..."
+        style="max-width:320px;"
+      />
+
+      <button class="btn-tertiary" onclick="procurarListas()">Procurar</button>
+    </div>
+
+    <div id="listasSalvasBox" class="saved-list"></div>
+  </section>
+
+ <!-- =========================
+     ADMIN / USUÁRIOS (PARTE DE BAIXO)
+========================= -->
+<div class="admin-grid-wrapper">
+
+  <!-- Admin Master -->
+  <section class="card" id="adminPanel" style="display:none;">
+    <h3 style="margin:0 0 8px 0;">Admin (Master)</h3>
+
+    <div class="admin-grid">
+      <div>
+        <label class="label">Novo usuário</label>
+        <input id="newUser" type="text" placeholder="ex: cliente10" />
+      </div>
+
+      <div>
+        <label class="label">Senha inicial</label>
+        <input id="newPass" type="password" placeholder="senha inicial" />
+      </div>
+    </div>
+
+    <div class="auth-actions" style="margin-top:10px;">
+      <button class="btn-secondary" onclick="cadastrarMaster()">Cadastrar Master</button> </br></br>
+      <button class="btn-tertiary" onclick="cadastrarCliente()">Cadastrar Cliente</button>
+    </div>
+
+    <div class="hint">
+      Dica: para cadastrar outro usuário, você vai confirmar a sua senha de master (para voltar a logar depois do cadastro).
+    </div>
+  </section>
+
+  <!-- Contas -->
+  <section class="card">
+    <h3 style="margin:0 0 8px 0;">Contas (Masters e Clientes)</h3>
+
+    <div class="actions-row" style="margin-bottom:10px;">
+      <button class="btn-secondary" onclick="listarContas()">Atualizar lista</button>
+    </div>
+
+    <div id="accountsBox" class="saved-list"></div>
+  </section>
+
+  <!-- Renomear / Trocar senha -->
+  <section class="card">
+    <h3 style="margin:0 0 8px 0;">Renomear login / Trocar senha</h3>
+
+    <div class="admin-grid">
+      <div>
+        <label class="label">Usuário (atual)</label>
+        <input id="manageUser" type="text" placeholder="ex: cliente10" />
+      </div>
+
+      <div>
+        <label class="label">Novo usuário (para renomear)</label>
+        <input id="manageNewUser" type="text" placeholder="ex: cliente11" />
+      </div>
+
+      <div>
+        <label class="label">Nova senha</label>
+        <input id="manageNewPass" type="password" placeholder="nova senha" />
+      </div>
+    </div>
+
+    <div class="auth-actions" style="margin-top:10px;">
+      <button class="btn-secondary" onclick="adminRenomearLogin()">Renomear login</button>
+      <button class="btn-tertiary" onclick="adminTrocarSenha()">Trocar senha</button> </br></br>
+      <button class="btn-danger" onclick="adminBloquearUsuario()">Bloquear usuário</button>
+    </div>
+
+    <div class="hint" style="margin-top:8px;">
+      Obs: renomear login e trocar senha exigem Cloud Function. Bloquear funciona só no Firestore.
+    </div>
+  </section>
+
+</div>
+
+  <!-- =========================
+       IMPRESSÃO
+  ========================= -->
+  <section id="saidaPrint" class="print-area" style="display:none;">
+    <h1 id="printEboNome"></h1>
+    <p>
+      <strong>Total de pratos:</strong>
+      <span id="printTotalPratos"></span>
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Ingrediente</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="printIngredientes"></tbody>
+    </table>
+  </section>
+
+</div>
+</div>
+
+<!-- =========================
+     MODAL
+========================= -->
+<div id="modalBackdrop" class="modal-backdrop" style="display:none;">
+  <div class="modal-card">
+    <div class="section-head">
+      <h3 style="margin:0;" id="modalTitulo">Cadastrar lista</h3>
+      <button class="btn-danger btn-mini" onclick="fecharModal()">X</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase -->
+<script type="module">
+  const firebaseConfig = {
+    apiKey: "AIzaSyByEkOQbZT0hN1yPG9PfM7uqKJ7JuzXoSs",
+    authDomain: "ebos-oferendas.firebaseapp.com",
+    projectId: "ebos-oferendas",
+    storageBucket: "ebos-oferendas.firebasestorage.app",
+    messagingSenderId: "534673187125",
+    appId: "1:534673187125:web:55dd61b0e44eab893e2c7c"
+  };
+
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+
+  import {
+    getFirestore,
+    collection, addDoc, doc, getDoc, getDocs,
+    setDoc, deleteDoc,
+    query, orderBy, limit, startAt, endAt,
+    serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  import {
+    getAuth,
+    onAuthStateChanged,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  window.__FIREBASE__ = {
+    db,
+    collection, addDoc, doc, getDoc, getDocs,
+    setDoc, deleteDoc,
+    query, orderBy, limit, startAt, endAt,
+    serverTimestamp,
+
+    auth,
+    onAuthStateChanged,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signOut
+  };
+</script>
+</div>
+<script src="./java.js" defer></script>
+
+
+</body>
+</html>
