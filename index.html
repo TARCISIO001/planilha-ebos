@@ -2,6 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
   <title>Lista de Ebó</title>
   <link rel="stylesheet" href="style.css.css">
 </head>
@@ -22,7 +24,7 @@
     <div>
       <label class="label">Usuário</label>
       <input id="authUser" type="text" placeholder="usuário" autocomplete="username" />
-      <div class="hint">Você entra com usuário + senha (sem e-mail).</div>
+      <div class="hint">Você entra com usuário .</div>
     </div>
 
     <div>
@@ -219,22 +221,22 @@
        IMPRESSÃO
   ========================= -->
   <section id="saidaPrint" class="print-area" style="display:none;">
+
+  <div class="print-header">
+    <img src="imagem.png" alt="Ilê D’Ogum" class="print-logo">
     <h1 id="printEboNome"></h1>
-    <p>
-      <strong>Total de pratos:</strong>
-      <span id="printTotalPratos"></span>
-    </p>
 
     <table>
       <thead>
-        <tr>
-          <th>Ingrediente</th>
-          <th>Total</th>
-        </tr>
-      </thead>
+  <tr>
+    <th class="print-total">Total</th>
+    <th class="print-ing">Ingrediente</th>
+    <th class="print-pratos">Pratos</th>
+  </tr>
+</thead>
       <tbody id="printIngredientes"></tbody>
-    </table>
-  </section>
+  </table>
+    </section>
 
 </div>
 </div>
@@ -244,12 +246,95 @@
 ========================= -->
 <div id="modalBackdrop" class="modal-backdrop" style="display:none;">
   <div class="modal-card">
+
     <div class="section-head">
       <h3 style="margin:0;" id="modalTitulo">Cadastrar lista</h3>
       <button class="btn-danger btn-mini" onclick="fecharModal()">X</button>
     </div>
+
+    <!-- ====== BLOCO 1 ====== -->
+    <div style="margin-top:10px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:10px;">Lista 1</div>
+
+      <!-- Nome do ebó 1 -->
+      <label class="label">Nome do ebó</label>
+      <input id="modalNomeEbo_1" type="text" placeholder="Ex: Ebó Exu" />
+
+   
+
+      <!-- Ingredientes 1 -->
+      <div class="section-head" style="margin:12px 0 8px;">
+        <div class="saved-title">Ingredientes</div>
+        <button class="btn-tertiary btn-mini" onclick="modalAdicionarLinha('1')">+ Adicionar linha</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Ingrediente</th>
+            <th style="width:160px;">Quantidade</th>
+            <th style="width:120px;">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="modalBodyLinhas_1"></tbody>
+      </table>
+    </div>
+
+    <!-- ====== BLOCO 2 ====== -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:8px;">Modo de fazer</div>
+      <textarea
+        id="modalModoFazer_1"
+        placeholder="Escreva aqui o modo de fazer..."
+        style="width:100%; min-height:120px; padding:10px; border-radius:10px; border:1px solid #ddd; outline:none; resize:vertical;"
+      ></textarea>
+    </div>
+
+    <!-- ====== BLOCO 3 ====== -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:10px;">Lista 2</div>
+
+      <!-- Nome do ebó 2 -->
+      <label class="label">Nome do ebó</label>
+      <input id="modalNomeEbo_2" type="text" placeholder="Ex: Ebó Oxum" />
+
+      <!-- Ingredientes 2 -->
+      <div class="section-head" style="margin:12px 0 8px;">
+        <div class="saved-title">Ingredientes</div>
+        <button class="btn-tertiary btn-mini" onclick="modalAdicionarLinha('2')">+ Adicionar linha</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Ingrediente</th>
+            <th style="width:160px;">Quantidade</th>
+            <th style="width:120px;">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="modalBodyLinhas_2"></tbody>
+      </table>
+    </div>
+
+    <!-- ====== BLOCO 4 ====== -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:8px;">Modo de preparo</div>
+      <textarea
+        id="modalModoFazer_2"
+        placeholder="Escreva aqui o modo de preparo..."
+        style="width:100%; min-height:120px; padding:10px; border-radius:10px; border:1px solid #ddd; outline:none; resize:vertical;"
+      ></textarea>
+    </div>
+
+    <div class="actions-row" style="margin-top:12px;">
+      <button class="btn-secondary" onclick="enviarParaBanco()">Enviar para banco de dados</button>
+      <button onclick="fecharModal()">Cancelar</button>
+    </div>
+
+    <div class="hint" id="modalMsg" style="margin-top:8px;"></div>
   </div>
 </div>
+
 
 <!-- Firebase -->
 <script type="module">
@@ -298,9 +383,8 @@
     signOut
   };
 </script>
-</div>
-<script src="./java.js" defer></script>
 
+<script src="./java.js" defer></script>
 
 </body>
 </html>
