@@ -1,6 +1,4 @@
-/* ===================================================
-   RESET / BASE
-=================================================== */
+/* (mantive exatamente como você enviou) */
 
 * {
   box-sizing: border-box;
@@ -212,14 +210,6 @@ th, td {
    LOGIN – CENTRALIZAÇÃO CORRETA E SIMPLES
 =================================================== */
 
-/* Fundo premium quando login visível */
-body:has(#authCard:not([style*="display:none"])) {
-  min-height: 100vh;
-  background:
-    radial-gradient(1200px 600px at 10% -10%, #dbeafe 0%, transparent 60%),
-    radial-gradient(800px 400px at 90% 10%, #ede9fe 0%, transparent 55%),
-    linear-gradient(180deg, #0f172a 0%, #020617 100%);
-}
 
 /* Card de login (tamanho real, centralizado) */
 #authCard.login-card {
@@ -264,10 +254,41 @@ body:has(#authCard:not([style*="display:none"])) {
 =================================================== */
 
 @media (max-width: 720px) {
-  .auth-grid,
-  .admin-grid {
-    grid-template-columns: 1fr;
+
+  input,
+  select,
+  textarea {
+    font-size: 18px;        /* texto maior */
+    padding: 16px 18px;     /* mais área de toque */
+    border-radius: 18px;    /* visual mais moderno */
   }
+
+}
+@media (max-width: 720px) {
+
+  #eboNome {
+    font-size: 20px;        /* maior que os outros */
+    font-weight: 600;
+    padding: 18px 20px;
+  }
+
+}
+@media (max-width: 720px) {
+
+  button {
+    font-size: 17px;
+    padding: 16px 18px;
+    border-radius: 18px;
+  }
+
+}
+@media (max-width: 720px) {
+
+  .label {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+
 }
 
 /* ===================================================
@@ -393,4 +414,306 @@ body:has(#authCard:not([style*="display:none"])) {
 /* Texto selecionável (copiar tudo) */
 .app-container > #postLogin > section.card:nth-of-type(2) * {
   user-select: text;
+}
+
+
+/* ================================
+   FUNDO LOGIN x FUNDO APP
+================================ */
+
+/* FUNDO PADRÃO DO APP (SEMPRE CLARO) */
+body {
+  background: linear-gradient(180deg, #f7f8fa 0%, #eef1f5 100%);
+}
+
+/* FUNDO EXCLUSIVO DO LOGIN */
+#authCard.login-card {
+  background: rgba(255,255,255,0.95);
+}
+
+
+
+.print-header{
+  display: flex;
+  flex-direction: column;   /* empilha */
+  align-items: center;      /* centraliza */
+  gap: 6px;
+  margin-bottom: 16px;      /* espaço antes dos ingredientes */
+}
+
+.print-logo{
+  width: 130px;              /* ajuste se quiser: 40px / 60px */
+  height: auto;
+}
+
+
+/* =========================================
+   IMPRESSÃO – ALINHAMENTO À DIREITA
+========================================= */
+
+.print-total {
+  text-align: right;
+  font-weight: 800;
+}
+
+.print-pratos {
+  text-align: right;
+  color: #555;
+  font-size: 12px;
+}
+
+.print-total,
+.print-pratos {
+  text-align: right;
+  white-space: nowrap;
+}
+
+
+
+.print-pratos .pratos-linha {
+  font-size: 12px;
+  color: #555;
+  line-height: 1.2;
+}
+
+
+/* Centraliza cabeçalhos */
+th.print-total, th.print-ing, th.print-pratos {
+  text-align: center;
+}
+
+/* Centraliza conteúdo das colunas */
+td.print-total, td.print-ing, td.print-pratos {
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* (Opcional) deixa TOTAL mais forte */
+td.print-total {
+  font-weight: 800;
+}
+
+td.print-pratos { text-align: center; vertical-align: middle; }
+
+
+/* ==========================
+   IMPRIMIR SÓ A LISTA GERADA
+========================== */
+@media print {
+  /* esconde tudo */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* mostra apenas a área de impressão */
+  #saidaPrint, #saidaPrint * {
+    visibility: visible !important;
+  }
+
+  /* garante que a área fique no topo/esquerda */
+  #saidaPrint {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* remove sombras e coisas desnecessárias */
+  .card, .saved-item, .modal-backdrop, .modal-card {
+    box-shadow: none !important;
+  }
+
+  /* evita quebrar linhas feias */
+  table { page-break-inside: auto; }
+  tr { page-break-inside: avoid; page-break-after: auto; }
+  thead { display: table-header-group; }
+}
+
+
+/* ==========================
+   IMPRIMIR SOMENTE A LISTA
+   (#saidaPrint)
+========================== */
+@media print {
+
+  /* Esconde tudo da página */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Mostra somente a área de impressão */
+  #saidaPrint,
+  #saidaPrint * {
+    visibility: visible !important;
+  }
+
+  /* Posiciona corretamente no topo da página */
+  #saidaPrint {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  /* Remove sombras, bordas e fundos que não precisam */
+  .card,
+  .saved-item,
+  .modal-backdrop,
+  .modal-card {
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  /* Garante que a tabela imprima corretamente */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    page-break-inside: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  th,
+  td {
+    border: 1px solid #000;
+    padding: 6px;
+  }
+
+  /* Centralizações conforme você pediu */
+  th.print-total,
+  th.print-ing,
+  th.print-pratos,
+  td.print-total,
+  td.print-ing,
+  td.print-pratos {
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  /* Ajustes finos de tipografia para impressão */
+  body {
+    font-size: 12pt;
+    color: #000;
+  }
+
+  h1, h2, h3 {
+    color: #000;
+  }
+}
+
+
+/* ===========================
+   MOBILE (CELULAR)
+   =========================== */
+@media (max-width: 720px) {
+
+  /* padding geral + safe area do iPhone */
+  .app-container {
+    padding: 16px 12px calc(32px + env(safe-area-inset-bottom));
+  }
+
+  .card {
+    padding: 16px;
+    border-radius: 16px;
+    margin-bottom: 14px;
+  }
+
+  
+
+
+  /* TOPO/PAINEL: no desktop você usa título absoluto centralizado;
+     no mobile isso costuma sobrepor "Firebase" + "Sair" */
+  .section-head {
+    position: static !important;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .section-head .saved-title {
+    position: static !important;
+    left: auto !important;
+    transform: none !important;
+    width: auto !important;
+    text-align: left !important;
+    font-size: 24px;
+  }
+
+  /* botões e ações: vira coluna e tudo largura total */
+  .actions-row,
+  .auth-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .actions-row button,
+  .auth-actions button {
+    width: 100%;
+  }
+
+  /* input de busca tem max-width inline no HTML -> precisa !important */
+  #pesquisaListas {
+    max-width: 100% !important;
+  }
+
+  /* cards de itens/listas: empilha */
+  .saved-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .saved-actions-row {
+    width: 100%;
+  }
+
+  /* ADMIN: as 3 caixas lado a lado viram 1 coluna no mobile */
+  .admin-grid-wrapper {
+    flex-direction: column;
+  }
+
+  .admin-grid-wrapper .card {
+    min-height: auto !important;
+  }
+
+  /* evita scroll dentro de scroll no admin no mobile */
+  .admin-grid-wrapper .saved-list,
+  .admin-grid-wrapper .admin-grid {
+    overflow: visible;
+    max-height: none;
+    padding-right: 0;
+  }
+
+  /* login: o margin-top calc(50vh - 220px) pode cortar no celular */
+  #authCard.login-card {
+    margin-top: 10vh;
+    padding: 24px 18px;
+    border-radius: 22px;
+  }
+
+  /* tabelas no modal: se estourar a tela, habilita rolagem lateral */
+  .modal-card table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* prevenção de scroll horizontal acidental */
+  html, body {
+    overflow-x: hidden;
+  }
 }
