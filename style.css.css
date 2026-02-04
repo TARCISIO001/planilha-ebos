@@ -103,6 +103,18 @@ button {
 .btn-tertiary  { background: #0f172a; color: #fff; }
 .btn-danger    { background: #dc2626; color: #fff; }
 
+/* =========================
+   BOTÃO IMPRIMIR
+========================= */
+.btn-print {
+  background: #7c3aed;       /* roxo elegante */
+  color: #ffffff;
+}
+
+.btn-print:hover {
+  background: #6d28d9;
+}
+
 /* ===================================================
    LAYOUTS AUXILIARES
 =================================================== */
