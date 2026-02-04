@@ -3,6 +3,7 @@
 // =======================================================
 
 
+
 const COLLECTION = "listas";
 const USERS_COLLECTION = "users";
 const MASTERS = ["taina", "tata"];
@@ -10,6 +11,17 @@ const MASTERS = ["taina", "tata"];
 let editingDocId = null;
 
 const $ = (id) => document.getElementById(id);
+
+function extenso(n) {
+  const m = {
+    1: "um", 2: "dois", 3: "três", 4: "quatro", 5: "cinco",
+    6: "seis", 7: "sete", 8: "oito", 9: "nove", 10: "dez",
+    11: "onze", 12: "doze", 13: "treze", 14: "quatorze", 15: "quinze",
+    16: "dezesseis", 17: "dezessete", 18: "dezoito", 19: "dezenove", 20: "vinte"
+  };
+  return m[n] || String(n);
+}
+
 
 // ============================
 // Firebase bridge
@@ -383,6 +395,16 @@ function formatNumero(n) {
   return (v % 1 === 0) ? String(Math.trunc(v)) : String(v).replace(".", ",");
 }
 
+function resetarQuantidadePessoasPara1() {
+  const input = document.getElementById("numPratos");
+  if (input) input.value = "1";
+  setTimeout(() => {
+    const i = document.getElementById("numPratos");
+    if (i) i.value = "1";
+  }, 0);
+}
+
+
 function getGeradorEstado() {
   const eboNome = ($("eboNome")?.value || "").trim();
   const pratos = parseInt($("numPratos")?.value || "0", 10);
@@ -564,17 +586,59 @@ window.gerarLista = async function gerarLista() {
         ? item.texto.join(" + ") + ` x ${pratos}`
         : `x ${pratos}`;
     }
-
     const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${item.ingrediente}</td>
-      <td>${totalTxt}</td>
-    `;
-    tbody.appendChild(tr);
+
+// Ingrediente (esquerda)
+const tdIng = document.createElement("td");
+tdIng.textContent = item.ingrediente;
+
+// Quantidade (direita)
+const tdQtd = document.createElement("td");
+
+const pratosBase =
+  window.__listasAcumuladas &&
+  window.__listasAcumuladas[0]
+    ? window.__listasAcumuladas[0].pratos
+    : null;
+
+let exibiuDetalhe = false;
+
+if (pratosBase && typeof totalTxt === "string") {
+  const partes = totalTxt.split(" ");
+  const num = parseFloat(partes[0].replace(",", "."));
+  const unidade = partes.slice(1).join(" ");
+
+  if (!isNaN(num) && num % pratosBase === 0) {
+    const porPrato = num / pratosBase;
+    tdQtd.textContent =
+      formatNumero(num) +
+      (unidade ? " " + unidade : "") +
+      "  |  " +
+      pratosBase +
+      " pratos × " +
+      formatNumero(porPrato);
+    exibiuDetalhe = true;
+  }
+}
+
+if (!exibiuDetalhe) {
+  tdQtd.textContent = totalTxt;
+}
+
+tr.appendChild(tdIng);
+tr.appendChild(tdQtd);
+tbody.appendChild(tr);
+
+
   });
 
   $("saidaPrint")?.scrollIntoView?.({ behavior: "smooth" });
+
+  // 🔄 sempre voltar Quantidade de Pessoas para 1
+  resetarQuantidadePessoasPara1();
+
 };
+
 
 // =======================================================
 // 2) MODAL (compatível)
@@ -1069,86 +1133,158 @@ window.imprimirListaGerada = function imprimirListaGerada() {
   window.print();
 };
 
+
 window.gerarListaFinalAcumulada = function () {
-  if (!window.__listasAcumuladas.length) {
-    return alert("Nenhuma lista foi adicionada.");
-  }
+  try {
+    if (!window.__listasAcumuladas || !window.__listasAcumuladas.length) {
+      alert("Nenhuma lista foi adicionada. Clique em 'Adicionar lista' primeiro.");
+      return;
+    }
 
-  const itensExpandidos = [];
-
-  window.__listasAcumuladas.forEach(lista => {
-    lista.itens.forEach(item => {
-      itensExpandidos.push({
-        ingrediente: item.ingrediente,
-        quantidade: item.quantidade,
-        __pratos: lista.pratos
+    // Expande itens das listas adicionadas
+    const itensExpandidos = [];
+    window.__listasAcumuladas.forEach((lista) => {
+      (lista.itens || []).forEach((item) => {
+        itensExpandidos.push({
+          ingrediente: item.ingrediente,
+          quantidade: item.quantidade,
+          __pratos: lista.pratos,
+        });
       });
     });
-  });
 
-  const consolidados = {};
+    // Consolida totais
+    const consolidados = {};
+    itensExpandidos.forEach((it) => {
+      const ing = (it?.ingrediente || "").trim();
+      if (!ing) return;
 
-  itensExpandidos.forEach(it => {
-    const ing = (it?.ingrediente || "").trim();
-    if (!ing) return;
+      const chave = chaveIngrediente(ing);
 
-    const chave = chaveIngrediente(ing);
-
-    if (!consolidados[chave]) {
-      consolidados[chave] = {
-        ingrediente: ing,
-        valores: [],
-        unidades: [],
-        textos: []
-      };
-    }
-
-    const parsed = parseQuantidadeComUnidade(it.quantidade);
-    if (parsed.ok) {
-      consolidados[chave].valores.push(parsed.value * it.__pratos);
-      consolidados[chave].unidades.push(parsed.unit || "");
-    } else if (it.quantidade) {
-      // evita repetir o mesmo texto
-      const txt = `${it.quantidade} x ${it.__pratos}`;
-      if (!consolidados[chave].textos.some(t => normalizarTexto(t) === normalizarTexto(txt))) {
-        consolidados[chave].textos.push(txt);
+      if (!consolidados[chave]) {
+        consolidados[chave] = {
+          ingrediente: ing,
+          valores: [],
+          unidades: [],
+          textos: [],
+        };
       }
-    }
-  });
 
-  $("saidaPrint").style.display = "block";
-  $("printEboNome").textContent = "Ilê D'Ogum ---- Lista Total:";
-  $("printTotalPratos").textContent = "Múltiplas listas";
+      const parsed = parseQuantidadeComUnidade(it.quantidade);
 
-  const tbody = $("printIngredientes");
-  tbody.innerHTML = "";
-
-  Object.values(consolidados).forEach(item => {
-    let totalTxt = "";
-
-    if (item.valores.length) {
-      const base = item.unidades[0] || "";
-      const iguais = item.unidades.every(u => u === base);
-      if (iguais) {
-        const soma = item.valores.reduce((a, b) => a + b, 0);
-        totalTxt = `${formatNumero(soma)}${base ? " " + base : ""}`;
+      if (parsed.ok) {
+        // total = quantidade * pratos da lista (mantém sua lógica atual de total)
+        consolidados[chave].valores.push(parsed.value * it.__pratos);
+        consolidados[chave].unidades.push(parsed.unit || "");
+      } else if (it.quantidade) {
+        const txt = `${it.quantidade} x ${it.__pratos}`;
+        if (!consolidados[chave].textos.some((t) => normalizarTexto(t) === normalizarTexto(txt))) {
+          consolidados[chave].textos.push(txt);
+        }
       }
+    });
+
+    // Mostra área de impressão
+    const saida = document.getElementById("saidaPrint");
+    if (saida) saida.style.display = "block";
+
+    const printNome = document.getElementById("printEboNome");
+    if (printNome) printNome.textContent = "Ilê D'Ogum";
+
+    const tbody = document.getElementById("printIngredientes");
+    if (!tbody) {
+      alert("Erro: não achei o tbody #printIngredientes no HTML.");
+      return;
     }
 
-    if (!totalTxt) {
-      totalTxt = item.textos.length ? item.textos.join(" + ") : "—";
-    }
+    tbody.innerHTML = "";
 
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${item.ingrediente}</td>
-      <td>${totalTxt}</td>
-    `;
-    tbody.appendChild(tr);
-  });
+    Object.values(consolidados).forEach((item) => {
+      // ===== TOTAL (somente total) =====
+      let totalTxt = "";
 
-  $("saidaPrint").scrollIntoView({ behavior: "smooth" });
+      if (item.valores.length) {
+        const base = item.unidades[0] || "";
+        const iguais = item.unidades.every((u) => u === base);
+
+        if (iguais) {
+          const soma = item.valores.reduce((a, b) => a + b, 0);
+          totalTxt = `${formatNumero(soma)}${base ? " " + base : ""}`;
+        }
+      }
+
+      if (!totalTxt) {
+        totalTxt = item.textos.length ? item.textos.join(" + ") : "—";
+      }
+
+      // ===== PRATOS (conta pela QUANTIDADE do ingrediente em cada lista) =====
+      const chaveAtual = chaveIngrediente(item.ingrediente);
+      const contagemPorQtd = {}; // ex: {"7":2, "2":2}
+
+      itensExpandidos.forEach((it) => {
+        const ing = (it?.ingrediente || "").trim();
+        if (!ing) return;
+
+        if (chaveIngrediente(ing) !== chaveAtual) return;
+
+        const parsed = parseQuantidadeComUnidade(it.quantidade);
+        if (!parsed.ok) return;
+
+        // usa só o valor numérico (sem unidade) como chave
+        const key = String(parsed.value).replace(".", ",");
+        contagemPorQtd[key] = (contagemPorQtd[key] || 0) + 1;
+      });
+
+      const qtdKeys = Object.keys(contagemPorQtd)
+        .map((k) => ({ k, n: parseFloat(k.replace(",", ".")) }))
+        .filter((o) => Number.isFinite(o.n))
+        .sort((a, b) => a.n - b.n)
+        .map((o) => o.k);
+
+      let pratosTxt = "—";
+      if (qtdKeys.length) {
+        const partes = qtdKeys.map((q) => {
+          const qtdListas = contagemPorQtd[q];
+          const rotulo = qtdListas === 1 ? "prato" : "pratos";
+          return `${extenso(qtdListas)} ${rotulo} de ${q}`;
+        });
+
+        if (partes.length === 1) pratosTxt = partes[0];
+        else if (partes.length === 2) pratosTxt = `${partes[0]} e ${partes[1]}`;
+        else pratosTxt = `${partes.slice(0, -1).join(", ")} e ${partes[partes.length - 1]}`;
+      }
+
+      // ===== Render linha (3 colunas): Total | Ingrediente | Pratos =====
+      const tr = document.createElement("tr");
+
+      const tdTotal = document.createElement("td");
+      tdTotal.className = "print-total";
+      tdTotal.textContent = totalTxt;
+
+      const tdIng = document.createElement("td");
+      tdIng.className = "print-ing";
+      tdIng.textContent = item.ingrediente;
+
+      const tdPratos = document.createElement("td");
+      tdPratos.className = "print-pratos";
+      tdPratos.textContent = pratosTxt;
+
+      tr.appendChild(tdTotal);
+      tr.appendChild(tdIng);
+      tr.appendChild(tdPratos);
+      tbody.appendChild(tr);
+    });
+
+    // 🔄 sempre voltar Quantidade de Pessoas para 1
+    resetarQuantidadePessoasPara1();
+
+    saida?.scrollIntoView?.({ behavior: "smooth" });
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao gerar a lista. Abra o console (F12) para ver o detalhe.\\n\\n" + (e?.message || e));
+  }
 };
+
 
 
 // =======================================================
@@ -1195,15 +1331,26 @@ window.adicionarListaAcumulada = async function () {
     renderizarListasAcumuladas();
     return; // não duplica e não dá erro
   }
-
+    
   window.__listasAcumuladas.push({
     nome: eboNome,
     pratos,
     itens: itensConsolidados
   });
+      resetarQuantidadePessoasPara1();
 
-  renderizarListasAcumuladas();
+   renderizarListasAcumuladas();
+  resetarQuantidadePessoasPara1();
   alert(`Lista "${eboNome}" adicionada (${pratos} pratos).`);
+  // 🔄 limpa o nome do ebó após adicionar
+const inputEbo = document.getElementById("eboNome");
+if (inputEbo) {
+  inputEbo.value = "";
+  inputEbo.focus(); // 🔥 cursor piscando automaticamente
+}
+
+
+
 };
 
 
@@ -1224,3 +1371,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 });
+
+// Inverte colunas da tabela de impressão (Qtd à esquerda, Ingrediente à direita)
+function prepararTabelaParaPrint() {
+  const tabela = document.querySelector("#saidaPrint table");
+  if (!tabela) return;
+
+  // Cabeçalho
+  const ths = tabela.querySelectorAll("thead th");
+  if (ths.length >= 2) {
+    ths[0].parentNode.insertBefore(ths[1], ths[0]); // troca 2º com 1º
+  }
+
+  // Linhas do corpo
+  tabela.querySelectorAll("tbody tr").forEach(tr => {
+    const tds = tr.querySelectorAll("td");
+    if (tds.length >= 2) {
+      tr.insertBefore(tds[1], tds[0]); // troca 2º com 1º
+    }
+  });
+}
