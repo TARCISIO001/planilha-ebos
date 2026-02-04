@@ -222,6 +222,8 @@ window.criarConta = async function criarConta() {
 
 window.sair = async function sair() {
   try {
+    pararControleInatividade();
+
     const { auth, signOut } = fb();
     await signOut(auth);
     setAuthMsg("Você saiu.");
@@ -1106,6 +1108,7 @@ onAuthStateChanged(auth, (user) => {
     setUserBadge(`Logado como: ${username}`);
     setFirebaseStatus(true, "Firebase: conectado");
     procurarListas(); //se nao quiser que a lista cadastrada apareça , so comentar essa linha, só vai aparecer quando apertar o botão procurar 
+     iniciarControleInatividade(); // 🔥 aqui
 
     
 
@@ -1390,4 +1393,48 @@ function prepararTabelaParaPrint() {
       tr.insertBefore(tds[1], tds[0]); // troca 2º com 1º
     }
   });
+}
+
+// ======================================
+// AUTO LOGOUT POR INATIVIDADE
+// ======================================
+
+let idleTimer = null;
+const IDLE_TIMEOUT = 60 * 1000; // ⏱️ 60 segundos (ajuste aqui)
+
+function resetIdleTimer() {
+  if (idleTimer) clearTimeout(idleTimer);
+
+  idleTimer = setTimeout(() => {
+    console.log("Logout por inatividade");
+    sair(); // usa sua função existente
+    alert("Sessão encerrada por inatividade.");
+  }, IDLE_TIMEOUT);
+}
+
+// eventos que contam como atividade
+const IDLE_EVENTS = [
+  "mousemove",
+  "mousedown",
+  "keydown",
+  "touchstart",
+  "scroll",
+  "click"
+];
+
+function iniciarControleInatividade() {
+  IDLE_EVENTS.forEach(event =>
+    document.addEventListener(event, resetIdleTimer, true)
+  );
+
+  resetIdleTimer(); // inicia contador
+}
+
+function pararControleInatividade() {
+  if (idleTimer) clearTimeout(idleTimer);
+  idleTimer = null;
+
+  IDLE_EVENTS.forEach(event =>
+    document.removeEventListener(event, resetIdleTimer, true)
+  );
 }
