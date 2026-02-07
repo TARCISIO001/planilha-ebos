@@ -225,22 +225,37 @@ th, td {
 
 /* Card de login (tamanho real, centralizado) */
 #authCard.login-card {
+  position: relative;
   max-width: 380px;
   width: 100%;
-  margin: 0 auto;              /* centro horizontal */
-  margin-top: calc(50vh - 220px); /* centro vertical real */
-
-  background: rgba(255,255,255,0.95);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  margin: 0 auto;
+  margin-top: calc(50vh - 220px);
 
   border-radius: 28px;
   padding: 32px 28px;
+
+  /* camada sólida onde ficam os inputs */
+  background: rgba(255,255,255,0.95);
+  z-index: 2;
 
   box-shadow:
     0 40px 100px rgba(0,0,0,.45),
     0 10px 30px rgba(0,0,0,.25);
 }
+
+/* 🔥 BLUR REAL, MAS FORA DO FORMULÁRIO */
+#authCard.login-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 28px;
+  z-index: -1;
+
+  background: rgba(255,255,255,0.4);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
 
 /* Grid compacto */
 #authCard .auth-grid {
@@ -438,10 +453,8 @@ body {
   background: linear-gradient(180deg, #f7f8fa 0%, #eef1f5 100%);
 }
 
-/* FUNDO EXCLUSIVO DO LOGIN */
-#authCard.login-card {
-  background: rgba(255,255,255,0.95);
-}
+
+
 
 
 
@@ -728,4 +741,115 @@ td.print-pratos { text-align: center; vertical-align: middle; }
   html, body {
     overflow-x: hidden;
   }
+}
+
+#authCard {
+  position: relative;
+  z-index: 9999;
+}
+
+#authCard {
+  pointer-events: auto;
+}
+
+/* 🔥 GARANTE QUE NADA INVISÍVEL BLOQUEIE O LOGIN */
+#modalBackdrop {
+  display: none;
+  pointer-events: none;
+}
+
+/* quando o modal estiver visível */
+#modalBackdrop[style*="display: flex"] {
+  pointer-events: auto;
+}
+
+/* ============================
+   CONTROLE CORRETO DE CLIQUES
+============================ */
+
+/* Por padrão, o app pode receber cliques */
+#postLogin {
+  pointer-events: auto;
+}
+
+/* Quando o login estiver visível,
+   o app não pode receber cliques */
+#authCard:not([style*="display: none"]) ~ .app-container #postLogin {
+  pointer-events: none;
+}
+
+/* Login sempre clicável */
+#authCard {
+  position: relative;
+  z-index: 9999;
+  pointer-events: auto;
+}
+
+
+/* ============================
+   CORREÇÃO DEFINITIVA DO FOCO
+============================ */
+
+/* Enquanto o LOGIN estiver visível,
+   NENHUM backdrop pode existir */
+#authCard:not([style*="display: none"]) ~ #modalBackdrop {
+  display: none !important;
+  pointer-events: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Login sempre acima e focável */
+#authCard {
+  position: relative;
+  z-index: 99999;
+}
+
+/* App normal depois do login */
+#postLogin {
+  pointer-events: auto;
+}
+
+
+#authCard.login-card {
+  background: rgba(255, 255, 255, 0.92); /* efeito vidro */
+  border-radius: 28px;
+  padding: 32px 28px;
+
+  /* borda clara estilo glass */
+  border: 1px solid rgba(255, 255, 255, 0.6);
+
+  /* sombra profunda (simula blur atrás) */
+  box-shadow:
+    0 40px 100px rgba(0,0,0,.45),
+    0 10px 30px rgba(0,0,0,.25);
+}
+
+
+@media print {
+  /* Linha do logo/nome sem grades */
+  .print-brand-row th,
+  .print-brand-row td {
+    border: none !important;
+  }
+
+  /* A célula da marca ocupa 100% e centraliza */
+  .print-brand-cell {
+    text-align: center !important;
+    padding: 8px 0 12px 0 !important;
+  }
+
+  /* Centralização garantida */
+  .print-header-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  /* Remove margem padrão do H1 */
+  #printEboNome { margin: 0; }
 }
