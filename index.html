@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-
   <title>Lista de Ebó</title>
-  <link rel="stylesheet" href="style.css.css">
+  <link rel="stylesheet" href="./style.css.css">
 </head>
 
 <body>
@@ -14,17 +13,14 @@
      TELA 1: LOGIN
 ========================= -->
 <section class="login-card" id="authCard">
-
   <h3>Bem-vindo</h3>
-  <p class="hint" style="text-align:center; margin-top:6px;">
-    Faça seu login.
-  </p>
+  <p class="hint" style="text-align:center; margin-top:6px;">Faça seu login.</p>
 
   <div class="auth-grid">
     <div>
       <label class="label">Usuário</label>
       <input id="authUser" type="text" placeholder="usuário" autocomplete="username" />
-      <div class="hint">Você entra com usuário .</div>
+      <div class="hint">Você entra com usuário.</div>
     </div>
 
     <div>
@@ -41,58 +37,44 @@
 </section>
 
 <!-- =========================
-     TELA 2: APP
+     APP PRINCIPAL
 ========================= -->
 <div class="app-container">
 <div id="postLogin" style="display:none;">
 
-  <!-- =========================
-       PAINEL / TOPO
-  ========================= -->
+  <!-- TOPO -->
   <section class="card">
     <div class="section-head">
-      <div>
-        <div class="saved-title">Painel</div>
-        <div class="saved-meta" id="userBadge">—</div>
+
+      <div class="actions-row" style="margin:0;">
+        <button class="btn-secondary" onclick="abrirTelaAdmin()" id="btnAdmin">Área Administrativa</button>
+        <button class="btn-tertiary" onclick="abrirTelaOferendas()" id="btnOferendas">Oferendas</button>
       </div>
+
+      <div class="saved-title">Painel</div>
 
       <div class="actions-row" style="margin:0;">
         <div class="firebase-pill" id="firebaseStatus">Firebase: não conectado</div>
         <button class="btn-danger" onclick="sair()" id="btnSair">Sair</button>
       </div>
+
     </div>
   </section>
 
-  <!-- =========================
-       GERAR LISTA DE EBÓ
-  ========================= -->
+  <!-- GERAR LISTA -->
   <section class="card">
     <h2>Gerar lista de ebó</h2>
 
     <label class="label">Nome do ebó</label>
-    <input
-      id="eboNome"
-      type="text"
-      placeholder="Ex: Ebó Exu"
-      oninput="autoCarregarListaDebounced()"
-    />
+    <input id="eboNome" type="text" placeholder="Ex: Ebó Exu" oninput="autoCarregarListaDebounced()" />
 
-    <label class="label" style="margin-top:12px;">
-      Quantidade de Pessoas
-    </label>
-    <input
-      id="numPratos"
-      type="number"
-      min="1"
-      placeholder="Ex: 7, 9, 11, 21"
-      value="1"
-    />
+    <label class="label" style="margin-top:12px;">Quantidade de Pessoas</label>
+    <input id="numPratos" type="number" min="1" value="1" />
 
     <div class="actions-row">
       <button class="btn-secondary" onclick="adicionarListaAcumulada()">Adicionar lista</button>
       <button class="btn-tertiary" onclick="gerarListaFinalAcumulada()">Gerar Lista</button>
       <button class="btn-print" onclick="imprimirListaGerada()">Imprimir</button>
-
     </div>
 
     <div class="hint">
@@ -100,27 +82,18 @@
     </div>
   </section>
 
-  <!-- =========================
-       LISTAS ADICIONADAS
-  ========================= -->
+  <!-- LISTAS ADICIONADAS -->
   <section class="card">
     <div class="section-head">
-      <h2 style="margin:0;">Listas adicionadas</h2>
-      <div class="actions-row" style="margin:0;">
-        <button class="btn-danger btn-mini" onclick="limparListasAcumuladas()">Limpar tudo</button>
-      </div>
+      <h2>Listas adicionadas</h2>
+      <button class="btn-danger btn-mini" onclick="limparListasAcumuladas()">Limpar tudo</button>
     </div>
 
-    <div class="hint">
-      Aqui aparecem as listas que você adicionou. Você pode remover individualmente.
-    </div>
-
+    <div class="hint">Aqui aparecem as listas que você adicionou.</div>
     <div id="listasContainer"></div>
   </section>
 
-  <!-- =========================
-       GERENCIAR LISTAS
-  ========================= -->
+  <!-- GERENCIAR LISTAS -->
   <section class="card">
     <div class="section-head">
       <h2>Gerenciar listas</h2>
@@ -128,119 +101,114 @@
 
     <div class="actions-row">
       <button class="btn-secondary" onclick="cadastrarLista()">Cadastrar lista</button>
-
-      <input
-        id="pesquisaListas"
-        type="text"
-        placeholder="Procurar lista pelo nome..."
-        style="max-width:320px;"
-      />
-
+      <input id="pesquisaListas" type="text" placeholder="Procurar lista pelo nome..." style="max-width:320px;" />
       <button class="btn-tertiary" onclick="procurarListas()">Procurar</button>
     </div>
 
     <div id="listasSalvasBox" class="saved-list"></div>
   </section>
 
- <!-- =========================
-     ADMIN / USUÁRIOS (PARTE DE BAIXO)
-========================= -->
-<div class="admin-grid-wrapper">
-
-  <!-- Admin Master -->
-  <section class="card" id="adminPanel" style="display:none;">
-    <h3 style="margin:0 0 8px 0;">Admin (Master)</h3>
-
-    <div class="admin-grid">
-      <div>
-        <label class="label">Novo usuário</label>
-        <input id="newUser" type="text" placeholder="ex: cliente10" />
-      </div>
-
-      <div>
-        <label class="label">Senha inicial</label>
-        <input id="newPass" type="password" placeholder="senha inicial" />
-      </div>
-    </div>
-
-    <div class="auth-actions" style="margin-top:10px;">
-      <button class="btn-secondary" onclick="cadastrarMaster()">Cadastrar Master</button> </br></br>
-      <button class="btn-tertiary" onclick="cadastrarCliente()">Cadastrar Cliente</button>
-    </div>
-
-    <div class="hint">
-      Dica: para cadastrar outro usuário, você vai confirmar a sua senha de master (para voltar a logar depois do cadastro).
-    </div>
-  </section>
-
-  <!-- Contas -->
-  <section class="card">
-    <h3 style="margin:0 0 8px 0;">Contas (Masters e Clientes)</h3>
-
-    <div class="actions-row" style="margin-bottom:10px;">
-      <button class="btn-secondary" onclick="listarContas()">Atualizar lista</button>
-    </div>
-
-    <div id="accountsBox" class="saved-list"></div>
-  </section>
-
-  <!-- Renomear / Trocar senha -->
-  <section class="card">
-    <h3 style="margin:0 0 8px 0;">Renomear login / Trocar senha</h3>
-
-    <div class="admin-grid">
-      <div>
-        <label class="label">Usuário (atual)</label>
-        <input id="manageUser" type="text" placeholder="ex: cliente10" />
-      </div>
-
-      <div>
-        <label class="label">Novo usuário (para renomear)</label>
-        <input id="manageNewUser" type="text" placeholder="ex: cliente11" />
-      </div>
-
-      <div>
-        <label class="label">Nova senha</label>
-        <input id="manageNewPass" type="password" placeholder="nova senha" />
-      </div>
-    </div>
-
-    <div class="auth-actions" style="margin-top:10px;">
-      <button class="btn-secondary" onclick="adminRenomearLogin()">Renomear login</button> </br></br>
-      <button class="btn-tertiary" onclick="adminTrocarSenha()">Trocar senha</button> </br></br>
-      <button class="btn-danger" onclick="adminBloquearUsuario()">Bloquear usuário</button>
-    </div>
-
-    <div class="hint" style="margin-top:8px;">
-      Obs: renomear login e trocar senha exigem Cloud Function. Bloquear funciona só no Firestore.
-    </div>
-  </section>
-
+</div>
 </div>
 
   <!-- =========================
        IMPRESSÃO
   ========================= -->
-  <section id="saidaPrint" class="print-area" style="display:none;">
+<section id="saidaPrint" class="print-area" style="display:none;">
 
-  <div class="print-header">
+  <!-- ✅ fica fora do THEAD, então aparece só 1 vez -->
+  <div class="print-header print-only-first">
     <img src="imagem.png" alt="Ilê D’Ogum" class="print-logo">
     <h1 id="printEboNome"></h1>
+  </div>
 
-    <table>
-      <thead>
-  <tr>
-    <th class="print-total">Total</th>
-    <th class="print-ing">Ingrediente</th>
-    <th class="print-pratos">Pratos</th>
-  </tr>
-</thead>
-      <tbody id="printIngredientes"></tbody>
+  <table class="print-table">
+    <thead>
+      <tr>
+        <th class="print-total">Total</th>
+        <th class="print-ing">Ingrediente</th>
+        <th class="print-pratos">Pratos</th>
+      </tr>
+    </thead>
+    <tbody id="printIngredientes"></tbody>
   </table>
-    </section>
+
+</section>
+
+
 
 </div>
 </div>
+<!-- =========================
+     ADMIN
+========================= -->
+<section id="adminScreen" style="display:none;">
+  <div class="app-container">
+
+    <div class="section-head">
+      <h2>Área Administrativa</h2>
+      <button class="btn-tertiary" onclick="voltarTelaPrincipal()">Voltar</button>
+    </div>
+
+    <div class="admin-grid-wrapper">
+
+      <section class="card" id="adminPanel" style="display:none;">
+        <h3>Admin (Master)</h3>
+        <label class="label">Novo usuário</label>
+        <input id="newUser" type="text">
+        <label class="label">Senha inicial</label>
+        <input id="newPass" type="password">
+
+        <div class="actions-row">
+          <button class="btn-secondary" onclick="cadastrarMaster()">Cadastrar Master</button>
+          <button class="btn-tertiary" onclick="cadastrarCliente()">Cadastrar Cliente</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>Contas</h3>
+        <button class="btn-secondary" onclick="listarContas()">Atualizar lista</button>
+        <div id="accountsBox" class="saved-list"></div>
+      </section>
+
+      <section class="card">
+        <h3>Gerenciar usuário</h3>
+        <label class="label">Usuário</label>
+        <input id="manageUser" type="text">
+        <label class="label">Novo usuário</label>
+        <input id="manageNewUser" type="text">
+        <label class="label">Nova senha</label>
+        <input id="manageNewPass" type="password">
+
+        <div class="actions-row">
+          <button class="btn-secondary" onclick="adminRenomearLogin()">Renomear</button>
+          <button class="btn-tertiary" onclick="adminTrocarSenha()">Trocar senha</button>
+          <button class="btn-danger" onclick="adminBloquearUsuario()">Bloquear</button>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>
+
+<!-- =========================
+     OFERENDAS
+========================= -->
+<section id="oferendasScreen" style="display:none; min-height:100vh;">
+  <div class="app-container" style="min-height:100vh; display:flex; flex-direction:column;">
+    <div class="section-head">
+      <h2>Projeto Oferendas</h2>
+      <button class="btn-tertiary" onclick="voltarTelaPrincipal()">Voltar</button>
+    </div>
+
+    <section class="card" style="flex:1; display:flex; align-items:center; justify-content:center; text-align:center;">
+      <div>
+        <h1>Página em construção</h1>
+        <p class="hint">Estamos preparando algo especial.</p>
+      </div>
+    </section>
+  </div>
+</section>
 
 <!-- =========================
      MODAL
@@ -257,16 +225,26 @@
     <div style="margin-top:10px; padding:12px; border:1px solid #eee; border-radius:12px;">
       <div class="saved-title" style="margin-bottom:10px;">Lista 1</div>
 
-      <!-- Nome do ebó 1 -->
       <label class="label">Nome do ebó</label>
-      <input id="modalNomeEbo_1" type="text" placeholder="Ex: Ebó Exu" />
+<input
+  id="modalNomeEbo_1"
+  type="text"
+  placeholder="Ex: Ebó Exu"
+/>
 
-   
+<label class="label" style="margin-top:8px;">Subtítulo</label>
+<input
+  id="modalSubtitulo_1"
+  type="text"
+  placeholder="Ex: Para abertura de caminhos"
+/>
 
-      <!-- Ingredientes 1 -->
+
       <div class="section-head" style="margin:12px 0 8px;">
         <div class="saved-title">Ingredientes</div>
-        <button class="btn-tertiary btn-mini" onclick="modalAdicionarLinha('1')">+ Adicionar linha</button>
+        <button class="btn-tertiary btn-mini" onclick="modalAdicionarLinha('1')">
+          + Adicionar linha
+        </button>
       </div>
 
       <table>
@@ -287,22 +265,25 @@
       <textarea
         id="modalModoFazer_1"
         placeholder="Escreva aqui o modo de fazer..."
-        style="width:100%; min-height:120px; padding:10px; border-radius:10px; border:1px solid #ddd; outline:none; resize:vertical;"
+        style="width:100%; min-height:120px;"
       ></textarea>
     </div>
 
     <!-- ====== BLOCO 3 ====== -->
     <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
       <div class="saved-title" style="margin-bottom:10px;">Lista 2</div>
+        <label class="label" style="margin-top:8px;">Subtítulo</label>
+<input
+  id="modalSubtitulo_2"
+  type="text"
+  placeholder="Ex: Complemento / segunda parte"
+/>
 
-      <!-- Nome do ebó 2 -->
-      <label class="label">Nome do ebó</label>
-      <input id="modalNomeEbo_2" type="text" placeholder="Ex: Ebó Oxum" />
-
-      <!-- Ingredientes 2 -->
       <div class="section-head" style="margin:12px 0 8px;">
         <div class="saved-title">Ingredientes</div>
-        <button class="btn-tertiary btn-mini" onclick="modalAdicionarLinha('2')">+ Adicionar linha</button>
+        <button class="btn-tertiary btn-mini" onclick="modalAdicionarLinha('2')">
+          + Adicionar linha
+        </button>
       </div>
 
       <table>
@@ -323,21 +304,24 @@
       <textarea
         id="modalModoFazer_2"
         placeholder="Escreva aqui o modo de preparo..."
-        style="width:100%; min-height:120px; padding:10px; border-radius:10px; border:1px solid #ddd; outline:none; resize:vertical;"
+        style="width:100%; min-height:120px;"
       ></textarea>
     </div>
 
     <div class="actions-row" style="margin-top:12px;">
-      <button class="btn-secondary" onclick="enviarParaBanco()">Enviar para banco de dados</button>
+      <button class="btn-secondary" onclick="enviarParaBanco()">
+        Enviar para banco de dados
+      </button>
       <button onclick="fecharModal()">Cancelar</button>
     </div>
 
     <div class="hint" id="modalMsg" style="margin-top:8px;"></div>
+
   </div>
 </div>
 
 
-<!-- Firebase -->
+<!-- FIREBASE -->
 <script type="module">
   const firebaseConfig = {
     apiKey: "AIzaSyByEkOQbZT0hN1yPG9PfM7uqKJ7JuzXoSs",
@@ -370,6 +354,7 @@
   const db = getFirestore(app);
   const auth = getAuth(app);
 
+  // 🔥 ISSO É O QUE O java.js ESPERA
   window.__FIREBASE__ = {
     db,
     collection, addDoc, doc, getDoc, getDocs,
@@ -385,8 +370,8 @@
   };
 </script>
 
+
 <script src="./java.js" defer></script>
 
 </body>
 </html>
-
