@@ -226,6 +226,8 @@ window.sair = async function sair() {
 
     const { auth, signOut } = fb();
     await signOut(auth);
+        limparSaidaPrint();
+
     setAuthMsg("Você saiu.");
   } catch (e) {
     console.error(e);
@@ -1029,9 +1031,28 @@ window.removerListaAcumulada = function removerListaAcumulada(idx) {
 };
 
 window.limparListasAcumuladas = function limparListasAcumuladas() {
+  // limpa listas acumuladas
   window.__listasAcumuladas = [];
   renderizarListasAcumuladas();
+
+  // 🔥 LIMPA A LISTA GERADA (PRINT)
+  const saida = document.getElementById("saidaPrint");
+  const tbody = document.getElementById("printIngredientes");
+
+  if (tbody) tbody.innerHTML = "";
+  if (saida) saida.style.display = "none";
+
+  // opcional: volta scroll pro topo
+  window.scrollTo({ top: 0, behavior: "instant" });
 };
+
+function limparSaidaPrint() {
+  const saida = document.getElementById("saidaPrint");
+  const tbody = document.getElementById("printIngredientes");
+  if (tbody) tbody.innerHTML = "";
+  if (saida) saida.style.display = "none";
+}
+
 
 // Consolida ingredientes dentro de UMA lista (evita contar item repetido mais de 1 vez)
 function consolidarItensDaLista(itens) {
@@ -1085,6 +1106,20 @@ function consolidarItensDaLista(itens) {
     return { ingrediente: g.ingrediente, quantidade: "" };
   });
 }
+window.abrirTelaAdmin = function () {
+  const app = document.getElementById("postLogin");
+  const admin = document.getElementById("adminScreen");
+  const oferendas = document.getElementById("oferendasScreen");
+
+  if (app) app.style.display = "none";
+  if (oferendas) oferendas.style.display = "none";
+  if (admin) admin.style.display = "block";
+
+  window.scrollTo({ top: 0, behavior: "instant" });
+};
+
+
+
 
 // =======================================================
 // INIT
@@ -1104,6 +1139,11 @@ onAuthStateChanged(auth, (user) => {
     const username = emailToUsername(user.email);
     showApp(true);
     showAdminPanel(MASTERS.includes(username));
+    const btnAdmin = document.getElementById("btnAdmin");
+if (btnAdmin) {
+  btnAdmin.style.display = MASTERS.includes(username) ? "inline-block" : "none";
+}
+
     setAuthMsg(`Logado como: ${username}`);
     setUserBadge(`Logado como: ${username}`);
     setFirebaseStatus(true, "Firebase: conectado");
@@ -1235,7 +1275,7 @@ window.gerarListaFinalAcumulada = function () {
 
         // usa só o valor numérico (sem unidade) como chave
         const key = String(parsed.value).replace(".", ",");
-        contagemPorQtd[key] = (contagemPorQtd[key] || 0) + 1;
+        contagemPorQtd[key] = (contagemPorQtd[key] || 0) + (Number(it.__pratos) || 0);
       });
 
       const qtdKeys = Object.keys(contagemPorQtd)
@@ -1438,3 +1478,64 @@ function pararControleInatividade() {
     document.removeEventListener(event, resetIdleTimer, true)
   );
 }
+
+
+// ======================================
+// TROCA DE TELAS (APP x ADMIN)
+// ======================================
+
+function abrirTelaAdmin() {
+  const admin = document.getElementById("adminScreen");
+  const app = document.getElementById("postLogin");
+
+  if (admin) admin.style.display = "block";
+  if (app) app.style.display = "none";
+}
+
+
+
+// ============================
+// NOVA FUNÇÃO , OFERENDAS
+// ============================
+window.abrirTelaOferendas = function () {
+  const app = document.getElementById("postLogin");
+  const admin = document.getElementById("adminScreen");
+  const oferendas = document.getElementById("oferendasScreen");
+
+  if (app) app.style.display = "none";
+  if (admin) admin.style.display = "none";
+  if (oferendas) oferendas.style.display = "block";
+
+  // 🔥 ISSO É O QUE FALTAVA
+  window.scrollTo({ top: 0, behavior: "instant" });
+};
+
+window.voltarTelaPrincipal = function () {
+  const app = document.getElementById("postLogin");
+  const admin = document.getElementById("adminScreen");
+  const oferendas = document.getElementById("oferendasScreen");
+
+  if (admin) admin.style.display = "none";
+  if (oferendas) oferendas.style.display = "none";
+  if (app) app.style.display = "block";
+
+  window.scrollTo({ top: 0, behavior: "instant" });
+};
+
+//Isso elimina definitivamente o bug de foco preso
+document.addEventListener("DOMContentLoaded", () => {
+  const senha = document.getElementById("authSenha");
+  const user = document.getElementById("authUser");
+
+  if (user) {
+    user.focus();
+  }
+
+  // força foco correto ao clicar
+  document.addEventListener("click", () => {
+    if (document.getElementById("authCard")?.style.display !== "none") {
+      document.getElementById("authSenha")?.blur();
+      document.getElementById("authSenha")?.focus();
+    }
+  }, { once: true });
+});
