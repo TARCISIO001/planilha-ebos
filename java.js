@@ -227,6 +227,8 @@ window.sair = async function sair() {
     const { auth, signOut } = fb();
     await signOut(auth);
         limparSaidaPrint();
+    try { limparSaidaPrintListaCadastrada(); } catch {}
+
 
     setAuthMsg("Você saiu.");
   } catch (e) {
@@ -524,6 +526,23 @@ function consolidarIngredientes(itens) {
 
 
 window.gerarLista = async function gerarLista() {
+
+  // =============================
+// DETECTAR "QUALIDADES DE PADÊ"
+// =============================
+function detectarQualidadesPade(nome) {
+  if (!nome) return 1;
+
+  const txt = nome.toLowerCase();
+
+  const match = txt.match(/(\d+)\s*qualidades?\s*de\s*pad[eê]s?/);
+
+  if (match) {
+    return parseInt(match[1], 10);
+  }
+
+  return 1;
+}
   const { eboNome, pratos } = getGeradorEstado();
   if (!eboNome) return alert("Informe o nome do ebó.");
   if (!pratos || pratos < 1) return alert("Informe a quantidade de pratos (mínimo 1).");
@@ -553,6 +572,33 @@ window.gerarLista = async function gerarLista() {
 
   // Junta lista 1 + lista 2
   const itensBrutos = [...itens1, ...itens2];
+
+// 🔥 Detecta número de qualidades de padê
+const multiplicadorPade = detectarQualidadesPade(docLista.nome);
+
+// Ajusta quantidades automaticamente
+const itensAjustados = itensBrutos.map(it => {
+  let qtd = (it.quantidade || "").toString().trim();
+
+  // se não tiver quantidade escrita
+  if (!qtd) {
+    return {
+      ...it,
+      quantidade: String(multiplicadorPade)
+    };
+  }
+
+  const num = parseFloat(qtd.replace(",", "."));
+
+  if (!isNaN(num)) {
+    return {
+      ...it,
+      quantidade: String(num * multiplicadorPade)
+    };
+  }
+
+  return it;
+});
   const itensConsolidados = consolidarIngredientes(itensBrutos);
 
   if (!itensConsolidados.length) {
@@ -825,6 +871,7 @@ window.procurarListas = async function procurarListas(silent = false) {
               <div class="saved-meta">Itens: ${n} • Criada: ${created} • Atualizada: ${updated}</div>
             </div>
             <div class="saved-actions-row">
+              <button class="btn-mini btn-print" onclick="imprimirListaCadastrada('${item.id}')">Imprimir</button>
               <button class="btn-mini btn-mini-open" onclick="editarLista('${item.id}')">Editar</button>
               <button class="btn-mini btn-mini-del" onclick="excluirLista('${item.id}')">Excluir</button>
             </div>
@@ -1173,8 +1220,251 @@ window.imprimirListaGerada = function imprimirListaGerada() {
     alert("Gere a lista primeiro para imprimir.");
     return;
   }
+  // garante que não está no modo de impressão simples
+  try { limparSaidaPrintListaCadastrada(); } catch {}
   window.print();
 };
+
+// =======================================================
+// 🔹 IMPRIMIR LISTA CADASTRADA (SIMPLES)
+// - quantidade à esquerda
+// - ingrediente centralizado
+// - sem logo / sem grades (CSS em @media print com body.print-lista-cadastrada)
+// =======================================================
+
+function limparSaidaPrintListaCadastrada() {
+  document.body.classList.remove("print-lista-cadastrada");
+
+  const area = document.getElementById("saidaPrintListaCadastrada");
+  const tbody = document.getElementById("printListaCadastradaIngredientes");
+
+  if (tbody) tbody.innerHTML = "";
+  if (area) area.style.display = "none";
+}
+
+window.imprimirListaCadastrada = async function imprimirListaCadastrada(docId) {
+  if (!docId) {
+    alert("ID da lista não informado.");
+    return;
+  }
+
+  const area = document.getElementById("saidaPrintListaCadastrada");
+  const titulo = document.getElementById("printListaCadastradaNome");
+  const tbody = document.getElementById("printListaCadastradaIngredientes");
+
+  if (!area || !titulo || !tbody) {
+    alert("Área de impressão simples não encontrada no HTML. Confira se existe #saidaPrintListaCadastrada.");
+    return;
+  }
+
+  // sempre limpa antes
+  limparSaidaPrintListaCadastrada();
+
+  let mq = null;
+  let onChange = null;
+
+  let cleaned = false;
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+
+    limparSaidaPrintListaCadastrada();
+
+    window.removeEventListener("afterprint", cleanup);
+
+    try {
+      if (mq) {
+        if (mq.removeEventListener) mq.removeEventListener("change", onChange);
+        else if (mq.removeListener) mq.removeListener(onChange);
+      }
+    } catch {
+      // no-op
+    }
+  };
+
+  try {
+    const { db, doc, getDoc } = fb();
+    const snap = await getDoc(doc(db, COLLECTION, String(docId)));
+
+    if (!snap.exists()) {
+      alert("Lista não encontrada.");
+      return;
+    }
+
+    const data = snap.data() || {};
+
+    titulo.textContent = data.nome || "(sem nome)";
+
+    const itens1 = Array.isArray(data.itens) ? data.itens : [];
+    const itens2 = Array.isArray(data.itens2) ? data.itens2 : [];
+
+    // Lista 1 + Lista 2 (sem multiplicar)
+    const itens = [...itens1, ...itens2].filter((it) => {
+      const ing = (it?.ingrediente || "").trim();
+      const qtd = (it?.quantidade || "").toString().trim();
+      return ing || qtd;
+    });
+
+    tbody.innerHTML = "";
+
+    if (!itens.length) {
+      const tr = document.createElement("tr");
+
+      const tdQtd = document.createElement("td");
+      tdQtd.className = "print-total";
+      tdQtd.textContent = "—";
+
+      const tdIng = document.createElement("td");
+      tdIng.className = "print-ing";
+      tdIng.textContent = "Sem ingredientes cadastrados.";
+
+      tr.appendChild(tdQtd);
+      tr.appendChild(tdIng);
+      tbody.appendChild(tr);
+    } else {
+      itens.forEach((it) => {
+        const tr = document.createElement("tr");
+
+        // Quantidade (esquerda)
+        const tdQtd = document.createElement("td");
+        tdQtd.className = "print-total";
+        tdQtd.textContent = (it?.quantidade || "").toString().trim() || "—";
+
+        // Ingrediente (meio)
+        const tdIng = document.createElement("td");
+        tdIng.className = "print-ing";
+        tdIng.textContent = (it?.ingrediente || "").trim();
+
+        tr.appendChild(tdQtd);
+        tr.appendChild(tdIng);
+        tbody.appendChild(tr);
+      });
+    }
+
+    area.style.display = "block";
+    document.body.classList.add("print-lista-cadastrada");
+
+    // cleanup robusto (afterprint + matchMedia)
+    window.addEventListener("afterprint", cleanup);
+
+    try {
+      mq = window.matchMedia("print");
+      onChange = (e) => {
+        if (!e.matches) cleanup();
+      };
+
+      if (mq.addEventListener) mq.addEventListener("change", onChange);
+      else if (mq.addListener) mq.addListener(onChange);
+    } catch {
+      // no-op
+    }
+
+    window.print();
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao imprimir lista cadastrada. Veja o console (F12).");
+    cleanup();
+  }
+};
+
+
+
+function extrairInfoQualidadesPade(ingrediente, quantidade = "") {
+  const ing = (ingrediente || "").toString().trim();
+  const qtd = (quantidade || "").toString().trim();
+
+  const reHeader = /(\d+(?:[.,]\d+)?)\s*qualidades?\s*de\s*pad[eê]s?\b/i;
+  const temMarcador = reHeader.test(ing) || /qualidades?\s*de\s*pad[eê]s?\b/i.test(ing) || /qualidades?\s*de\s*pad[eê]s?\b/i.test(qtd);
+
+  if (!temMarcador) return null;
+
+  let totalBase = null;
+  let detalhes = "";
+
+  const matchHeader = ing.match(reHeader);
+  if (matchHeader) {
+    totalBase = parseFloat((matchHeader[1] || "").replace(",", "."));
+    detalhes = ing.slice((matchHeader.index || 0) + matchHeader[0].length).trim();
+  } else {
+    const parsedQtd = parseQuantidadeComUnidade(qtd);
+    if (parsedQtd.ok) totalBase = parsedQtd.value;
+    detalhes = ing.replace(/qualidades?\s*de\s*pad[eê]s?\b/i, "").trim();
+  }
+
+  const itens = [];
+  const extras = [];
+
+  const partes = detalhes
+    .split(/[,;]+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  partes.forEach((parte) => {
+    const p = parte.replace(/^[-–—:]+/, "").trim();
+    if (!p) return;
+
+    const m = p.match(/^(\d+(?:[.,]\d+)?)\s*[-–—x×:]?\s*(.+)$/i);
+    if (m) {
+      const qtdItem = parseFloat((m[1] || "").replace(",", "."));
+      const nomeItem = (m[2] || "").trim();
+      if (nomeItem) itens.push({ nome: nomeItem, quantidade: Number.isFinite(qtdItem) ? qtdItem : 0 });
+      return;
+    }
+
+    if (!extras.some((x) => normalizarTexto(x) === normalizarTexto(p))) {
+      extras.push(p);
+    }
+  });
+
+  if (!itens.length && detalhes) {
+    const reItensInline = /(\d+(?:[.,]\d+)?)\s*[-–—x×:]?\s*([a-zà-ÿ0-9][^,;\n]+?)(?=(?:\s+\d+(?:[.,]\d+)?\s*[-–—x×:]?\s*[a-zà-ÿ0-9])|$)/gi;
+    const itensInline = [];
+    let m;
+    while ((m = reItensInline.exec(detalhes)) !== null) {
+      const qtdItem = parseFloat((m[1] || "").replace(",", "."));
+      const nomeItem = (m[2] || "").trim();
+      if (nomeItem) itensInline.push({ nome: nomeItem, quantidade: Number.isFinite(qtdItem) ? qtdItem : 0 });
+    }
+
+    if (itensInline.length) {
+      itensInline.forEach((it) => itens.push(it));
+      extras.length = 0;
+    }
+  }
+
+  if ((!Number.isFinite(totalBase) || totalBase === null) && itens.length) {
+    totalBase = itens.reduce((acc, it) => acc + (Number(it.quantidade) || 0), 0);
+  }
+
+  const nomesChave = itens.map((it) => normalizarTexto(it.nome)).filter(Boolean).join("|");
+  const extrasChave = extras.map((it) => normalizarTexto(it)).filter(Boolean).join("|");
+  const totalChave = Number.isFinite(totalBase) ? String(totalBase) : "0";
+
+  return {
+    key: `pade|global`,
+    totalBase: Number.isFinite(totalBase) ? totalBase : 0,
+    itens,
+    extras,
+    ingredienteBase: "Padezinhos",
+  };
+}
+
+function formatarDetalhesQualidadesPade(agregado) {
+  const partes = [];
+
+  (agregado.itensOrdem || []).forEach((nomeKey) => {
+    const it = agregado.itensMap[nomeKey];
+    if (!it) return;
+    partes.push(`${formatNumero(it.quantidade)}- ${it.nome}`);
+  });
+
+  (agregado.extrasOrdem || []).forEach((extraKey) => {
+    const valor = agregado.extrasMap[extraKey];
+    if (valor) partes.push(valor);
+  });
+
+  return partes.length ? partes.join(", ") : "—";
+}
 
 
 window.gerarListaFinalAcumulada = function () {
@@ -1184,28 +1474,81 @@ window.gerarListaFinalAcumulada = function () {
       return;
     }
 
-    // Expande itens das listas adicionadas
     const itensExpandidos = [];
     window.__listasAcumuladas.forEach((lista) => {
       (lista.itens || []).forEach((item) => {
         itensExpandidos.push({
           ingrediente: item.ingrediente,
           quantidade: item.quantidade,
-          __pratos: lista.pratos,
+          __pratos: Number(lista.pratos) || 0,
         });
       });
     });
 
-    // Consolida totais
     const consolidados = {};
+    const consolidadosPade = {};
+    let ordemAtual = 0;
+
     itensExpandidos.forEach((it) => {
       const ing = (it?.ingrediente || "").trim();
       if (!ing) return;
+
+      const multiplicador = Number(it.__pratos) || 0;
+      const infoPade = extrairInfoQualidadesPade(ing, it.quantidade);
+
+      if (infoPade) {
+        const chavePade = infoPade.key;
+
+        if (!consolidadosPade[chavePade]) {
+          consolidadosPade[chavePade] = {
+            tipo: "pade",
+            ordem: ordemAtual++,
+            ingrediente: infoPade.ingredienteBase,
+            total: 0,
+            itensMap: {},
+            itensOrdem: [],
+            extrasMap: {},
+            extrasOrdem: [],
+          };
+        }
+
+        const grupo = consolidadosPade[chavePade];
+        const totalBase = Number(infoPade.totalBase) || 0;
+        grupo.total += totalBase * multiplicador;
+
+        (infoPade.itens || []).forEach((parte) => {
+          const nomeOriginal = (parte?.nome || "").trim();
+          if (!nomeOriginal) return;
+
+          const nomeKey = normalizarTexto(nomeOriginal);
+          if (!grupo.itensMap[nomeKey]) {
+            grupo.itensMap[nomeKey] = { nome: nomeOriginal, quantidade: 0 };
+            grupo.itensOrdem.push(nomeKey);
+          }
+
+          grupo.itensMap[nomeKey].quantidade += (Number(parte.quantidade) || 0) * multiplicador;
+        });
+
+        (infoPade.extras || []).forEach((extra) => {
+          const extraTxt = (extra || "").trim();
+          if (!extraTxt) return;
+
+          const extraKey = normalizarTexto(extraTxt);
+          if (!grupo.extrasMap[extraKey]) {
+            grupo.extrasMap[extraKey] = extraTxt;
+            grupo.extrasOrdem.push(extraKey);
+          }
+        });
+
+        return;
+      }
 
       const chave = chaveIngrediente(ing);
 
       if (!consolidados[chave]) {
         consolidados[chave] = {
+          tipo: "normal",
+          ordem: ordemAtual++,
           ingrediente: ing,
           valores: [],
           unidades: [],
@@ -1216,34 +1559,17 @@ window.gerarListaFinalAcumulada = function () {
       const parsed = parseQuantidadeComUnidade(it.quantidade);
 
       if (parsed.ok) {
-        // total = quantidade * pratos da lista (mantém sua lógica atual de total)
-        consolidados[chave].valores.push(parsed.value * it.__pratos);
+        consolidados[chave].valores.push(parsed.value * multiplicador);
         consolidados[chave].unidades.push(parsed.unit || "");
       } else if (it.quantidade) {
-        const txt = `${it.quantidade} x ${it.__pratos}`;
+        const txt = `${it.quantidade} x ${multiplicador}`;
         if (!consolidados[chave].textos.some((t) => normalizarTexto(t) === normalizarTexto(txt))) {
           consolidados[chave].textos.push(txt);
         }
       }
     });
 
-    // Mostra área de impressão
-    const saida = document.getElementById("saidaPrint");
-    if (saida) saida.style.display = "block";
-
-    const printNome = document.getElementById("printEboNome");
-    if (printNome) printNome.textContent = "Ilê D'Ogum";
-
-    const tbody = document.getElementById("printIngredientes");
-    if (!tbody) {
-      alert("Erro: não achei o tbody #printIngredientes no HTML.");
-      return;
-    }
-
-    tbody.innerHTML = "";
-
-    Object.values(consolidados).forEach((item) => {
-      // ===== TOTAL (somente total) =====
+    const linhasNormais = Object.values(consolidados).map((item) => {
       let totalTxt = "";
 
       if (item.valores.length) {
@@ -1260,20 +1586,18 @@ window.gerarListaFinalAcumulada = function () {
         totalTxt = item.textos.length ? item.textos.join(" + ") : "—";
       }
 
-      // ===== PRATOS (conta pela QUANTIDADE do ingrediente em cada lista) =====
       const chaveAtual = chaveIngrediente(item.ingrediente);
-      const contagemPorQtd = {}; // ex: {"7":2, "2":2}
+      const contagemPorQtd = {};
 
       itensExpandidos.forEach((it) => {
         const ing = (it?.ingrediente || "").trim();
         if (!ing) return;
-
+        if (extrairInfoQualidadesPade(ing, it.quantidade)) return;
         if (chaveIngrediente(ing) !== chaveAtual) return;
 
         const parsed = parseQuantidadeComUnidade(it.quantidade);
         if (!parsed.ok) return;
 
-        // usa só o valor numérico (sem unidade) como chave
         const key = String(parsed.value).replace(".", ",");
         contagemPorQtd[key] = (contagemPorQtd[key] || 0) + (Number(it.__pratos) || 0);
       });
@@ -1297,20 +1621,101 @@ window.gerarListaFinalAcumulada = function () {
         else pratosTxt = `${partes.slice(0, -1).join(", ")} e ${partes[partes.length - 1]}`;
       }
 
-      // ===== Render linha (3 colunas): Total | Ingrediente | Pratos =====
+      return {
+        ordem: item.ordem,
+        totalTxt,
+        ingrediente: item.ingrediente,
+        pratosTxt,
+      };
+    });
+
+    const linhasPade = Object.values(consolidadosPade).map((item) => ({
+      ordem: item.ordem,
+      totalTxt: item.total ? formatNumero(item.total) : "—",
+      ingrediente: item.ingrediente,
+      pratosTxt: formatarDetalhesQualidadesPade(item),
+    }));
+
+    const linhas = [...linhasNormais, ...linhasPade].sort((a, b) => a.ordem - b.ordem);
+
+    const saida = document.getElementById("saidaPrint");
+    if (saida) saida.style.display = "block";
+
+    const printNome = document.getElementById("printEboNome");
+    if (printNome) printNome.textContent = "Ilê D'Ogum";
+
+    const tbody = document.getElementById("printIngredientes");
+    if (!tbody) {
+      alert("Erro: não achei o tbody #printIngredientes no HTML.");
+      return;
+    }
+
+    tbody.innerHTML = "";
+
+    linhas.forEach((item) => {
       const tr = document.createElement("tr");
 
       const tdTotal = document.createElement("td");
       tdTotal.className = "print-total";
-      tdTotal.textContent = totalTxt;
-
+      tdTotal.textContent = item.totalTxt;
+      
+      
       const tdIng = document.createElement("td");
       tdIng.className = "print-ing";
       tdIng.textContent = item.ingrediente;
 
-      const tdPratos = document.createElement("td");
-      tdPratos.className = "print-pratos";
-      tdPratos.textContent = pratosTxt;
+const tdPratos = document.createElement("td");
+tdPratos.className = "print-pratos";
+
+let textoPratos = item.pratosTxt;
+const ingrediente = (item.ingrediente || "").toLowerCase();
+
+// usa o TOTAL da linha
+const qtd = parseInt(item.totalTxt) || 1;
+
+// MORIM
+if (ingrediente.includes("morim")) {
+  textoPratos = `${qtd} morim preto, vermelho e branco`;
+}
+
+// CASAL DE BRUXO
+else if (ingrediente.includes("casal de bruxo")) {
+  textoPratos = `${qtd} casal de bruxo`;
+}
+
+tdPratos.textContent = textoPratos;
+
+// 🔥 tratamento especial somente para MORIM
+if ((item.ingrediente || "").toLowerCase().includes("morim")) {
+
+  // pega número de pratos
+  const match = textoPratos.match(/(um|dois|três|quatro|cinco|seis|sete|oito|nove|dez|\d+)/i);
+
+  let qtd = match ? match[0] : "1";
+
+  // converter palavras para número
+  const mapa = {
+    um:1, dois:2, três:3, tres:3, quatro:4, cinco:5,
+    seis:6, sete:7, oito:8, nove:9, dez:10
+  };
+
+  if (mapa[qtd.toLowerCase()]) {
+    qtd = mapa[qtd.toLowerCase()];
+  }
+
+  textoPratos = `${qtd} morim preto, vermelho e branco`;
+}
+
+tdPratos.textContent = textoPratos;
+
+// 🔥 somente para MORIM
+if ((item.ingrediente || "").toLowerCase().includes("morim")) {
+  textoPratos = textoPratos
+    .replace(/pratos/g, "morim")
+    .replace(/prato/g, "morim");
+}
+
+tdPratos.textContent = textoPratos;
 
       tr.appendChild(tdTotal);
       tr.appendChild(tdIng);
@@ -1318,9 +1723,7 @@ window.gerarListaFinalAcumulada = function () {
       tbody.appendChild(tr);
     });
 
-    // 🔄 sempre voltar Quantidade de Pessoas para 1
     resetarQuantidadePessoasPara1();
-
     saida?.scrollIntoView?.({ behavior: "smooth" });
   } catch (e) {
     console.error(e);
@@ -1524,18 +1927,18 @@ window.voltarTelaPrincipal = function () {
 
 //Isso elimina definitivamente o bug de foco preso
 document.addEventListener("DOMContentLoaded", () => {
-  const senha = document.getElementById("authSenha");
   const user = document.getElementById("authUser");
+  const senha = document.getElementById("authSenha");
 
   if (user) {
     user.focus();
   }
 
-  // força foco correto ao clicar
-  document.addEventListener("click", () => {
-    if (document.getElementById("authCard")?.style.display !== "none") {
-      document.getElementById("authSenha")?.blur();
-      document.getElementById("authSenha")?.focus();
-    }
-  }, { once: true });
+  if (senha) {
+    senha.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        entrar();
+      }
+    });
+  }
 });
