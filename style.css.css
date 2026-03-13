@@ -197,7 +197,7 @@ th, td {
    MODAL
 =================================================== */
 
-.modal-backdrop {
+.modal-backdrop  {
   position: fixed;
   inset: 0;
   background: rgba(15,23,42,.55);
@@ -533,6 +533,7 @@ td.print-pratos { text-align: center; vertical-align: middle; }
   /* mostra apenas a área de impressão */
   #saidaPrint, #saidaPrint * {
     visibility: visible !important;
+
   }
 
   /* garante que a área fique no topo/esquerda */
@@ -852,4 +853,574 @@ td.print-pratos { text-align: center; vertical-align: middle; }
 
   /* Remove margem padrão do H1 */
   #printEboNome { margin: 0; }
+}
+
+
+
+/* =========================================
+   IMPRESSÃO SIMPLES (LISTA CADASTRADA)
+   - sem grades
+   - sem coluna "Pratos"
+   - sem mexer na impressão padrão (#saidaPrint)
+========================================= */
+@media print {
+  /* Quando for impressão da lista cadastrada */
+  body.print-lista-cadastrada * {
+    visibility: hidden !important;
+  }
+
+  body.print-lista-cadastrada #saidaPrintListaCadastrada,
+  body.print-lista-cadastrada #saidaPrintListaCadastrada * {
+    visibility: visible !important;
+  }
+
+  /* esconde explicitamente a impressão padrão */
+  body.print-lista-cadastrada #saidaPrint {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  body.print-lista-cadastrada #saidaPrintListaCadastrada {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  /* tabela simples */
+  body.print-lista-cadastrada .print-table-simple {
+    width: 100% !important;
+    border-collapse: separate !important; /* ajuda a não "colar" bordas */
+    border-spacing: 0 !important;
+    margin-top: 12px !important;
+  }
+
+  /* SEM GRADES (linhas/bordas) */
+  body.print-lista-cadastrada .print-table-simple th,
+  body.print-lista-cadastrada .print-table-simple td {
+    border: none !important;
+    padding: 6px 4px !important;
+    text-align: left !important;
+    vertical-align: top !important;
+  }
+
+  /* cabeçalho simples */
+  body.print-lista-cadastrada .print-table-simple thead th {
+    font-weight: 700 !important;
+    padding-bottom: 10px !important;
+  }
+
+  /* quantidade com destaque */
+  body.print-lista-cadastrada .print-table-simple td.print-total,
+  body.print-lista-cadastrada .print-table-simple th.print-total {
+    width: 28% !important;
+    white-space: nowrap !important;
+    font-weight: 700 !important;
+  }
+
+  /* ingrediente no meio (centralizado) */
+  body.print-lista-cadastrada .print-table-simple th.print-ing,
+  body.print-lista-cadastrada .print-table-simple td.print-ing {
+    text-align: center !important;
+  }
+
+  body.print-lista-cadastrada .print-header {
+    margin-bottom: 8px !important;
+  }
+
+  body.print-lista-cadastrada h1 {
+    font-size: 18pt !important;
+    margin: 0 0 6px 0 !important;
+  }
+}
+
+#saidaPrint .print-table {
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+
+#saidaPrint .print-table th.print-total,
+#saidaPrint .print-table td.print-total {
+  width: 18% !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+}
+
+#saidaPrint .print-table th.print-ing,
+#saidaPrint .print-table td.print-ing {
+  width: 46% !important;
+  text-align: center !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+}
+
+#saidaPrint .print-table th.print-pratos,
+#saidaPrint .print-table td.print-pratos {
+  width: 36% !important;
+  text-align: center !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+}
+
+/*Cabeçalho mais forte*/
+#saidaPrint thead th {
+  background: #e6e6e6;
+  font-weight: bold;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+#saidaPrint .print-ing {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+
+#saidaPrint tbody tr:nth-child(even) {
+  background: #f5f5f5;
+}
+
+.print-table {
+  font-size: 14px;
+}
+
+.print-table th {
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+#saidaPrint table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.abas-sistema{
+  display:flex;
+  gap:10px;
+  margin-bottom:20px;
+}
+
+/* ===== TOPO SISTEMA ===== */
+
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:#1f2937;
+  padding:10px 20px;
+  border-radius:10px;
+  margin-bottom:20px;
+  color:white;
+}
+
+.logo-area{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.logo-sistema{
+  height:36px;
+}
+
+.sistema-nome{
+  font-weight:bold;
+  font-size:16px;
+}
+
+/* menu */
+
+.menu-topo{
+  display:flex;
+  gap:8px;
+}
+
+.menu-btn{
+  background:none;
+  border:none;
+  color:white;
+  padding:8px 14px;
+  cursor:pointer;
+  border-radius:6px;
+  font-weight:500;
+}
+
+.menu-btn:hover{
+  background:#374151;
+}
+
+/* lado direito */
+
+.top-actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+/* ===== DASHBOARD BASE ===== */
+
+body{
+  background:#f4f6f9;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  color:#1f2937;
+}
+
+.app-container{
+  max-width:1100px;
+  margin:auto;
+  padding:20px;
+}
+
+/* ===== CARDS ===== */
+
+.card{
+  background:#ffffff;
+  border-radius:12px;
+  padding:20px;
+  margin-bottom:20px;
+  border:1px solid #e5e7eb;
+  box-shadow:0 4px 14px rgba(0,0,0,0.08);
+  transition:all .2s;
+}
+
+.card:hover{
+  box-shadow:0 6px 18px rgba(0,0,0,0.12);
+}
+
+/* ===== TOPBAR ===== */
+
+.section-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:#1f2937;
+  padding:10px 16px;
+  border-radius:10px;
+  margin-bottom:16px;
+}
+
+.section-head h2{
+  color:white;
+  margin:0;
+}
+
+/* ===== BOTÕES ===== */
+
+button{
+  border:none;
+  padding:8px 14px;
+  border-radius:6px;
+  font-size:14px;
+  font-weight:500;
+  cursor:pointer;
+  transition:all .2s;
+}
+
+button:hover{
+  transform:translateY(-1px);
+}
+
+.btn-secondary{
+  background:#2563eb;
+  color:white;
+}
+
+.btn-tertiary{
+  background:#4b5563;
+  color:white;
+}
+
+.btn-danger{
+  background:#dc2626;
+  color:white;
+}
+
+.btn-print{
+  background:#6508bd;
+  color:white;
+}
+
+.btn-mini{
+  padding:4px 8px;
+  font-size:12px;
+}
+
+/* ===== INPUTS ===== */
+
+input{
+  width:100%;
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #d1d5db;
+  font-size:14px;
+  margin-top:4px;
+}
+
+input:focus{
+  outline:none;
+  border-color:#2563eb;
+  box-shadow:0 0 0 2px rgba(37,99,235,0.2);
+}
+
+/* ===== TABELAS ===== */
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+
+thead{
+  background:#f3f4f6;
+}
+
+th{
+  text-align:left;
+  font-weight:600;
+}
+
+th,td{
+  padding:8px;
+  border-bottom:1px solid #e5e7eb;
+}
+
+tbody tr:hover{
+  background:#f9fafb;
+}
+
+.firebase-pill{
+  background:#10b981;
+  color:white;
+  padding:4px 10px;
+  border-radius:20px;
+  font-size:12px;
+}
+
+/*MODAL POSITIVOS*/
+
+#modalBackdropPositivos {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+}
+
+#modalBackdropPositivos .modal-card,
+#modalBackdropPositivos input,
+#modalBackdropPositivos textarea,
+#modalBackdropPositivos button,
+#modalBackdropPositivos table,
+#modalBackdropPositivos th,
+#modalBackdropPositivos td {
+  pointer-events: auto;
+}
+
+
+@media print {
+
+  /* Mostra apenas a área de impressão */
+  body.print-lista-cadastrada * {
+    visibility: hidden !important;
+  }
+
+  #saidaPrintListaCadastrada,
+  #saidaPrintListaCadastrada * {
+    visibility: visible !important;
+  }
+
+  #saidaPrintListaCadastrada {
+    display: block !important;
+    width: 100% !important;
+    padding: 10px !important;
+    background: #fff !important;
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #1f2937;
+    font-size: 10pt; /* menor fonte ajuda a caber em uma folha */
+    page-break-after: avoid;
+  }
+
+  /* Título centralizado */
+  #saidaPrintListaCadastrada #printListaCadastradaNome {
+    text-align: center;
+    font-size: 16pt;
+    font-weight: 700;
+    margin-bottom: 4px;
+    page-break-after: avoid; /* título e tabela juntos */
+  }
+
+  /* Mantém tabela como tabela real */
+  #saidaPrintListaCadastrada table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 auto;
+    page-break-inside: avoid;
+  }
+
+  /* Cabeçalho */
+  #saidaPrintListaCadastrada thead th {
+    text-align: center;
+    padding: 4px;
+    font-weight: 700;
+    border: 1px solid #d1d5db;
+    text-transform: uppercase;
+  }
+
+  /* Linhas de conteúdo */
+  #saidaPrintListaCadastrada tbody td {
+    text-align: center;
+    padding: 2px 4px;
+    border: 1px solid #d1d5db;
+    page-break-inside: avoid; /* evita quebrar no meio */
+  }
+
+  /* Fundo alternado */
+  #saidaPrintListaCadastrada tbody tr:nth-child(even) td {
+    background-color: #f9fafb;
+  }
+
+  /* Remove sombras e fundos extras */
+  .card, .saved-item, .modal-backdrop, .modal-card {
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  /* Evita quebra no meio da tabela */
+  #saidaPrintListaCadastrada tbody,
+  #saidaPrintListaCadastrada tbody tr {
+    page-break-inside: avoid !important;
+  }
+}
+
+
+
+
+
+/* Card Lista Gerada bonito e consistente */
+#cardListaGerada {
+  max-width: 100%;
+  margin-top: 16px;
+}
+
+#cardListaGerada .saved-list {
+  max-height: 300px; /* altura máxima para não ficar gigante */
+  overflow-y: auto;  /* scroll interno se a lista for grande */
+  padding-right: 8px;
+}
+
+/* Ajusta scroll para aparência melhor */
+#cardListaGerada .saved-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+#cardListaGerada .saved-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+/* ==========================
+   LISTA GERADA DENTRO DO CARD
+========================== */
+#listaGeradaContainer {
+  padding-right: 0;
+}
+
+#listaGeradaContainer .preview-print-area {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+#listaGeradaContainer .preview-print-area .print-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 0;
+  padding: 18px 16px 12px;
+}
+
+#listaGeradaContainer .preview-print-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  text-align: center;
+  color: #020617;
+}
+
+#listaGeradaContainer .preview-print-area .print-logo {
+  width: 130px;
+  height: auto;
+}
+
+#listaGeradaContainer .preview-print-area .print-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  margin-top: 0;
+}
+
+#listaGeradaContainer .preview-print-area .print-table th,
+#listaGeradaContainer .preview-print-area .print-table td {
+  border: 1px solid #000;
+  padding: 6px;
+  vertical-align: middle;
+}
+
+#listaGeradaContainer .preview-print-area .print-table th.print-total,
+#listaGeradaContainer .preview-print-area .print-table td.print-total {
+  width: 18%;
+  text-align: center;
+  white-space: nowrap;
+}
+
+#listaGeradaContainer .preview-print-area .print-table th.print-ing,
+#listaGeradaContainer .preview-print-area .print-table td.print-ing {
+  width: 46%;
+  text-align: center;
+  word-break: break-word;
+}
+
+#listaGeradaContainer .preview-print-area .print-table th.print-pratos,
+#listaGeradaContainer .preview-print-area .print-table td.print-pratos {
+  width: 36%;
+  text-align: center;
+  word-break: break-word;
+}
+
+#listaGeradaContainer .preview-print-area .print-table thead th {
+  background: #e6e6e6;
+  font-weight: bold;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+#listaGeradaContainer .preview-print-area .print-table .print-ing {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+#listaGeradaContainer .preview-print-area .print-table tbody tr:nth-child(even) {
+  background: #f5f5f5;
+}
+
+@media (max-width: 720px) {
+  #listaGeradaContainer .preview-print-title {
+    font-size: 20px;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table {
+    font-size: 12px;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table th,
+  #listaGeradaContainer .preview-print-area .print-table td {
+    padding: 6px 4px;
+  }
 }
