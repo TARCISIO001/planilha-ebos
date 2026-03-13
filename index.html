@@ -44,18 +44,35 @@
 
   <!-- TOPO -->
   <section class="card">
-    <div class="section-head">
+    <div class="topbar">
 
-      <div class="actions-row" style="margin:0;">
-        <button class="btn-secondary" onclick="abrirTelaAdmin()" id="btnAdmin">Área Administrativa</button>
-        <button class="btn-tertiary" onclick="abrirTelaOferendas()" id="btnOferendas">Oferendas</button>
+      <div class="logo-area">
+        <img src="./imagem.png" class="logo-sistema">
+        <span class="sistema-nome">Painel</span>
       </div>
 
-      <div class="saved-title">Painel</div>
+      <div class="menu-topo">
 
-      <div class="actions-row" style="margin:0;">
-        <div class="firebase-pill" id="firebaseStatus">Firebase: não conectado</div>
-        <button class="btn-danger" onclick="sair()" id="btnSair">Sair</button>
+        <button class="menu-btn" onclick="abrirTelaOferendas()">
+          🪔 Oferendas
+        </button>
+       <button class="menu-btn" onclick="abrirTelaPositivos()">    
+  ✨ Positivos
+</button>
+
+        <button class="menu-btn" onclick="abrirTelaBanhos()">   
+          🌿 Banhos
+        </button>
+
+        <button class="menu-btn" onclick="abrirTelaAdmin()" id="btnAdmin">
+          ⚙ Administração
+        </button>
+
+      </div>
+
+      <div class="top-actions">
+        <div class="firebase-pill" id="firebaseStatus"></div>
+        <button class="btn-danger" onclick="sair()">Sair</button>
       </div>
 
     </div>
@@ -64,6 +81,7 @@
   <!-- GERAR LISTA -->
   <section class="card">
     <h2>Gerar lista de ebó</h2>
+    
 
     <label class="label">Nome do ebó</label>
     <input id="eboNome" type="text" placeholder="Ex: Ebó Exu" oninput="autoCarregarListaDebounced()" />
@@ -72,8 +90,7 @@
     <input id="numPratos" type="number" min="1" value="1" />
 
     <div class="actions-row">
-      <button class="btn-secondary" onclick="adicionarListaAcumulada()">Adicionar lista</button>
-      <button class="btn-tertiary" onclick="gerarListaFinalAcumulada()">Gerar Lista</button>
+      <button class="btn-secondary" onclick="adicionarListaAcumulada()">Adicionar lista</button> 
       <button class="btn-print" onclick="imprimirListaGerada()">Imprimir</button>
     </div>
 
@@ -92,6 +109,18 @@
     <div class="hint">Aqui aparecem as listas que você adicionou.</div>
     <div id="listasContainer"></div>
   </section>
+
+
+
+  <section class="card" id="cardListaGerada">
+  <div class="section-head">
+    <h2>Lista gerada</h2>
+  </div>
+
+  <div id="listaGeradaContainer" class="saved-list">
+    <!-- Os itens da lista gerada serão inseridos aqui pelo JS -->
+  </div>
+</section>
 
   <!-- GERENCIAR LISTAS -->
   <section class="card">
@@ -118,7 +147,8 @@
 
   <!-- ✅ fica fora do THEAD, então aparece só 1 vez -->
   <div class="print-header print-only-first">
-    <img src="imagem.png" alt="Ilê D’Ogum" class="print-logo">
+    <img src="./imagem.png" alt="Ilê D’Ogum" class="print-logo">
+
     <h1 id="printEboNome"></h1>
   </div>
 
@@ -131,6 +161,28 @@
       </tr>
     </thead>
     <tbody id="printIngredientes"></tbody>
+  </table>
+
+</section>
+
+<!-- =========================
+     IMPRESSÃO (LISTA CADASTRADA – SIMPLES)
+========================= -->
+<section id="saidaPrintListaCadastrada" class="print-area" style="display:none;">
+
+  <div class="print-header">
+    <h1 id="printListaCadastradaNome"></h1>
+  </div>
+
+ <table class="print-table">
+<thead>
+<tr>
+<th class="print-total">Quantidade</th>
+<th class="print-ing">Ingrediente</th>
+</tr>
+</thead>
+
+    <tbody id="printListaCadastradaIngredientes"></tbody>
   </table>
 
 </section>
@@ -195,20 +247,100 @@
      OFERENDAS
 ========================= -->
 <section id="oferendasScreen" style="display:none; min-height:100vh;">
-  <div class="app-container" style="min-height:100vh; display:flex; flex-direction:column;">
+  <div class="app-container">
+
+    <!-- Card projeto Oferendas -->
+    <section class="card">
+      <div class="section-head">
+        <h2>Projeto Oferendas</h2>
+        <button class="btn-tertiary" onclick="voltarTelaPrincipal()">Voltar</button>
+      </div>
+      <div class="actions-row">
+        <button class="btn-secondary" onclick="abrirModalOferendas()">Cadastrar lista</button>
+        <input id="pesquisaOferendas" type="text" placeholder="Procurar lista..." style="max-width:320px;" />
+        <button class="btn-tertiary">Procurar</button>
+      </div>
+    </section>
+
+    <!-- Card Oferendas cadastradas -->
+    <section class="card">
+      <div class="section-head">
+        <h2>Oferendas cadastradas</h2>
+      </div>
+      <div id="oferendasSalvosBox" class="saved-list"></div>
+    </section>
+
+  </div>
+</section>
+<!-- =========================
+     BANHOS
+========================= -->
+<section id="banhosScreen" style="display:none; min-height:100vh;">
+  <div class="app-container">
+
+    <!-- Card projeto Banhos -->
+    <section class="card">
+      <div class="section-head">
+        <h2>Projeto Banhos</h2>
+        <button class="btn-tertiary" onclick="voltarTelaPrincipal()">Voltar</button>
+      </div>
+      <div class="actions-row">
+        <button class="btn-secondary" onclick="abrirModalBanhos()">Cadastrar lista</button>
+        <input id="pesquisaBanhos" type="text" placeholder="Procurar lista..." style="max-width:320px;" />
+        <button class="btn-tertiary">Procurar</button>
+      </div>
+    </section>
+
+    <!-- Card Banhos cadastrados -->
+    <section class="card">
+      <div class="section-head">
+        <h2>Banhos cadastrados</h2>
+      </div>
+      <div id="banhosSalvosBox" class="saved-list"></div>
+    </section>
+
+  </div>
+</section>
+
+<!--ABRIR TELA POSITIVO-->
+<!-- =========================
+     POSITIVOS
+========================= -->
+<section id="positivosScreen" style="display:none; min-height:100vh;">
+  <div class="app-container">
+
     <div class="section-head">
-      <h2>Projeto Oferendas</h2>
+      <h2>Projeto Positivos</h2>
       <button class="btn-tertiary" onclick="voltarTelaPrincipal()">Voltar</button>
     </div>
 
-    <section class="card" style="flex:1; display:flex; align-items:center; justify-content:center; text-align:center;">
-      <div>
-        <h1>Página em construção</h1>
-        <p class="hint">Estamos preparando algo especial.</p>
+    <section class="card">
+      <div class="actions-row">
+        <button class="btn-secondary" onclick="abrirModalPositivos()">
+          Cadastrar lista
+        </button>
+
+        <input id="pesquisaPositivos" type="text" placeholder="Procurar lista..." style="max-width:320px;" />
+
+        <button class="btn-tertiary">
+          Procurar
+        </button>
       </div>
     </section>
+
+    <section class="card">
+      <div class="section-head" style="margin-top:0;">
+        <h2>Positivos cadastrados</h2>
+      </div>
+
+      <div id="positivosSalvosBox" class="saved-list"></div>
+    </section>
+
   </div>
 </section>
+
+  </div>
+ 
 
 <!-- =========================
      MODAL
@@ -320,7 +452,283 @@
   </div>
 </div>
 
+<!-- =========================
+     MODAL POSITIVOS
+========================= -->
+<div id="modalBackdropPositivos" class="modal-backdrop" style="display:none;">
+  <div class="modal-card">
 
+    <div class="section-head">
+      <h3 style="margin:0;" id="modalTitulo">Cadastrar Positivos</h3>
+      <button class="btn-danger btn-mini" onclick="fecharModalPositivos()">X</button>
+    </div>
+
+    <!-- ====== BLOCO 1 ====== -->
+    <div style="margin-top:10px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:10px;">Lista 1</div>
+
+      <label class="label">Nome do ebó</label>
+<input
+  id="modalNomeEbo_1Positivos"
+  type="text"
+  placeholder="Ex: Ebó Exu"
+/>
+
+<label class="label" style="margin-top:8px;">Subtítulo</label>
+<input
+  id="modalSubtitulo_1Positivos"
+  type="text"
+  placeholder="Ex: Para abertura de caminhos"
+/>
+
+
+      <div class="section-head" style="margin:12px 0 8px;">
+        <div class="saved-title">Ingredientes</div>
+        <button class="btn-tertiary btn-mini" onclick="modalAdicionarLinhaPositivos('1')">
+          + Adicionar linha
+        </button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Ingrediente</th>
+            <th style="width:160px;">Quantidade</th>
+            <th style="width:120px;">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="modalBodyLinhas_1Positivos"></tbody>
+      </table>
+    </div>
+
+    <!-- ====== BLOCO 2 ====== -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:8px;">Modo de fazer</div>
+      <textarea
+        id="modalModoFazer_1Positivos"
+        placeholder="Escreva aqui o modo de fazer..."
+        style="width:100%; min-height:120px;"
+      ></textarea>
+    </div>
+
+    <!-- ====== BLOCO 3 ====== -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:10px;">Lista 2</div>
+        <label class="label" style="margin-top:8px;">Subtítulo</label>
+<input
+  id="modalSubtitulo_2Positivos"
+  type="text"
+  placeholder="Ex: Complemento / segunda parte"
+/>
+
+      <div class="section-head" style="margin:12px 0 8px;">
+        <div class="saved-title">Ingredientes</div>
+        <button class="btn-tertiary btn-mini" onclick="modalAdicionarLinhaPositivos('2')">
+          + Adicionar linha
+        </button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Ingrediente</th>
+            <th style="width:160px;">Quantidade</th>
+            <th style="width:120px;">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="modalBodyLinhas_2Positivos"></tbody>
+      </table>
+    </div>
+
+    <!-- ====== BLOCO 4 ====== -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:8px;">Modo de preparo</div>
+      <textarea
+        id="modalModoFazer_2Positivos"
+        placeholder="Escreva aqui o modo de preparo..."
+        style="width:100%; min-height:120px;"
+      ></textarea>
+    </div>
+
+    <div class="actions-row" style="margin-top:12px;">
+      <button class="btn-secondary" onclick="enviarParaBancoPositivos()">
+        Enviar para banco de dados
+      </button>
+      <button onclick="fecharModalPositivos()">Cancelar</button>
+    </div>
+
+    <div class="hint" id="modalMsgPositivos" style="margin-top:8px;"></div>
+
+  </div>
+</div>
+
+<!-- =========================
+     MODAL OFERENDAS
+========================= -->
+<div id="modalBackdropOferendas" class="modal-backdrop" style="display:none;">
+  <div class="modal-card">
+
+    <div class="section-head">
+      <h3 style="margin:0;">Cadastrar Oferenda</h3>
+      <button class="btn-danger btn-mini" onclick="fecharModalOferendas()">X</button>
+    </div>
+
+    <!-- Bloco 1 -->
+    <div style="margin-top:10px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:10px;">Lista 1</div>
+
+      <label class="label">Nome da oferenda</label>
+      <input id="modalNomeOferenda_1" type="text" placeholder="Ex: Oferenda de Exu" />
+
+      <label class="label" style="margin-top:8px;">Subtítulo</label>
+      <input id="modalSubtituloOferenda_1" type="text" placeholder="Ex: Para abrir caminhos" />
+
+      <div class="section-head" style="margin:12px 0 8px;">
+        <div class="saved-title">Ingredientes</div>
+        <button class="btn-tertiary btn-mini" onclick="modalAdicionarLinhaOferendas('1')">+ Adicionar linha</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Ingrediente</th>
+            <th style="width:160px;">Quantidade</th>
+            <th style="width:120px;">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="modalBodyLinhasOferendas_1"></tbody>
+      </table>
+    </div>
+
+    <!-- Bloco 2 -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:8px;">Modo de fazer</div>
+      <textarea id="modalModoFazerOferenda_1" placeholder="Escreva aqui o modo de fazer..." style="width:100%; min-height:120px;"></textarea>
+    </div>
+
+    <!-- Bloco 3 -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:10px;">Lista 2</div>
+
+      <label class="label" style="margin-top:8px;">Subtítulo</label>
+      <input id="modalSubtituloOferenda_2" type="text" placeholder="Ex: Complemento / segunda parte" />
+
+      <div class="section-head" style="margin:12px 0 8px;">
+        <div class="saved-title">Ingredientes</div>
+        <button class="btn-tertiary btn-mini" onclick="modalAdicionarLinhaOferendas('2')">+ Adicionar linha</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Ingrediente</th>
+            <th style="width:160px;">Quantidade</th>
+            <th style="width:120px;">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="modalBodyLinhasOferendas_2"></tbody>
+      </table>
+    </div>
+
+    <!-- Bloco 4 -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:8px;">Modo de preparo</div>
+      <textarea id="modalModoFazerOferenda_2" placeholder="Escreva aqui o modo de preparo..." style="width:100%; min-height:120px;"></textarea>
+    </div>
+
+    <div class="actions-row" style="margin-top:12px;">
+      <button class="btn-secondary" onclick="enviarParaBancoOferendas()">Enviar para banco de dados</button>
+      <button onclick="fecharModalOferendas()">Cancelar</button>
+    </div>
+
+    <div class="hint" id="modalMsgOferendas" style="margin-top:8px;"></div>
+
+  </div>
+</div>
+
+<!-- =========================
+     MODAL BANHOS
+========================= -->
+<div id="modalBackdropBanhos" class="modal-backdrop" style="display:none;">
+  <div class="modal-card">
+
+    <div class="section-head">
+      <h3 style="margin:0;">Cadastrar Banho</h3>
+      <button class="btn-danger btn-mini" onclick="fecharModalBanhos()">X</button>
+    </div>
+
+    <!-- Bloco 1 -->
+    <div style="margin-top:10px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:10px;">Lista 1</div>
+
+      <label class="label">Nome do banho</label>
+      <input id="modalNomeBanho_1" type="text" placeholder="Ex: Banho de limpeza" />
+
+      <label class="label" style="margin-top:8px;">Subtítulo</label>
+      <input id="modalSubtituloBanho_1" type="text" placeholder="Ex: Para abrir caminhos" />
+
+      <div class="section-head" style="margin:12px 0 8px;">
+        <div class="saved-title">Ingredientes</div>
+        <button class="btn-tertiary btn-mini" onclick="modalAdicionarLinhaBanhos('1')">+ Adicionar linha</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Ingrediente</th>
+            <th style="width:160px;">Quantidade</th>
+            <th style="width:120px;">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="modalBodyLinhasBanhos_1"></tbody>
+      </table>
+    </div>
+
+    <!-- Bloco 2 -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:8px;">Modo de fazer</div>
+      <textarea id="modalModoFazerBanho_1" placeholder="Escreva aqui o modo de fazer..." style="width:100%; min-height:120px;"></textarea>
+    </div>
+
+    <!-- Bloco 3 -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:10px;">Lista 2</div>
+
+      <label class="label" style="margin-top:8px;">Subtítulo</label>
+      <input id="modalSubtituloBanho_2" type="text" placeholder="Ex: Complemento / segunda parte" />
+
+      <div class="section-head" style="margin:12px 0 8px;">
+        <div class="saved-title">Ingredientes</div>
+        <button class="btn-tertiary btn-mini" onclick="modalAdicionarLinhaBanhos('2')">+ Adicionar linha</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Ingrediente</th>
+            <th style="width:160px;">Quantidade</th>
+            <th style="width:120px;">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="modalBodyLinhasBanhos_2"></tbody>
+      </table>
+    </div>
+
+    <!-- Bloco 4 -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:8px;">Modo de preparo</div>
+      <textarea id="modalModoFazerBanho_2" placeholder="Escreva aqui o modo de preparo..." style="width:100%; min-height:120px;"></textarea>
+    </div>
+
+    <div class="actions-row" style="margin-top:12px;">
+      <button class="btn-secondary" onclick="enviarParaBancoBanhos()">Enviar para banco de dados</button>
+      <button onclick="fecharModalBanhos()">Cancelar</button>
+    </div>
+
+    <div class="hint" id="modalMsgBanhos" style="margin-top:8px;"></div>
+
+  </div>
+</div>
 <!-- FIREBASE -->
 <script type="module">
   const firebaseConfig = {
