@@ -8,6 +8,7 @@ const COLLECTION = "listas";
 const USERS_COLLECTION = "users";
 const MASTERS = ["taina", "tata"];
 
+
 let editingDocId = null;
 
 const $ = (id) => document.getElementById(id);
@@ -522,11 +523,6 @@ function consolidarIngredientes(itens) {
 
   return Object.values(mapa);
 }
-
-
-
-window.gerarLista = async function gerarLista() {
-
   // =============================
 // DETECTAR "QUALIDADES DE PADÊ"
 // =============================
@@ -543,29 +539,15 @@ function detectarQualidadesPade(nome) {
 
   return 1;
 }
+
+window.gerarLista = async function gerarLista() {
   const { eboNome, pratos } = getGeradorEstado();
-  if (!eboNome) return alert("Informe o nome do ebó.");
-  if (!pratos || pratos < 1) return alert("Informe a quantidade de pratos (mínimo 1).");
+
+  if (!eboNome) { alert("Informe o nome do ebó."); return; }
+  if (!pratos || pratos < 1) { alert("Informe a quantidade de pratos."); return; }
 
   let docLista = __listaCache;
-
-  try {
-    if (
-      !docLista ||
-      normalizarTexto(docLista.nome || "") !== normalizarTexto(eboNome) &&
-      normalizarTexto(docLista.nome2 || "") !== normalizarTexto(eboNome)
-    ) {
-      docLista = await buscarListaPorNomeOuNome2(eboNome);
-      __listaCache = docLista;
-    }
-  } catch (e) {
-    console.warn("Falha ao buscar lista no Firebase.", e);
-  }
-
-  if (!docLista) {
-    return alert("Não encontrei esse ebó nas listas cadastradas. Cadastre a lista primeiro.");
-  }
-
+ 
   // ✅ CORREÇÃO PRINCIPAL: declarar itens1 e itens2
   const itens1 = Array.isArray(docLista.itens) ? docLista.itens : [];
   const itens2 = Array.isArray(docLista.itens2) ? docLista.itens2 : [];
@@ -601,49 +583,53 @@ const itensAjustados = itensBrutos.map(it => {
 });
   const itensConsolidados = consolidarIngredientes(itensBrutos);
 
-  if (!itensConsolidados.length) {
-    return alert("Essa lista não possui ingredientes cadastrados.");
-  }
+if (!itensConsolidados.length) {
+  alert("Essa lista não possui ingredientes cadastrados.");
+  throw new Error("Lista sem ingredientes");
+}
 
   // Geração da impressão
-  if ($("saidaPrint")) $("saidaPrint").style.display = "block";
+  //if ($("saidaPrint")) $("saidaPrint").style.display = "block";//
   if ($("printEboNome")) $("printEboNome").textContent = eboNome;
   if ($("printTotalPratos")) {
     $("printTotalPratos").textContent = `${pratos} prato${pratos > 1 ? "s" : ""}`;
   }
-
-  const tbody = $("printIngredientes");
-  if (!tbody) return;
-
-  tbody.innerHTML = "";
-
-  itensConsolidados.forEach((item) => {
-    let totalTxt = "";
-
-    if (item.valores.length) {
-      const unidadeBase = item.unidades[0];
-      const unidadesIguais = item.unidades.every(u => u === unidadeBase);
-
-      if (unidadesIguais) {
-        const soma = item.valores.reduce((a, b) => a + b, 0);
-        const total = soma * pratos;
-        totalTxt = `${formatNumero(total)}${unidadeBase ? " " + unidadeBase : ""}`;
-      }
+const tbody = $("printIngredientes");
+if (!tbody) return;
+tbody.innerHTML = "";
+itensConsolidados.forEach((item) => {
+  let totalTxt = "";
+  if (item.valores.length) {
+    const unidadeBase = item.unidades[0];
+    const unidadesIguais = item.unidades.every(u => u === unidadeBase);
+    if (unidadesIguais) {
+      const soma = item.valores.reduce((a, b) => a + b, 0);
+      const total = soma * pratos;
+      totalTxt = `${formatNumero(total)}${unidadeBase ? " " + unidadeBase : ""}`;
     }
+  }
 
-    if (!totalTxt) {
-      totalTxt = item.texto.length
-        ? item.texto.join(" + ") + ` x ${pratos}`
-        : `x ${pratos}`;
-    }
-    const tr = document.createElement("tr");
+  if (!totalTxt) {
+    totalTxt = item.texto.length
+      ? item.texto.join(" + ") + ` x ${pratos}`
+      : `x ${pratos}`;
+  }
 
-// Ingrediente (esquerda)
+const tr = document.createElement("tr");
+
+// TOTAL primeiro
+const tdQtd = document.createElement("td");
+tdQtd.className = "print-total";
+
+// INGREDIENTE no meio
 const tdIng = document.createElement("td");
+tdIng.className = "print-ing";
 tdIng.textContent = item.ingrediente;
 
-// Quantidade (direita)
-const tdQtd = document.createElement("td");
+// 3ª coluna (pratos)
+const tdPratos = document.createElement("td");
+tdPratos.className = "print-pratos";
+tdPratos.textContent = "";
 
 const pratosBase =
   window.__listasAcumuladas &&
@@ -675,8 +661,9 @@ if (!exibiuDetalhe) {
   tdQtd.textContent = totalTxt;
 }
 
-tr.appendChild(tdIng);
 tr.appendChild(tdQtd);
+tr.appendChild(tdIng);
+tr.appendChild(tdPratos);
 tbody.appendChild(tr);
 
 
@@ -1036,6 +1023,7 @@ window.enviarListaParaBancoDeDados = window.__enviarBancoComAlerta;
 window.__listasAcumuladas = [];
 
 // Render das listas adicionadas na UI
+// 🔹 Renderiza somente o resumo das listas adicionadas, sem detalhes da lista final
 function renderizarListasAcumuladas() {
   const box = document.getElementById("listasContainer");
   if (!box) return;
@@ -1052,6 +1040,7 @@ function renderizarListasAcumuladas() {
     return;
   }
 
+  // Mostra apenas resumo: nome do ebó, pratos e quantidade de itens
   box.innerHTML = window.__listasAcumuladas
     .map((l, idx) => {
       const nItens = Array.isArray(l.itens) ? l.itens.length : 0;
@@ -1070,26 +1059,36 @@ function renderizarListasAcumuladas() {
     .join("");
 }
 
-window.removerListaAcumulada = function removerListaAcumulada(idx) {
-  const i = Number(idx);
-  if (!Number.isFinite(i)) return;
-  window.__listasAcumuladas.splice(i, 1);
-  renderizarListasAcumuladas();
-};
+function limparPreviewListaGerada() {
+  const container = document.getElementById("listaGeradaContainer");
+  if (!container) return;
 
+  container.innerHTML = `
+    <div class="saved-item">
+      <div>
+        <div class="saved-title">Nenhuma lista gerada.</div>
+        <div class="saved-meta">Adicione uma lista para montar a prévia automática.</div>
+      </div>
+    </div>
+  `;
+}
+
+function removerListaAcumulada(idx) {
+  __listasAcumuladas.splice(idx, 1);
+  renderizarListasAcumuladas();
+
+  if (window.__listasAcumuladas.length) {
+    window.gerarListaFinalAcumulada();
+  } else {
+    limparPreviewListaGerada();
+    limparSaidaPrint();
+  }
+}
 window.limparListasAcumuladas = function limparListasAcumuladas() {
-  // limpa listas acumuladas
   window.__listasAcumuladas = [];
   renderizarListasAcumuladas();
-
-  // 🔥 LIMPA A LISTA GERADA (PRINT)
-  const saida = document.getElementById("saidaPrint");
-  const tbody = document.getElementById("printIngredientes");
-
-  if (tbody) tbody.innerHTML = "";
-  if (saida) saida.style.display = "none";
-
-  // opcional: volta scroll pro topo
+  limparPreviewListaGerada();
+  limparSaidaPrint();
   window.scrollTo({ top: 0, behavior: "instant" });
 };
 
@@ -1172,6 +1171,8 @@ window.abrirTelaAdmin = function () {
 // INIT
 // =======================================================
 document.addEventListener("DOMContentLoaded", () => {
+  limparPreviewListaGerada();
+
   const btnEntrar = document.getElementById("btnEntrar");
 if (btnEntrar) btnEntrar.addEventListener("click", () => window.entrar());
 
@@ -1216,12 +1217,64 @@ if (btnAdmin) {
 // Imprimir lista Gerada
 window.imprimirListaGerada = function imprimirListaGerada() {
   const area = document.getElementById("saidaPrint");
-  if (!area || area.style.display === "none") {
-    alert("Gere a lista primeiro para imprimir.");
+  let tbody = document.getElementById("printIngredientes");
+
+  // Se ainda não montou a área de impressão, tenta gerar automaticamente
+  if ((!tbody || !tbody.children.length) && window.__listasAcumuladas?.length) {
+    try {
+      window.gerarListaFinalAcumulada();
+      tbody = document.getElementById("printIngredientes");
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  if (!window.__listasAcumuladas || !window.__listasAcumuladas.length) {
+    alert("Adicione a lista primeiro para imprimir.");
     return;
   }
-  // garante que não está no modo de impressão simples
+
+  if (!area || !tbody || !tbody.children.length) {
+    alert("Não consegui montar a impressão automaticamente. Clique em 'Adicionar lista' novamente.");
+    return;
+  }
+
   try { limparSaidaPrintListaCadastrada(); } catch {}
+
+  const displayAnterior = area.style.display;
+  area.style.display = "block";
+
+  let mq = null;
+  let onChange = null;
+  let cleaned = false;
+
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+
+    area.style.display = displayAnterior || "none";
+    window.removeEventListener("afterprint", cleanup);
+
+    try {
+      if (mq) {
+        if (mq.removeEventListener) mq.removeEventListener("change", onChange);
+        else if (mq.removeListener) mq.removeListener(onChange);
+      }
+    } catch {}
+  };
+
+  window.addEventListener("afterprint", cleanup);
+
+  try {
+    mq = window.matchMedia("print");
+    onChange = (e) => {
+      if (!e.matches) cleanup();
+    };
+
+    if (mq.addEventListener) mq.addEventListener("change", onChange);
+    else if (mq.addListener) mq.addListener(onChange);
+  } catch {}
+
   window.print();
 };
 
@@ -1309,18 +1362,21 @@ window.imprimirListaCadastrada = async function imprimirListaCadastrada(docId) {
 
     if (!itens.length) {
       const tr = document.createElement("tr");
+const tdTotal = document.createElement("td");
+tdTotal.className = "print-total";
+tdTotal.textContent = (it?.quantidade || "").toString().trim() || "—";
 
-      const tdQtd = document.createElement("td");
-      tdQtd.className = "print-total";
-      tdQtd.textContent = "—";
+const tdIng = document.createElement("td");
+tdIng.className = "print-ing";
+tdIng.textContent = (it?.ingrediente || "").trim();
 
-      const tdIng = document.createElement("td");
-      tdIng.className = "print-ing";
-      tdIng.textContent = "Sem ingredientes cadastrados.";
+//const tdPratos = document.createElement("td");//
+//tdPratos.className = "print-pratos";//
+//tdPratos.textContent = "—";//
 
-      tr.appendChild(tdQtd);
-      tr.appendChild(tdIng);
-      tbody.appendChild(tr);
+tr.appendChild(tdTotal);
+tr.appendChild(tdIng);
+
     } else {
       itens.forEach((it) => {
         const tr = document.createElement("tr");
@@ -1466,11 +1522,33 @@ function formatarDetalhesQualidadesPade(agregado) {
   return partes.length ? partes.join(", ") : "—";
 }
 
+function montarTextoPratosLista(item) {
+  let textoPratos = item?.pratosTxt || "—";
+  const ingrediente = (item?.ingrediente || "").toLowerCase();
+
+  const qtd = parseInt(item?.totalTxt, 10) || 1;
+
+  if (ingrediente.includes("morim")) {
+    textoPratos = `${qtd} morim preto, vermelho e branco`;
+  } else if (ingrediente.includes("casal de bruxo")) {
+    textoPratos = `${qtd} casal de bruxo`;
+  }
+
+  if (ingrediente.includes("morim")) {
+    textoPratos = textoPratos
+      .replace(/pratos/g, "morim")
+      .replace(/prato/g, "morim");
+  }
+
+  return textoPratos || "—";
+}
+
 
 window.gerarListaFinalAcumulada = function () {
   try {
     if (!window.__listasAcumuladas || !window.__listasAcumuladas.length) {
-      alert("Nenhuma lista foi adicionada. Clique em 'Adicionar lista' primeiro.");
+      limparPreviewListaGerada();
+      limparSaidaPrint();
       return;
     }
 
@@ -1484,6 +1562,7 @@ window.gerarListaFinalAcumulada = function () {
         });
       });
     });
+    
 
     const consolidados = {};
     const consolidadosPade = {};
@@ -1638,12 +1717,53 @@ window.gerarListaFinalAcumulada = function () {
 
     const linhas = [...linhasNormais, ...linhasPade].sort((a, b) => a.ordem - b.ordem);
 
-    const saida = document.getElementById("saidaPrint");
-    if (saida) saida.style.display = "block";
+    // 🔹 MOSTRAR LISTA NO CARD "Lista gerada" no mesmo visual da tabela final
+    const container = document.getElementById("listaGeradaContainer");
+
+    const linhasHtml = linhas.length
+      ? linhas.map((item) => `
+          <tr>
+            <td class="print-total">${item.totalTxt}</td>
+            <td class="print-ing">${item.ingrediente}</td>
+            <td class="print-pratos">${montarTextoPratosLista(item)}</td>
+          </tr>
+        `).join("")
+      : `
+          <tr>
+            <td class="print-total">—</td>
+            <td class="print-ing">Nenhum item gerado.</td>
+            <td class="print-pratos">—</td>
+          </tr>
+        `;
+
+    if (container) {
+      container.innerHTML = `
+        <section class="preview-print-area">
+          <div class="print-header">
+            <img src="./imagem.png" alt="Ilê D'Ogum" class="print-logo">
+            <h1 class="preview-print-title">Ilê D'Ogum</h1>
+          </div>
+
+          <table class="print-table">
+            <thead>
+              <tr>
+                <th class="print-total">Total</th>
+                <th class="print-ing">Ingrediente</th>
+                <th class="print-pratos">Pratos</th>
+              </tr>
+            </thead>
+            <tbody>${linhasHtml}</tbody>
+          </table>
+        </section>
+      `;
+    }
+
+    // Mantém a tabela escondida, mas pronta para impressão
 
     const printNome = document.getElementById("printEboNome");
     if (printNome) printNome.textContent = "Ilê D'Ogum";
 
+    const saida = document.getElementById("saidaPrint");
     const tbody = document.getElementById("printIngredientes");
     if (!tbody) {
       alert("Erro: não achei o tbody #printIngredientes no HTML.");
@@ -1651,6 +1771,7 @@ window.gerarListaFinalAcumulada = function () {
     }
 
     tbody.innerHTML = "";
+    if (saida) saida.style.display = "none";
 
     linhas.forEach((item) => {
       const tr = document.createElement("tr");
@@ -1666,56 +1787,7 @@ window.gerarListaFinalAcumulada = function () {
 
 const tdPratos = document.createElement("td");
 tdPratos.className = "print-pratos";
-
-let textoPratos = item.pratosTxt;
-const ingrediente = (item.ingrediente || "").toLowerCase();
-
-// usa o TOTAL da linha
-const qtd = parseInt(item.totalTxt) || 1;
-
-// MORIM
-if (ingrediente.includes("morim")) {
-  textoPratos = `${qtd} morim preto, vermelho e branco`;
-}
-
-// CASAL DE BRUXO
-else if (ingrediente.includes("casal de bruxo")) {
-  textoPratos = `${qtd} casal de bruxo`;
-}
-
-tdPratos.textContent = textoPratos;
-
-// 🔥 tratamento especial somente para MORIM
-if ((item.ingrediente || "").toLowerCase().includes("morim")) {
-
-  // pega número de pratos
-  const match = textoPratos.match(/(um|dois|três|quatro|cinco|seis|sete|oito|nove|dez|\d+)/i);
-
-  let qtd = match ? match[0] : "1";
-
-  // converter palavras para número
-  const mapa = {
-    um:1, dois:2, três:3, tres:3, quatro:4, cinco:5,
-    seis:6, sete:7, oito:8, nove:9, dez:10
-  };
-
-  if (mapa[qtd.toLowerCase()]) {
-    qtd = mapa[qtd.toLowerCase()];
-  }
-
-  textoPratos = `${qtd} morim preto, vermelho e branco`;
-}
-
-tdPratos.textContent = textoPratos;
-
-// 🔥 somente para MORIM
-if ((item.ingrediente || "").toLowerCase().includes("morim")) {
-  textoPratos = textoPratos
-    .replace(/pratos/g, "morim")
-    .replace(/prato/g, "morim");
-}
-
-tdPratos.textContent = textoPratos;
+tdPratos.textContent = montarTextoPratosLista(item);
 
       tr.appendChild(tdTotal);
       tr.appendChild(tdIng);
@@ -1724,7 +1796,7 @@ tdPratos.textContent = textoPratos;
     });
 
     resetarQuantidadePessoasPara1();
-    saida?.scrollIntoView?.({ behavior: "smooth" });
+    container?.scrollIntoView?.({ behavior: "smooth" });
   } catch (e) {
     console.error(e);
     alert("Erro ao gerar a lista. Abra o console (F12) para ver o detalhe.\\n\\n" + (e?.message || e));
@@ -1751,7 +1823,6 @@ window.adicionarListaAcumulada = async function () {
   }
 
   let lista = null;
-
   try {
     lista = await buscarListaPorNomeOuNome2(eboNome);
   } catch (e) {
@@ -1766,37 +1837,30 @@ window.adicionarListaAcumulada = async function () {
   const itens1 = Array.isArray(lista.itens) ? lista.itens : [];
   const itens2 = Array.isArray(lista.itens2) ? lista.itens2 : [];
 
-  // Se não tiver Lista 2, não faz nada e não dá erro (itens2 = []).
-  // Junta Lista 1 + Lista 2 e consolida duplicados dentro da própria lista.
   const itensConsolidados = consolidarItensDaLista([...itens1, ...itens2]);
 
-  // Evita adicionar a MESMA lista repetidas vezes (mesmo nome + mesmos pratos)
   const chaveNova = `${normalizarTexto(eboNome)}|${pratos}`;
   const jaExiste = window.__listasAcumuladas.some(l => `${normalizarTexto(l.nome)}|${l.pratos}` === chaveNova);
-  if (jaExiste) {
-    renderizarListasAcumuladas();
-    return; // não duplica e não dá erro
+  if (!jaExiste) {
+    window.__listasAcumuladas.push({
+      nome: eboNome,
+      pratos,
+      itens: itensConsolidados
+    });
   }
-    
-  window.__listasAcumuladas.push({
-    nome: eboNome,
-    pratos,
-    itens: itensConsolidados
-  });
-      resetarQuantidadePessoasPara1();
 
-   renderizarListasAcumuladas();
+  renderizarListasAcumuladas();
   resetarQuantidadePessoasPara1();
-  alert(`Lista "${eboNome}" adicionada (${pratos} pratos).`);
-  // 🔄 limpa o nome do ebó após adicionar
-const inputEbo = document.getElementById("eboNome");
-if (inputEbo) {
-  inputEbo.value = "";
-  inputEbo.focus(); // 🔥 cursor piscando automaticamente
-}
 
+  // 🔹 NOVO: gera a lista final automaticamente
+  window.gerarListaFinalAcumulada();
 
-
+  // 🔄 limpa o input do ebó
+  const inputEbo = document.getElementById("eboNome");
+  if (inputEbo) {
+    inputEbo.value = "";
+    inputEbo.focus();
+  }
 };
 
 
@@ -1903,16 +1967,20 @@ function abrirTelaAdmin() {
 window.abrirTelaOferendas = function () {
   const app = document.getElementById("postLogin");
   const admin = document.getElementById("adminScreen");
+  const banhos = document.getElementById("banhosScreen");
   const oferendas = document.getElementById("oferendasScreen");
 
   if (app) app.style.display = "none";
   if (admin) admin.style.display = "none";
+  if (banhos) banhos.style.display = "none";
+
   if (oferendas) oferendas.style.display = "block";
 
-  // 🔥 ISSO É O QUE FALTAVA
+  // 🔹 Renderizar todas as listas cadastradas ao abrir a tela
+  renderizarOferendas();
+
   window.scrollTo({ top: 0, behavior: "instant" });
 };
-
 window.voltarTelaPrincipal = function () {
   const app = document.getElementById("postLogin");
   const admin = document.getElementById("adminScreen");
@@ -1942,3 +2010,893 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+
+// ============================
+// FUNÇÃO POSITIVOS
+// ============================
+
+window.abrirTelaPositivos = function () {
+  esconderTodasAsTelas(); // 🔹 esconde tudo
+
+  const positivos = document.getElementById("positivosScreen");
+  if (positivos) positivos.style.display = "block";
+
+  renderizarPositivos();
+  window.scrollTo({ top: 0, behavior: "instant" });
+};
+
+window.abrirTelaBanhos = function () {
+  esconderTodasAsTelas(); // 🔹 esconde tudo
+
+  const banhos = document.getElementById("banhosScreen");
+  if (banhos) banhos.style.display = "block";
+
+  renderizarBanhos();
+  window.scrollTo({ top: 0, behavior: "instant" });
+};
+
+window.abrirTelaOferendas = function () {
+  esconderTodasAsTelas(); // 🔹 esconde tudo
+
+  const oferendas = document.getElementById("oferendasScreen");
+  if (oferendas) oferendas.style.display = "block";
+
+  renderizarOferendas();
+  window.scrollTo({ top: 0, behavior: "instant" });
+};
+
+window.voltarTelaPrincipal = function () {
+  esconderTodasAsTelas(); // 🔹 esconde tudo
+
+  const app = document.getElementById("postLogin");
+  if (app) app.style.display = "block";
+
+  window.scrollTo({ top: 0, behavior: "instant" });
+};
+window.abrirModalPositivos = function () {
+
+  const modal = document.getElementById("modalBackdropPositivos");
+
+  if (modal) modal.style.display = "flex";
+
+};
+
+window.fecharModalPositivos = function () {
+
+  const modal = document.getElementById("modalBackdropPositivos");
+
+  if (modal) modal.style.display = "none";
+
+};
+
+
+// =======================================================
+// MODAL POSITIVOS - FUNÇÕES
+// =======================================================
+
+function modalLimparLinhasPositivos(listId) {
+  const tbody = document.getElementById(`modalBodyLinhas_${listId}Positivos`);
+  if (tbody) tbody.innerHTML = "";
+}
+
+function modalCriarLinhaPositivos(listId = "1", ingrediente = "", quantidade = "") {
+  const tbody = document.getElementById(`modalBodyLinhas_${listId}Positivos`);
+  if (!tbody) return;
+
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td><input class="modalIng" type="text" placeholder="Ex: Pipoca" value="${String(ingrediente).replace(/"/g, "&quot;")}" /></td>
+    <td><input class="modalQtd" type="text" placeholder="Ex: 7" value="${String(quantidade).replace(/"/g, "&quot;")}" /></td>
+    <td><button class="btn-danger btn-mini" type="button">Remover</button></td>
+  `;
+  tr.querySelector("button").onclick = () => tr.remove();
+  tbody.appendChild(tr);
+}
+
+// Adicionar linha (chamado pelos botões +Adicionar linha do modal Positivos)
+window.modalAdicionarLinhaPositivos = function(listId) {
+  modalCriarLinhaPositivos(listId, "", "");
+};
+
+// Captura todas as linhas do modal Positivos
+function getLinhasPositivos(listId) {
+  const linhas = [];
+  const selector = `#modalBodyLinhas_${listId}Positivos tr`;
+
+  document.querySelectorAll(selector).forEach((tr) => {
+    const ing = (tr.querySelector(".modalIng")?.value || "").trim();
+    const qtd = (tr.querySelector(".modalQtd")?.value || "").trim();
+    if (ing || qtd) linhas.push({ ingrediente: ing, quantidade: qtd });
+  });
+
+  return linhas;
+}
+
+// Prepara payload do modal Positivos
+function modalGetPayloadPositivos() {
+  const lista1 = {
+    nome: ($("modalNomeEbo_1Positivos")?.value || "").trim(),
+    subtitulo: ($("modalSubtitulo_1Positivos")?.value || "").trim(),
+    modo: ($("modalModoFazer_1Positivos")?.value || "").trim(),
+    itens: getLinhasPositivos("1")
+  };
+
+  const lista2 = {
+    subtitulo: ($("modalSubtitulo_2Positivos")?.value || "").trim(),
+    modo: ($("modalModoFazer_2Positivos")?.value || "").trim(),
+    itens: getLinhasPositivos("2")
+  };
+
+  return { lista1, lista2 };
+}
+
+// Enviar Positivos para Firebase
+window.enviarParaBancoPositivos = async function() {
+  try {
+    const payload = modalGetPayloadPositivos();
+    const { db, collection, doc, setDoc, addDoc, serverTimestamp } = fb();
+
+    if (!payload.lista1.nome) return alert("Digite o nome do Positivo (Lista 1).");
+    if (!payload.lista1.itens || !payload.lista1.itens.some(i => (i.ingrediente || "").trim())) {
+      return alert("Adicione ao menos 1 ingrediente na Lista 1.");
+    }
+
+    const docPayload = {
+      nome: payload.lista1.nome,
+      nome_norm: normalizarTexto(payload.lista1.nome),
+      subtitulo: payload.lista1.subtitulo || "",
+      modo: payload.lista1.modo || "",
+      itens: payload.lista1.itens,
+
+      nome2: "",
+      nome2_norm: "",
+      subtitulo2: payload.lista2.subtitulo || "",
+      modo2: payload.lista2.modo || "",
+      itens2: payload.lista2.itens || [],
+
+      updatedAt: serverTimestamp(),
+      createdAt: serverTimestamp()
+    };
+
+   if (window.editingDocIdPositivos) {
+  await setDoc(doc(db, "positivos", window.editingDocIdPositivos), docPayload, { merge: true });
+  window.editingDocIdPositivos = null;
+} else {
+  await addDoc(collection(db, "positivos"), docPayload);
+}
+
+// 🔹 Atualiza apenas o container de Positivos
+renderizarPositivos();
+fecharModalPositivos();
+
+  } catch (e) {
+    console.error(e);
+    alert(`❌ Erro ao enviar: ${e?.code || e?.message || "erro desconhecido"}`);
+  }
+};
+
+// =======================================================
+// POSITIVOS - renderizar listas cadastradas
+// =======================================================
+window.renderizarPositivos = async function() {
+  const box = $("positivosSalvosBox");
+  if (!box) return;
+
+  const { db, collection, getDocs, query, orderBy, limit } = fb();
+
+  box.innerHTML = `<div class="saved-item"><div><div class="saved-title">Carregando...</div></div></div>`;
+
+  try {
+    const q = query(collection(db, "positivos"), orderBy("updatedAt", "desc"), limit(50));
+    const snaps = await getDocs(q);
+    const items = [];
+    snaps.forEach(s => items.push({ id: s.id, ...s.data() }));
+
+    if (!items.length) {
+      box.innerHTML = `<div class="saved-item"><div><div class="saved-title">Nenhum positivo cadastrado.</div></div></div>`;
+      return;
+    }
+
+    box.innerHTML = items.map((item) => {
+      const nItens1 = Array.isArray(item.itens) ? item.itens.length : 0;
+      const nItens2 = Array.isArray(item.itens2) ? item.itens2.length : 0;
+
+      return `
+        <div class="saved-item">
+          <div>
+            <div class="saved-title">${item.nome || "(sem nome)"}</div>
+            <div class="saved-meta">Itens Lista 1: ${nItens1} • Itens Lista 2: ${nItens2}</div>
+          </div>
+          <div class="saved-actions-row">
+         
+            <button class="btn-mini btn-mini-open" onclick="editarPositivo('${item.id}')">Editar</button>
+            <button class="btn-mini btn-mini-del" onclick="excluirPositivo('${item.id}')">Excluir</button>
+             <button class="btn-mini btn-print" onclick="imprimirPositivo('${item.id}')">Imprimir</button>
+            
+          </div>
+        </div>
+      `;
+    }).join("");
+
+  } catch (e) {
+    console.error(e);
+    box.innerHTML = `<div class="saved-item"><div><div class="saved-title">Erro ao carregar</div></div></div>`;
+  }
+};
+
+// Editar positivo
+window.editarPositivo = async function(docId) {
+  const { db, doc, getDoc } = fb();
+
+  try {
+    const snap = await getDoc(doc(db, "positivos", docId));
+    if (!snap.exists()) return alert("Positivo não encontrado.");
+    const data = snap.data();
+
+    // limpa e abre modal Positivos
+    abrirModalPositivos();
+
+    // Lista 1
+    if ($("modalNomeEbo_1Positivos")) $("modalNomeEbo_1Positivos").value = data.nome || "";
+    if ($("modalSubtitulo_1Positivos")) $("modalSubtitulo_1Positivos").value = data.subtitulo || "";
+    if ($("modalModoFazer_1Positivos")) $("modalModoFazer_1Positivos").value = data.modo || "";
+    modalLimparLinhasPositivos("1");
+    (data.itens || []).forEach(it => modalCriarLinhaPositivos("1", it.ingrediente || "", it.quantidade || ""));
+
+    // Lista 2
+    if ($("modalSubtitulo_2Positivos")) $("modalSubtitulo_2Positivos").value = data.subtitulo2 || "";
+    if ($("modalModoFazer_2Positivos")) $("modalModoFazer_2Positivos").value = data.modo2 || "";
+    modalLimparLinhasPositivos("2");
+    (data.itens2 || []).forEach(it => modalCriarLinhaPositivos("2", it.ingrediente || "", it.quantidade || ""));
+
+    // salva o id editando
+    window.editingDocIdPositivos = docId;
+
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao editar positivo.");
+  }
+};
+
+// Excluir positivo
+window.excluirPositivo = async function(docId) {
+  const ok = confirm("Tem certeza que deseja excluir este positivo?");
+  if (!ok) return;
+
+  const { db, doc, deleteDoc } = fb();
+
+  try {
+    await deleteDoc(doc(db, "positivos", docId));
+    alert("Positivo excluído!");
+    renderizarPositivos();
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao excluir positivo.");
+  }
+};
+
+//imprimir positivo//
+
+window.imprimirPositivo = async function(docId) {
+  if (!docId) {
+    alert("ID do positivo não informado.");
+    return;
+  }
+
+  const area = document.getElementById("saidaPrintListaCadastrada");
+  const titulo = document.getElementById("printListaCadastradaNome");
+  const tbody = document.getElementById("printListaCadastradaIngredientes");
+
+  if (!area || !titulo || !tbody) return alert("Área de impressão não encontrada.");
+
+  // limpa antes
+  tbody.innerHTML = "";
+
+  try {
+    const { db, doc, getDoc } = fb();
+    const snap = await getDoc(doc(db, "positivos", docId));
+    if (!snap.exists()) return alert("Positivo não encontrado.");
+    const data = snap.data() || {};
+
+    titulo.textContent = data.nome || "(sem nome)";
+
+    const itens1 = Array.isArray(data.itens) ? data.itens : [];
+    const itens2 = Array.isArray(data.itens2) ? data.itens2 : [];
+
+    const itens = [...itens1, ...itens2].filter(it => (it.ingrediente || "").trim());
+
+    if (!itens.length) {
+      const tr = document.createElement("tr");
+      const tdIng = document.createElement("td");
+      tdIng.className = "print-ing";
+      tdIng.colSpan = 2;
+      tdIng.textContent = "Sem ingredientes cadastrados.";
+      tr.appendChild(tdIng);
+      tbody.appendChild(tr);
+    } else {
+      itens.forEach(it => {
+        const tr = document.createElement("tr");
+
+        const tdQtd = document.createElement("td");
+        tdQtd.className = "print-total";
+        tdQtd.textContent = (it.quantidade || "").trim() || "—";
+
+        const tdIng = document.createElement("td");
+        tdIng.className = "print-ing";
+        tdIng.textContent = it.ingrediente || "—";
+
+        tr.appendChild(tdQtd);
+        tr.appendChild(tdIng);
+        tbody.appendChild(tr);
+      });
+    }
+
+    // mostra e imprime
+    area.style.display = "block";
+    document.body.classList.add("print-lista-cadastrada");
+    window.print();
+
+    // opcional: limpa após impressão
+    area.style.display = "none";
+    tbody.innerHTML = "";
+    document.body.classList.remove("print-lista-cadastrada");
+
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao imprimir positivo. Veja o console.");
+  }
+};
+
+
+window.abrirModalBanhos = function() {
+  const modal = document.getElementById("modalBackdropBanhos");
+  if (modal) modal.style.display = "flex";
+};
+
+window.fecharModalBanhos = function() {
+  const modal = document.getElementById("modalBackdropBanhos");
+  if (modal) modal.style.display = "none";
+};
+
+// Adicionar linhas
+function modalLimparLinhasBanhos(listId) {
+  const tbody = document.getElementById(`modalBodyLinhasBanhos_${listId}`);
+  if (tbody) tbody.innerHTML = "";
+}
+
+function modalCriarLinhaBanhos(listId = "1", ingrediente = "", quantidade = "") {
+  const tbody = document.getElementById(`modalBodyLinhasBanhos_${listId}`);
+  if (!tbody) return;
+
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td><input class="modalIng" type="text" placeholder="Ex: Pipoca" value="${ingrediente}" /></td>
+    <td><input class="modalQtd" type="text" placeholder="Ex: 7" value="${quantidade}" /></td>
+    <td><button class="btn-danger btn-mini" type="button">Remover</button></td>
+  `;
+  tr.querySelector("button").onclick = () => tr.remove();
+  tbody.appendChild(tr);
+}
+
+window.modalAdicionarLinhaBanhos = function(listId) {
+  modalCriarLinhaBanhos(listId, "", "");
+};
+
+// Captura linhas
+function getLinhasBanhos(listId) {
+  const linhas = [];
+  const selector = `#modalBodyLinhasBanhos_${listId} tr`;
+  document.querySelectorAll(selector).forEach(tr => {
+    const ing = (tr.querySelector(".modalIng")?.value || "").trim();
+    const qtd = (tr.querySelector(".modalQtd")?.value || "").trim();
+    if (ing || qtd) linhas.push({ ingrediente: ing, quantidade: qtd });
+  });
+  return linhas;
+}
+
+// Payload
+function modalGetPayloadBanhos() {
+  const lista1 = {
+    nome: ($("modalNomeBanho_1")?.value || "").trim(),
+    subtitulo: ($("modalSubtituloBanho_1")?.value || "").trim(),
+    modo: ($("modalModoFazerBanho_1")?.value || "").trim(),
+    itens: getLinhasBanhos("1")
+  };
+  const lista2 = {
+    subtitulo: ($("modalSubtituloBanho_2")?.value || "").trim(),
+    modo: ($("modalModoFazerBanho_2")?.value || "").trim(),
+    itens: getLinhasBanhos("2")
+  };
+  return { lista1, lista2 };
+}
+
+// Enviar para Firebase
+window.enviarParaBancoBanhos = async function() {
+  try {
+    const payload = modalGetPayloadBanhos();
+    const { db, collection, doc, setDoc, addDoc, serverTimestamp } = fb();
+
+    if (!payload.lista1.nome) return alert("Digite o nome do Banho (Lista 1).");
+    if (!payload.lista1.itens || !payload.lista1.itens.some(i => (i.ingrediente || "").trim())) {
+      return alert("Adicione ao menos 1 ingrediente na Lista 1.");
+    }
+
+    const docPayload = {
+      nome: payload.lista1.nome,
+      nome_norm: normalizarTexto(payload.lista1.nome),
+      subtitulo: payload.lista1.subtitulo || "",
+      modo: payload.lista1.modo || "",
+      itens: payload.lista1.itens,
+      nome2: "",
+      nome2_norm: "",
+      subtitulo2: payload.lista2.subtitulo || "",
+      modo2: payload.lista2.modo || "",
+      itens2: payload.lista2.itens || [],
+      updatedAt: serverTimestamp(),
+      createdAt: serverTimestamp()
+    };
+
+    if (window.editingDocIdBanhos) {
+      await setDoc(doc(db, "banhos", window.editingDocIdBanhos), docPayload, { merge: true });
+      window.editingDocIdBanhos = null;
+      alert("✅ Banho atualizado com sucesso!");
+    } else {
+      await addDoc(collection(db, "banhos"), docPayload);
+      alert("✅ Banho cadastrado com sucesso!");
+    }
+
+    renderizarBanhos();
+    fecharModalBanhos();
+  } catch (e) {
+    console.error(e);
+    alert(`❌ Erro ao enviar: ${e?.code || e?.message || "erro desconhecido"}`);
+  }
+};
+
+// Renderizar listas
+window.renderizarBanhos = async function() {
+  const box = $("banhosSalvosBox");
+  if (!box) return;
+
+  const { db, collection, getDocs, query, orderBy, limit } = fb();
+
+  box.innerHTML = `<div class="saved-item"><div><div class="saved-title">Carregando...</div></div></div>`;
+
+  try {
+    const q = query(collection(db, "banhos"), orderBy("updatedAt", "desc"), limit(50));
+    const snaps = await getDocs(q);
+    const items = [];
+    snaps.forEach(s => items.push({ id: s.id, ...s.data() }));
+
+    if (!items.length) {
+      box.innerHTML = `<div class="saved-item"><div><div class="saved-title">Nenhum banho cadastrado.</div></div></div>`;
+      return;
+    }
+
+    box.innerHTML = items.map(item => {
+      const nItens1 = Array.isArray(item.itens) ? item.itens.length : 0;
+      const nItens2 = Array.isArray(item.itens2) ? item.itens2.length : 0;
+      return `
+        <div class="saved-item">
+          <div>
+            <div class="saved-title">${item.nome || "(sem nome)"}</div>
+            <div class="saved-meta">Itens Lista 1: ${nItens1} • Itens Lista 2: ${nItens2}</div>
+          </div>
+          <div class="saved-actions-row">
+            <button class="btn-mini btn-mini-open" onclick="editarBanho('${item.id}')">Editar</button>
+            <button class="btn-mini btn-mini-del" onclick="excluirBanho('${item.id}')">Excluir</button>
+            <button class="btn-mini btn-print" onclick="imprimirBanho('${item.id}')">Imprimir</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+  } catch (e) {
+    console.error(e);
+    box.innerHTML = `<div class="saved-item"><div><div class="saved-title">Erro ao carregar</div></div></div>`;
+  }
+};
+
+// Editar
+window.editarBanho = async function(docId) {
+  const { db, doc, getDoc } = fb();
+  try {
+    const snap = await getDoc(doc(db, "banhos", docId));
+    if (!snap.exists()) return alert("Banho não encontrado.");
+    const data = snap.data();
+
+    abrirModalBanhos();
+
+    if ($("modalNomeBanho_1")) $("modalNomeBanho_1").value = data.nome || "";
+    if ($("modalSubtituloBanho_1")) $("modalSubtituloBanho_1").value = data.subtitulo || "";
+    if ($("modalModoFazerBanho_1")) $("modalModoFazerBanho_1").value = data.modo || "";
+    modalLimparLinhasBanhos("1");
+    (data.itens || []).forEach(it => modalCriarLinhaBanhos("1", it.ingrediente || "", it.quantidade || ""));
+
+    if ($("modalSubtituloBanho_2")) $("modalSubtituloBanho_2").value = data.subtitulo2 || "";
+    if ($("modalModoFazerBanho_2")) $("modalModoFazerBanho_2").value = data.modo2 || "";
+    modalLimparLinhasBanhos("2");
+    (data.itens2 || []).forEach(it => modalCriarLinhaBanhos("2", it.ingrediente || "", it.quantidade || ""));
+
+    window.editingDocIdBanhos = docId;
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao editar banho.");
+  }
+};
+
+// Excluir
+window.excluirBanho = async function(docId) {
+  const ok = confirm("Tem certeza que deseja excluir este banho?");
+  if (!ok) return;
+  const { db, doc, deleteDoc } = fb();
+  try {
+    await deleteDoc(doc(db, "banhos", docId));
+    alert("Banho excluído!");
+    renderizarBanhos();
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao excluir banho.");
+  }
+};
+
+// ============================
+// ABRIR TELA BANHOS
+// ============================
+window.abrirTelaBanhos = function () {
+  esconderTodasAsTelas(); // 🔹 agora esconde TUDO, inclusive lista do gerador
+
+  const banhos = document.getElementById("banhosScreen");
+  if (banhos) banhos.style.display = "block";
+
+  renderizarBanhos();
+  window.scrollTo({ top: 0, behavior: "instant" });
+};
+
+window.imprimirBanho = async function(docId) {
+  if (!docId) {
+    alert("ID do banho não informado.");
+    return;
+  }
+
+  const area = document.getElementById("saidaPrintListaCadastrada");
+  const titulo = document.getElementById("printListaCadastradaNome");
+  const tbody = document.getElementById("printListaCadastradaIngredientes");
+
+  if (!area || !titulo || !tbody) {
+    alert("Área de impressão não encontrada.");
+    return;
+  }
+
+  // limpa tabela antes
+  tbody.innerHTML = "";
+
+  try {
+    const { db, doc, getDoc } = fb();
+    const snap = await getDoc(doc(db, "banhos", docId));
+    if (!snap.exists()) return alert("Banho não encontrado.");
+    const data = snap.data() || {};
+
+    titulo.textContent = data.nome || "(sem nome)";
+
+    const itens1 = Array.isArray(data.itens) ? data.itens : [];
+    const itens2 = Array.isArray(data.itens2) ? data.itens2 : [];
+    const itens = [...itens1, ...itens2].filter(it => (it.ingrediente || "").trim());
+
+    if (!itens.length) {
+      const tr = document.createElement("tr");
+      const tdIng = document.createElement("td");
+      tdIng.className = "print-ing";
+      tdIng.colSpan = 2;
+      tdIng.textContent = "Sem ingredientes cadastrados.";
+      tr.appendChild(tdIng);
+      tbody.appendChild(tr);
+    } else {
+      itens.forEach(it => {
+        const tr = document.createElement("tr");
+
+        const tdQtd = document.createElement("td");
+        tdQtd.className = "print-total";
+        tdQtd.textContent = (it.quantidade || "").trim() || "—";
+
+        const tdIng = document.createElement("td");
+        tdIng.className = "print-ing";
+        tdIng.textContent = it.ingrediente || "—";
+
+        tr.appendChild(tdQtd);
+        tr.appendChild(tdIng);
+        tbody.appendChild(tr);
+      });
+    }
+
+    // mostra e imprime
+    area.style.display = "block";
+    document.body.classList.add("print-lista-cadastrada");
+    window.print();
+
+    // opcional: limpa após impressão
+    area.style.display = "none";
+    tbody.innerHTML = "";
+    document.body.classList.remove("print-lista-cadastrada");
+
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao imprimir banho. Veja o console (F12).");
+  }
+};
+
+// OFERENDAS//
+window.abrirModalOferendas = function() {
+  const modal = document.getElementById("modalBackdropOferendas");
+  if (modal) modal.style.display = "flex";
+};
+
+window.fecharModalOferendas = function() {
+  const modal = document.getElementById("modalBackdropOferendas");
+  if (modal) modal.style.display = "none";
+};
+
+// Adicionar linhas
+function modalLimparLinhasOferendas(listId) {
+  const tbody = document.getElementById(`modalBodyLinhasOferendas_${listId}`);
+  if (tbody) tbody.innerHTML = "";
+}
+
+function modalCriarLinhaOferendas(listId = "1", ingrediente = "", quantidade = "") {
+  const tbody = document.getElementById(`modalBodyLinhasOferendas_${listId}`);
+  if (!tbody) return;
+
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td><input class="modalIng" type="text" placeholder="Ex: Pipoca" value="${ingrediente}" /></td>
+    <td><input class="modalQtd" type="text" placeholder="Ex: 7" value="${quantidade}" /></td>
+    <td><button class="btn-danger btn-mini" type="button">Remover</button></td>
+  `;
+  tr.querySelector("button").onclick = () => tr.remove();
+  tbody.appendChild(tr);
+}
+
+window.modalAdicionarLinhaOferendas = function(listId) {
+  modalCriarLinhaOferendas(listId, "", "");
+};
+
+function getLinhasOferendas(listId) {
+  const linhas = [];
+  const selector = `#modalBodyLinhasOferendas_${listId} tr`;
+  document.querySelectorAll(selector).forEach(tr => {
+    const ing = (tr.querySelector(".modalIng")?.value || "").trim();
+    const qtd = (tr.querySelector(".modalQtd")?.value || "").trim();
+    if (ing || qtd) linhas.push({ ingrediente: ing, quantidade: qtd });
+  });
+  return linhas;
+}
+
+function modalGetPayloadOferendas() {
+  const lista1 = {
+    nome: ($("modalNomeOferenda_1")?.value || "").trim(),
+    subtitulo: ($("modalSubtituloOferenda_1")?.value || "").trim(),
+    modo: ($("modalModoFazerOferenda_1")?.value || "").trim(),
+    itens: getLinhasOferendas("1")
+  };
+  const lista2 = {
+    subtitulo: ($("modalSubtituloOferenda_2")?.value || "").trim(),
+    modo: ($("modalModoFazerOferenda_2")?.value || "").trim(),
+    itens: getLinhasOferendas("2")
+  };
+  return { lista1, lista2 };
+}
+
+// Enviar para Firebase
+window.enviarParaBancoOferendas = async function() {
+  try {
+    const payload = modalGetPayloadOferendas();
+    const { db, collection, doc, setDoc, addDoc, serverTimestamp } = fb();
+
+    if (!payload.lista1.nome) return alert("Digite o nome da Oferenda (Lista 1).");
+    if (!payload.lista1.itens || !payload.lista1.itens.some(i => (i.ingrediente || "").trim())) {
+      return alert("Adicione ao menos 1 ingrediente na Lista 1.");
+    }
+
+    const docPayload = {
+      nome: payload.lista1.nome,
+      nome_norm: normalizarTexto(payload.lista1.nome),
+      subtitulo: payload.lista1.subtitulo || "",
+      modo: payload.lista1.modo || "",
+      itens: payload.lista1.itens,
+      nome2: "",
+      nome2_norm: "",
+      subtitulo2: payload.lista2.subtitulo || "",
+      modo2: payload.lista2.modo || "",
+      itens2: payload.lista2.itens || [],
+      updatedAt: serverTimestamp(),
+      createdAt: serverTimestamp()
+    };
+
+    if (window.editingDocIdOferendas) {
+      await setDoc(doc(db, "oferendas", window.editingDocIdOferendas), docPayload, { merge: true });
+      window.editingDocIdOferendas = null;
+      alert("✅ Oferenda atualizada com sucesso!");
+    } else {
+      await addDoc(collection(db, "oferendas"), docPayload);
+      alert("✅ Oferenda cadastrada com sucesso!");
+    }
+
+    renderizarOferendas();
+    fecharModalOferendas();
+  } catch (e) {
+    console.error(e);
+    alert(`❌ Erro ao enviar: ${e?.code || e?.message || "erro desconhecido"}`);
+  }
+};
+
+// Renderizar listas cadastradas
+window.renderizarOferendas = async function() {
+  const box = $("oferendasSalvosBox");
+  if (!box) return;
+
+  const { db, collection, getDocs, query, orderBy, limit } = fb();
+
+  box.innerHTML = `<div class="saved-item"><div><div class="saved-title">Carregando...</div></div></div>`;
+
+  try {
+    const q = query(collection(db, "oferendas"), orderBy("updatedAt", "desc"), limit(50));
+    const snaps = await getDocs(q);
+    const items = [];
+    snaps.forEach(s => items.push({ id: s.id, ...s.data() }));
+
+    if (!items.length) {
+      box.innerHTML = `<div class="saved-item"><div><div class="saved-title">Nenhuma Oferenda cadastrada.</div></div></div>`;
+      return;
+    }
+
+    box.innerHTML = items.map(item => {
+      const nItens1 = Array.isArray(item.itens) ? item.itens.length : 0;
+      const nItens2 = Array.isArray(item.itens2) ? item.itens2.length : 0;
+      return `
+        <div class="saved-item">
+          <div>
+            <div class="saved-title">${item.nome || "(sem nome)"}</div>
+            <div class="saved-meta">Itens Lista 1: ${nItens1} • Itens Lista 2: ${nItens2}</div>
+          </div>
+          <div class="saved-actions-row">
+            <button class="btn-mini btn-mini-open" onclick="editarOferenda('${item.id}')">Editar</button>
+            <button class="btn-mini btn-mini-del" onclick="excluirOferenda('${item.id}')">Excluir</button>
+            <button class="btn-mini btn-print" onclick="imprimirOferenda('${item.id}')">Imprimir</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+  } catch (e) {
+    console.error(e);
+    box.innerHTML = `<div class="saved-item"><div><div class="saved-title">Erro ao carregar</div></div></div>`;
+  }
+};
+
+// Editar Oferenda
+window.editarOferenda = async function(docId) {
+  const { db, doc, getDoc } = fb();
+  try {
+    const snap = await getDoc(doc(db, "oferendas", docId));
+    if (!snap.exists()) return alert("Oferenda não encontrada.");
+    const data = snap.data();
+
+    abrirModalOferendas();
+
+    if ($("modalNomeOferenda_1")) $("modalNomeOferenda_1").value = data.nome || "";
+    if ($("modalSubtituloOferenda_1")) $("modalSubtituloOferenda_1").value = data.subtitulo || "";
+    if ($("modalModoFazerOferenda_1")) $("modalModoFazerOferenda_1").value = data.modo || "";
+    modalLimparLinhasOferendas("1");
+    (data.itens || []).forEach(it => modalCriarLinhaOferendas("1", it.ingrediente || "", it.quantidade || ""));
+
+    if ($("modalSubtituloOferenda_2")) $("modalSubtituloOferenda_2").value = data.subtitulo2 || "";
+    if ($("modalModoFazerOferenda_2")) $("modalModoFazerOferenda_2").value = data.modo2 || "";
+    modalLimparLinhasOferendas("2");
+    (data.itens2 || []).forEach(it => modalCriarLinhaOferendas("2", it.ingrediente || "", it.quantidade || ""));
+
+    window.editingDocIdOferendas = docId;
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao editar oferenda.");
+  }
+};
+
+// Excluir Oferenda
+window.excluirOferenda = async function(docId) {
+  const ok = confirm("Tem certeza que deseja excluir esta oferenda?");
+  if (!ok) return;
+  const { db, doc, deleteDoc } = fb();
+  try {
+    await deleteDoc(doc(db, "oferendas", docId));
+    alert("Oferenda excluída!");
+    renderizarOferendas();
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao excluir oferenda.");
+  }
+};
+
+// Imprimir Oferenda
+window.imprimirOferenda = async function(docId) {
+  const area = document.getElementById("saidaPrintListaCadastrada");
+  const titulo = document.getElementById("printListaCadastradaNome");
+  const tbody = document.getElementById("printListaCadastradaIngredientes");
+
+  if (!area || !titulo || !tbody) return alert("Área de impressão não encontrada.");
+
+  tbody.innerHTML = "";
+
+  try {
+    const { db, doc, getDoc } = fb();
+    const snap = await getDoc(doc(db, "oferendas", docId));
+    if (!snap.exists()) return alert("Oferenda não encontrada.");
+    const data = snap.data() || {};
+
+    titulo.textContent = data.nome || "(sem nome)";
+
+    const itens1 = Array.isArray(data.itens) ? data.itens : [];
+    const itens2 = Array.isArray(data.itens2) ? data.itens2 : [];
+    const itens = [...itens1, ...itens2].filter(it => (it.ingrediente || "").trim());
+
+    if (!itens.length) {
+      const tr = document.createElement("tr");
+      const tdIng = document.createElement("td");
+      tdIng.colSpan = 2;
+      tdIng.textContent = "Sem ingredientes cadastrados.";
+      tr.appendChild(tdIng);
+      tbody.appendChild(tr);
+    } else {
+      itens.forEach(it => {
+        const tr = document.createElement("tr");
+        const tdQtd = document.createElement("td");
+        tdQtd.className = "print-total";
+        tdQtd.textContent = it.quantidade || "—";
+        const tdIng = document.createElement("td");
+        tdIng.className = "print-ing";
+        tdIng.textContent = it.ingrediente || "—";
+        tr.appendChild(tdQtd);
+        tr.appendChild(tdIng);
+        tbody.appendChild(tr);
+      });
+    }
+
+    area.style.display = "block";
+    document.body.classList.add("print-lista-cadastrada");
+    window.print();
+    area.style.display = "none";
+    tbody.innerHTML = "";
+    document.body.classList.remove("print-lista-cadastrada");
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao imprimir oferenda.");
+  }
+};
+
+//ESCONDER TODAS AS TELAS//
+function esconderTodasAsTelas() {
+  const ids = [
+    "postLogin",
+    "adminScreen",
+    "oferendasScreen",
+    "banhosScreen",
+    "positivosScreen"
+  ];
+
+  ids.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
+  });
+
+  // esconde a lista gerada do ebó
+  const saidaPrint = document.getElementById("saidaPrint");
+  const printIngredientes = document.getElementById("printIngredientes");
+  if (printIngredientes) printIngredientes.innerHTML = "";
+  if (saidaPrint) saidaPrint.style.display = "none";
+
+  // esconde também a impressão simples
+  const saidaPrintLista = document.getElementById("saidaPrintListaCadastrada");
+  const printLista = document.getElementById("printListaCadastradaIngredientes");
+  if (printLista) printLista.innerHTML = "";
+  if (saidaPrintLista) saidaPrintLista.style.display = "none";
+}
