@@ -1751,3 +1751,132 @@ img {
     padding: 12px;
   }
 }
+
+
+/* ===================================================
+   LISTA GERADA — AJUSTE FINAL PARA CELULAR
+=================================================== */
+@media (max-width: 720px) {
+  #cardListaGerada {
+    overflow: hidden;
+  }
+
+  #cardListaGerada .saved-list,
+  #listaGeradaContainer {
+    overflow: visible !important;
+    max-height: none !important;
+    max-width: 100%;
+    padding-right: 0 !important;
+  }
+
+  #listaGeradaContainer .preview-print-area {
+    width: 100%;
+    min-width: 0 !important;
+    max-width: 100%;
+    overflow: hidden;
+    border-radius: 14px;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-header {
+    padding: 14px 12px 10px;
+    gap: 4px;
+  }
+
+  #listaGeradaContainer .preview-print-title {
+    font-size: 17px !important;
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-logo {
+    width: 78px !important;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table,
+  #listaGeradaContainer .preview-print-area .print-table thead,
+  #listaGeradaContainer .preview-print-area .print-table tbody,
+  #listaGeradaContainer .preview-print-area .print-table tr,
+  #listaGeradaContainer .preview-print-area .print-table td {
+    display: block;
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table {
+    table-layout: auto;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table thead {
+    display: none;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table tbody {
+    display: grid;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table tbody tr {
+    background: #ffffff !important;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table td {
+    border: 0;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 10px 12px;
+    text-align: left !important;
+    white-space: normal !important;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table td:last-child {
+    border-bottom: 0;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 4px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table td.print-total,
+  #listaGeradaContainer .preview-print-area .print-table td.print-ing,
+  #listaGeradaContainer .preview-print-area .print-table td.print-pratos {
+    width: 100% !important;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table td.print-total {
+    font-weight: 800;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table .print-ing,
+  #listaGeradaContainer .preview-print-area .print-table .print-pratos {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 420px) {
+  #listaGeradaContainer .preview-print-title {
+    font-size: 15px !important;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-logo {
+    width: 68px !important;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table td {
+    padding: 9px 10px;
+  }
+}
