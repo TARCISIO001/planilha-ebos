@@ -1723,16 +1723,16 @@ window.gerarListaFinalAcumulada = function () {
     const linhasHtml = linhas.length
       ? linhas.map((item) => `
           <tr>
-            <td class="print-total">${item.totalTxt}</td>
-            <td class="print-ing">${item.ingrediente}</td>
-            <td class="print-pratos">${montarTextoPratosLista(item)}</td>
+            <td class="print-total" data-label="Total">${item.totalTxt}</td>
+            <td class="print-ing" data-label="Ingrediente">${item.ingrediente}</td>
+            <td class="print-pratos" data-label="Pratos">${montarTextoPratosLista(item)}</td>
           </tr>
         `).join("")
       : `
           <tr>
-            <td class="print-total">—</td>
-            <td class="print-ing">Nenhum item gerado.</td>
-            <td class="print-pratos">—</td>
+            <td class="print-total" data-label="Total">—</td>
+            <td class="print-ing" data-label="Ingrediente">Nenhum item gerado.</td>
+            <td class="print-pratos" data-label="Pratos">—</td>
           </tr>
         `;
 
@@ -2054,40 +2054,20 @@ window.voltarTelaPrincipal = function () {
 
   window.scrollTo({ top: 0, behavior: "instant" });
 };
-function limparFormularioPositivos() {
-  const campos = [
-    "modalNomeEbo_1Positivos",
-    "modalSubtitulo_1Positivos",
-    "modalModoFazer_1Positivos",
-    "modalSubtitulo_2Positivos",
-    "modalModoFazer_2Positivos",
-    "modalMsgPositivos"
-  ];
-
-  campos.forEach((id) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if ("value" in el) el.value = "";
-    else el.textContent = "";
-  });
-
-  modalLimparLinhasPositivos("1");
-  modalLimparLinhasPositivos("2");
-  modalCriarLinhaPositivos("1", "", "");
-  window.editingDocIdPositivos = null;
-}
-
-window.abrirModalPositivos = function (modo = "novo") {
-  if (modo !== "editar") limparFormularioPositivos();
+window.abrirModalPositivos = function () {
 
   const modal = document.getElementById("modalBackdropPositivos");
+
   if (modal) modal.style.display = "flex";
+
 };
 
 window.fecharModalPositivos = function () {
+
   const modal = document.getElementById("modalBackdropPositivos");
+
   if (modal) modal.style.display = "none";
-  limparFormularioPositivos();
+
 };
 
 
@@ -2255,7 +2235,7 @@ window.editarPositivo = async function(docId) {
     const data = snap.data();
 
     // limpa e abre modal Positivos
-    abrirModalPositivos("editar");
+    abrirModalPositivos();
 
     // Lista 1
     if ($("modalNomeEbo_1Positivos")) $("modalNomeEbo_1Positivos").value = data.nome || "";
@@ -2369,32 +2349,7 @@ window.imprimirPositivo = async function(docId) {
 };
 
 
-function limparFormularioBanhos() {
-  const campos = [
-    "modalNomeBanho_1",
-    "modalSubtituloBanho_1",
-    "modalModoFazerBanho_1",
-    "modalSubtituloBanho_2",
-    "modalModoFazerBanho_2",
-    "modalMsgBanhos"
-  ];
-
-  campos.forEach((id) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if ("value" in el) el.value = "";
-    else el.textContent = "";
-  });
-
-  modalLimparLinhasBanhos("1");
-  modalLimparLinhasBanhos("2");
-  modalCriarLinhaBanhos("1", "", "");
-  window.editingDocIdBanhos = null;
-}
-
-window.abrirModalBanhos = function(modo = "novo") {
-  if (modo !== "editar") limparFormularioBanhos();
-
+window.abrirModalBanhos = function() {
   const modal = document.getElementById("modalBackdropBanhos");
   if (modal) modal.style.display = "flex";
 };
@@ -2402,7 +2357,6 @@ window.abrirModalBanhos = function(modo = "novo") {
 window.fecharModalBanhos = function() {
   const modal = document.getElementById("modalBackdropBanhos");
   if (modal) modal.style.display = "none";
-  limparFormularioBanhos();
 };
 
 // Adicionar linhas
@@ -2552,7 +2506,7 @@ window.editarBanho = async function(docId) {
     if (!snap.exists()) return alert("Banho não encontrado.");
     const data = snap.data();
 
-    abrirModalBanhos("editar");
+    abrirModalBanhos();
 
     if ($("modalNomeBanho_1")) $("modalNomeBanho_1").value = data.nome || "";
     if ($("modalSubtituloBanho_1")) $("modalSubtituloBanho_1").value = data.subtitulo || "";
@@ -2673,32 +2627,7 @@ window.imprimirBanho = async function(docId) {
 };
 
 // OFERENDAS//
-function limparFormularioOferendas() {
-  const campos = [
-    "modalNomeOferenda_1",
-    "modalSubtituloOferenda_1",
-    "modalModoFazerOferenda_1",
-    "modalSubtituloOferenda_2",
-    "modalModoFazerOferenda_2",
-    "modalMsgOferendas"
-  ];
-
-  campos.forEach((id) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if ("value" in el) el.value = "";
-    else el.textContent = "";
-  });
-
-  modalLimparLinhasOferendas("1");
-  modalLimparLinhasOferendas("2");
-  modalCriarLinhaOferendas("1", "", "");
-  window.editingDocIdOferendas = null;
-}
-
-window.abrirModalOferendas = function(modo = "novo") {
-  if (modo !== "editar") limparFormularioOferendas();
-
+window.abrirModalOferendas = function() {
   const modal = document.getElementById("modalBackdropOferendas");
   if (modal) modal.style.display = "flex";
 };
@@ -2706,7 +2635,6 @@ window.abrirModalOferendas = function(modo = "novo") {
 window.fecharModalOferendas = function() {
   const modal = document.getElementById("modalBackdropOferendas");
   if (modal) modal.style.display = "none";
-  limparFormularioOferendas();
 };
 
 // Adicionar linhas
@@ -2854,7 +2782,7 @@ window.editarOferenda = async function(docId) {
     if (!snap.exists()) return alert("Oferenda não encontrada.");
     const data = snap.data();
 
-    abrirModalOferendas("editar");
+    abrirModalOferendas();
 
     if ($("modalNomeOferenda_1")) $("modalNomeOferenda_1").value = data.nome || "";
     if ($("modalSubtituloOferenda_1")) $("modalSubtituloOferenda_1").value = data.subtitulo || "";
