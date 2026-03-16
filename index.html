@@ -112,14 +112,21 @@
 
 
 
-  <section class="card" id="cardListaGerada">
+<section class="card" id="cardListaGerada">
+
   <div class="section-head">
     <h2>Lista gerada</h2>
+
+    <button class="btn-secondary btn-mini"
+      onclick="adicionarLinhaManual()">
+      + Nova linha
+    </button>
+
   </div>
 
   <div id="listaGeradaContainer" class="saved-list">
-    <!-- Os itens da lista gerada serão inseridos aqui pelo JS -->
   </div>
+
 </section>
 
   <!-- GERENCIAR LISTAS -->
@@ -166,7 +173,7 @@
 </section>
 
 <!-- =========================
-     IMPRESSÃO (LISTA CADASTRADA – SIMPLES)
+     IMPRESSÃO (LISTA CADASTRADA – BLOCO POR LISTA)
 ========================= -->
 <section id="saidaPrintListaCadastrada" class="print-area" style="display:none;">
 
@@ -174,18 +181,41 @@
     <h1 id="printListaCadastradaNome"></h1>
   </div>
 
- <table class="print-table">
-<thead>
-<tr>
-<th class="print-total">Quantidade</th>
-<th class="print-ing">Ingrediente</th>
-</tr>
-</thead>
-
-    <tbody id="printListaCadastradaIngredientes"></tbody>
-  </table>
+  <div id="printListaCadastradaConteudo"></div>
 
 </section>
+
+<!-- =========================
+     OPÇÕES DA IMPRESSÃO DAS LISTAS CADASTRADAS
+========================= -->
+<div id="modalImpressaoListaCadastrada" class="modal-backdrop" style="display:none;">
+  <div class="modal-card modal-impressao-card">
+    <div class="section-head">
+      <h3 style="margin:0;" id="modalImpressaoTitulo">Imprimir lista</h3>
+      <button class="btn-danger btn-mini" onclick="fecharModalImpressaoListaCadastrada()">X</button>
+    </div>
+
+    <div class="hint" style="margin-top:2px;">
+      A impressão vai manter o modelo atual da folha.
+    </div>
+
+    <label class="print-option-check" for="checkImprimirModosListaCadastrada">
+      <input id="checkImprimirModosListaCadastrada" type="checkbox" checked>
+      <span>
+        Incluir modo de fazer e modo de preparo
+        <small>
+          Marcado: imprime na ordem do modal, com ingredientes e depois o modo de fazer / preparo.
+          Desmarcado: imprime só os ingredientes, mantendo o layout atual.
+        </small>
+      </span>
+    </label>
+
+    <div class="actions-row" style="margin-top:14px;">
+      <button class="btn-print" onclick="confirmarImpressaoListaCadastrada()">Imprimir</button>
+      <button type="button" onclick="fecharModalImpressaoListaCadastrada()">Cancelar</button>
+    </div>
+  </div>
+</div>
 
 
 
