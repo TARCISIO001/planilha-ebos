@@ -402,13 +402,83 @@ function formatNumero(n) {
   return (v % 1 === 0) ? String(Math.trunc(v)) : String(v).replace(".", ",");
 }
 
+function escaparValorInput(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function montarLinhaEditavelListaGerada(item = {}, manual = false) {
+  const total = item?.totalTxt ?? item?.quantidade ?? "";
+  const ingrediente = item?.ingrediente ?? "";
+  const pratos = item?.pratosTxt ?? item?.pratos ?? "";
+
+  return `
+    <tr${manual ? ' data-manual="1"' : ""}>
+      <td class="print-total" data-label="Total">
+        <input class="editQtd" type="text" placeholder="Qtd" value="${escaparValorInput(total)}">
+      </td>
+
+      <td class="print-ing" data-label="Ingrediente">
+        <input class="editIng" type="text" placeholder="Ingrediente" value="${escaparValorInput(ingrediente)}">
+      </td>
+
+      <td class="print-pratos" data-label="Pratos">
+        <div class="preview-pratos-cell">
+          <input class="editPratos" type="text" placeholder="Pratos" value="${escaparValorInput(pratos)}">
+          ${manual ? `
+            <button class="btn-danger btn-mini" type="button" onclick="this.closest('tr').remove()">
+              Remover
+            </button>
+          ` : ""}
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
+function lerTextoTabelaSemBotoes(el) {
+  if (!el) return "";
+  const clone = el.cloneNode(true);
+  clone.querySelectorAll("button").forEach((btn) => btn.remove());
+  return (clone.textContent || "").trim();
+}
+
+function coletarLinhasEditaveisListaGerada() {
+  return Array.from(document.querySelectorAll("#listaGeradaContainer tbody tr"))
+    .map((tr) => {
+      const quantidade = (
+        tr.querySelector(".editQtd")?.value ||
+        lerTextoTabelaSemBotoes(tr.querySelector(".print-total"))
+      ).trim();
+
+      const ingrediente = (
+        tr.querySelector(".editIng")?.value ||
+        lerTextoTabelaSemBotoes(tr.querySelector(".print-ing"))
+      ).trim();
+
+      const pratos = (
+        tr.querySelector(".editPratos")?.value ||
+        lerTextoTabelaSemBotoes(tr.querySelector(".print-pratos"))
+      ).trim();
+
+      return { quantidade, ingrediente, pratos };
+    })
+    .filter((item) => item.quantidade || item.ingrediente || item.pratos);
+}
+
 function resetarQuantidadePessoasPara1() {
   const input = document.getElementById("numPratos");
-  if (input) input.value = "1";
-  setTimeout(() => {
-    const i = document.getElementById("numPratos");
-    if (i) i.value = "1";
-  }, 0);
+  if (!input) return;
+
+  const valorAtual = String(input.value || "").trim().replace(",", ".");
+  const numeroAtual = Number(valorAtual);
+
+  if (!Number.isFinite(numeroAtual) || numeroAtual < 1) {
+    input.value = "1";
+  }
 }
 
 
@@ -1217,29 +1287,53 @@ if (btnAdmin) {
 // Imprimir lista Gerada
 window.imprimirListaGerada = function imprimirListaGerada() {
   const area = document.getElementById("saidaPrint");
-  let tbody = document.getElementById("printIngredientes");
+  const tbody = document.getElementById("printIngredientes");
 
-  // Se ainda não montou a área de impressão, tenta gerar automaticamente
-  if ((!tbody || !tbody.children.length) && window.__listasAcumuladas?.length) {
+  if (!area || !tbody) {
+    alert("Não achei a área de impressão no HTML.");
+    return;
+  }
+
+  let linhasEditadas = coletarLinhasEditaveisListaGerada();
+
+  if (!linhasEditadas.length && window.__listasAcumuladas?.length) {
     try {
       window.gerarListaFinalAcumulada();
-      tbody = document.getElementById("printIngredientes");
+      linhasEditadas = coletarLinhasEditaveisListaGerada();
     } catch (e) {
       console.error(e);
     }
   }
 
-  if (!window.__listasAcumuladas || !window.__listasAcumuladas.length) {
+  if (!linhasEditadas.length) {
     alert("Adicione a lista primeiro para imprimir.");
     return;
   }
 
-  if (!area || !tbody || !tbody.children.length) {
-    alert("Não consegui montar a impressão automaticamente. Clique em 'Adicionar lista' novamente.");
-    return;
-  }
-
   try { limparSaidaPrintListaCadastrada(); } catch {}
+
+  tbody.innerHTML = "";
+
+  linhasEditadas.forEach((item) => {
+    const tr = document.createElement("tr");
+
+    const tdTotal = document.createElement("td");
+    tdTotal.className = "print-total";
+    tdTotal.textContent = item.quantidade || "—";
+
+    const tdIng = document.createElement("td");
+    tdIng.className = "print-ing";
+    tdIng.textContent = item.ingrediente || "—";
+
+    const tdPratos = document.createElement("td");
+    tdPratos.className = "print-pratos";
+    tdPratos.textContent = item.pratos || "—";
+
+    tr.appendChild(tdTotal);
+    tr.appendChild(tdIng);
+    tr.appendChild(tdPratos);
+    tbody.appendChild(tr);
+  });
 
   const displayAnterior = area.style.display;
   area.style.display = "block";
@@ -1278,51 +1372,257 @@ window.imprimirListaGerada = function imprimirListaGerada() {
   window.print();
 };
 
+
+//ADICIONAR FUNCAO NOVA LINHA ANTES DE IMPRIMIR//
+
+function adicionarLinhaManual(){
+  const tabela = document.querySelector("#listaGeradaContainer table tbody");
+
+  if(!tabela) {
+    alert("Adicione uma lista primeiro.");
+    return;
+  }
+
+  tabela.insertAdjacentHTML(
+    "beforeend",
+    montarLinhaEditavelListaGerada({ totalTxt: "", ingrediente: "", pratosTxt: "" }, true)
+  );
+
+  tabela.lastElementChild?.querySelector(".editQtd")?.focus();
+}
+
+window.adicionarLinhaManual = adicionarLinhaManual;
 // =======================================================
-// 🔹 IMPRIMIR LISTA CADASTRADA (SIMPLES)
-// - quantidade à esquerda
-// - ingrediente centralizado
-// - sem logo / sem grades (CSS em @media print com body.print-lista-cadastrada)
+// 🔹 IMPRESSÃO DAS LISTAS CADASTRADAS
+// - abre um aviso com checkbox antes de imprimir
+// - mantém o layout atual da folha
+// - segue a ordem do modal: ingredientes → modo / ingredientes → modo
 // =======================================================
+
+let printJobPendenteListaCadastrada = null;
+
+function esconderModalImpressaoListaCadastrada() {
+  const modal = document.getElementById("modalImpressaoListaCadastrada");
+  if (modal) modal.style.display = "none";
+}
+
+function abrirModalImpressaoListaCadastrada(config = {}) {
+  const modal = document.getElementById("modalImpressaoListaCadastrada");
+  const titulo = document.getElementById("modalImpressaoTitulo");
+  const checkbox = document.getElementById("checkImprimirModosListaCadastrada");
+
+  printJobPendenteListaCadastrada = config;
+
+  if (!modal) {
+    return imprimirRegistroListaCadastrada(
+      config.collectionName,
+      config.docId,
+      config.mensagens,
+      { incluirModo: true }
+    );
+  }
+
+  if (titulo) titulo.textContent = config.tituloModal || "Imprimir lista";
+  if (checkbox) checkbox.checked = true;
+
+  modal.style.display = "flex";
+}
+
+window.fecharModalImpressaoListaCadastrada = function fecharModalImpressaoListaCadastrada() {
+  printJobPendenteListaCadastrada = null;
+  esconderModalImpressaoListaCadastrada();
+};
+
+window.confirmarImpressaoListaCadastrada = async function confirmarImpressaoListaCadastrada() {
+  const job = printJobPendenteListaCadastrada;
+  const incluirModo = !!document.getElementById("checkImprimirModosListaCadastrada")?.checked;
+
+  printJobPendenteListaCadastrada = null;
+  esconderModalImpressaoListaCadastrada();
+
+  if (!job) return;
+
+  await imprimirRegistroListaCadastrada(job.collectionName, job.docId, job.mensagens, {
+    incluirModo,
+  });
+};
 
 function limparSaidaPrintListaCadastrada() {
   document.body.classList.remove("print-lista-cadastrada");
 
   const area = document.getElementById("saidaPrintListaCadastrada");
-  const tbody = document.getElementById("printListaCadastradaIngredientes");
+  const titulo = document.getElementById("printListaCadastradaNome");
+  const conteudo = document.getElementById("printListaCadastradaConteudo");
 
-  if (tbody) tbody.innerHTML = "";
+  if (titulo) titulo.textContent = "";
+  if (conteudo) conteudo.innerHTML = "";
   if (area) area.style.display = "none";
 }
 
-window.imprimirListaCadastrada = async function imprimirListaCadastrada(docId) {
-  if (!docId) {
-    alert("ID da lista não informado.");
-    return;
+function normalizarItensBlocoImpressao(itens = []) {
+  return (Array.isArray(itens) ? itens : []).filter((it) => {
+    const ing = (it?.ingrediente || "").toString().trim();
+    const qtd = (it?.quantidade || "").toString().trim();
+    return ing || qtd;
+  });
+}
+
+function criarTabelaIngredientesBlocoImpressao(itens = []) {
+  const table = document.createElement("table");
+  table.className = "print-table";
+
+  const thead = document.createElement("thead");
+  thead.innerHTML = `
+    <tr>
+      <th class="print-total">Quantidade</th>
+      <th class="print-ing">Ingrediente</th>
+    </tr>
+  `;
+
+  const tbody = document.createElement("tbody");
+
+  if (!itens.length) {
+    const tr = document.createElement("tr");
+    const tdIng = document.createElement("td");
+    tdIng.className = "print-ing";
+    tdIng.colSpan = 2;
+    tdIng.textContent = "Sem ingredientes cadastrados.";
+    tr.appendChild(tdIng);
+    tbody.appendChild(tr);
+  } else {
+    itens.forEach((it) => {
+      const tr = document.createElement("tr");
+
+      const tdQtd = document.createElement("td");
+      tdQtd.className = "print-total";
+      tdQtd.textContent = (it?.quantidade || "").toString().trim() || "—";
+
+      const tdIng = document.createElement("td");
+      tdIng.className = "print-ing";
+      tdIng.textContent = (it?.ingrediente || "").toString().trim() || "—";
+
+      tr.appendChild(tdQtd);
+      tr.appendChild(tdIng);
+      tbody.appendChild(tr);
+    });
   }
 
+  table.appendChild(thead);
+  table.appendChild(tbody);
+  return table;
+}
+
+function criarTituloSecaoImpressao(texto) {
+  const titulo = document.createElement("div");
+  titulo.className = "print-section-title";
+  titulo.textContent = texto;
+  return titulo;
+}
+
+function blocoTemConteudoImprimivel(bloco, incluirModo) {
+  return !!(
+    bloco?.itens?.length ||
+    (bloco?.subtitulo || "").trim() ||
+    (incluirModo && (bloco?.modo || "").trim())
+  );
+}
+
+function montarConteudoImpressaoListaCadastrada(data, incluirModo) {
+  const conteudo = document.getElementById("printListaCadastradaConteudo");
+  if (!conteudo) return;
+
+  conteudo.innerHTML = "";
+
+  const blocos = [
+    {
+      tituloLista: "Lista 1",
+      subtitulo: (data?.subtitulo || "").toString().trim(),
+      itens: normalizarItensBlocoImpressao(data?.itens),
+      modo: (data?.modo || "").toString().trim(),
+      tituloModo: "Modo de fazer",
+    },
+    {
+      tituloLista: "Lista 2",
+      subtitulo: (data?.subtitulo2 || "").toString().trim(),
+      itens: normalizarItensBlocoImpressao(data?.itens2),
+      modo: (data?.modo2 || "").toString().trim(),
+      tituloModo: "Modo de preparo",
+    },
+  ];
+
+  let blocosAtivos = blocos.filter((bloco) => blocoTemConteudoImprimivel(bloco, incluirModo));
+
+  if (!blocosAtivos.length) {
+    blocosAtivos = [blocos[0]];
+  }
+
+  const mostrarTituloLista = blocosAtivos.length > 1 || blocosAtivos[0]?.tituloLista === "Lista 2";
+
+  blocosAtivos.forEach((bloco) => {
+    const wrap = document.createElement("div");
+    wrap.className = "print-list-block";
+
+    if (mostrarTituloLista) {
+      const tituloLista = document.createElement("h2");
+      tituloLista.className = "print-list-block-title";
+      tituloLista.textContent = bloco.tituloLista;
+      wrap.appendChild(tituloLista);
+    }
+
+    if (bloco.subtitulo) {
+      const subtitulo = document.createElement("div");
+      subtitulo.className = "print-list-subtitle";
+      subtitulo.textContent = bloco.subtitulo;
+      wrap.appendChild(subtitulo);
+    }
+
+    wrap.appendChild(criarTituloSecaoImpressao("Ingredientes"));
+    wrap.appendChild(criarTabelaIngredientesBlocoImpressao(bloco.itens));
+
+    if (incluirModo && bloco.modo) {
+      wrap.appendChild(criarTituloSecaoImpressao(bloco.tituloModo));
+
+      const modoBox = document.createElement("div");
+      modoBox.className = "print-mode-box";
+
+      const modoTexto = document.createElement("p");
+      modoTexto.className = "print-mode-text";
+      modoTexto.textContent = bloco.modo;
+
+      modoBox.appendChild(modoTexto);
+      wrap.appendChild(modoBox);
+    }
+
+    conteudo.appendChild(wrap);
+  });
+}
+
+async function imprimirRegistroListaCadastrada(collectionName, docId, mensagens = {}, opcoes = {}) {
   const area = document.getElementById("saidaPrintListaCadastrada");
   const titulo = document.getElementById("printListaCadastradaNome");
-  const tbody = document.getElementById("printListaCadastradaIngredientes");
+  const conteudo = document.getElementById("printListaCadastradaConteudo");
 
-  if (!area || !titulo || !tbody) {
-    alert("Área de impressão simples não encontrada no HTML. Confira se existe #saidaPrintListaCadastrada.");
+  if (!docId) {
+    alert(mensagens.idNaoInformado || "ID não informado.");
     return;
   }
 
-  // sempre limpa antes
+  if (!area || !titulo || !conteudo) {
+    alert("Área de impressão não encontrada no HTML. Confira se existe #saidaPrintListaCadastrada.");
+    return;
+  }
+
   limparSaidaPrintListaCadastrada();
 
   let mq = null;
   let onChange = null;
-
   let cleaned = false;
+
   const cleanup = () => {
     if (cleaned) return;
     cleaned = true;
 
     limparSaidaPrintListaCadastrada();
-
     window.removeEventListener("afterprint", cleanup);
 
     try {
@@ -1337,70 +1637,22 @@ window.imprimirListaCadastrada = async function imprimirListaCadastrada(docId) {
 
   try {
     const { db, doc, getDoc } = fb();
-    const snap = await getDoc(doc(db, COLLECTION, String(docId)));
+    const snap = await getDoc(doc(db, collectionName, String(docId)));
 
     if (!snap.exists()) {
-      alert("Lista não encontrada.");
+      alert(mensagens.naoEncontrado || "Registro não encontrado.");
       return;
     }
 
     const data = snap.data() || {};
+    const incluirModo = opcoes?.incluirModo !== false;
 
     titulo.textContent = data.nome || "(sem nome)";
-
-    const itens1 = Array.isArray(data.itens) ? data.itens : [];
-    const itens2 = Array.isArray(data.itens2) ? data.itens2 : [];
-
-    // Lista 1 + Lista 2 (sem multiplicar)
-    const itens = [...itens1, ...itens2].filter((it) => {
-      const ing = (it?.ingrediente || "").trim();
-      const qtd = (it?.quantidade || "").toString().trim();
-      return ing || qtd;
-    });
-
-    tbody.innerHTML = "";
-
-    if (!itens.length) {
-      const tr = document.createElement("tr");
-const tdTotal = document.createElement("td");
-tdTotal.className = "print-total";
-tdTotal.textContent = (it?.quantidade || "").toString().trim() || "—";
-
-const tdIng = document.createElement("td");
-tdIng.className = "print-ing";
-tdIng.textContent = (it?.ingrediente || "").trim();
-
-//const tdPratos = document.createElement("td");//
-//tdPratos.className = "print-pratos";//
-//tdPratos.textContent = "—";//
-
-tr.appendChild(tdTotal);
-tr.appendChild(tdIng);
-
-    } else {
-      itens.forEach((it) => {
-        const tr = document.createElement("tr");
-
-        // Quantidade (esquerda)
-        const tdQtd = document.createElement("td");
-        tdQtd.className = "print-total";
-        tdQtd.textContent = (it?.quantidade || "").toString().trim() || "—";
-
-        // Ingrediente (meio)
-        const tdIng = document.createElement("td");
-        tdIng.className = "print-ing";
-        tdIng.textContent = (it?.ingrediente || "").trim();
-
-        tr.appendChild(tdQtd);
-        tr.appendChild(tdIng);
-        tbody.appendChild(tr);
-      });
-    }
+    montarConteudoImpressaoListaCadastrada(data, incluirModo);
 
     area.style.display = "block";
     document.body.classList.add("print-lista-cadastrada");
 
-    // cleanup robusto (afterprint + matchMedia)
     window.addEventListener("afterprint", cleanup);
 
     try {
@@ -1418,11 +1670,23 @@ tr.appendChild(tdIng);
     window.print();
   } catch (e) {
     console.error(e);
-    alert("Erro ao imprimir lista cadastrada. Veja o console (F12).");
+    alert(mensagens.erro || "Erro ao imprimir. Veja o console (F12).");
     cleanup();
   }
-};
+}
 
+window.imprimirListaCadastrada = function imprimirListaCadastrada(docId) {
+  return abrirModalImpressaoListaCadastrada({
+    collectionName: COLLECTION,
+    docId,
+    tituloModal: "Imprimir lista cadastrada",
+    mensagens: {
+      idNaoInformado: "ID da lista não informado.",
+      naoEncontrado: "Lista não encontrada.",
+      erro: "Erro ao imprimir lista cadastrada. Veja o console (F12).",
+    },
+  });
+};
 
 
 function extrairInfoQualidadesPade(ingrediente, quantidade = "") {
@@ -1721,13 +1985,11 @@ window.gerarListaFinalAcumulada = function () {
     const container = document.getElementById("listaGeradaContainer");
 
     const linhasHtml = linhas.length
-      ? linhas.map((item) => `
-          <tr>
-            <td class="print-total" data-label="Total">${item.totalTxt}</td>
-            <td class="print-ing" data-label="Ingrediente">${item.ingrediente}</td>
-            <td class="print-pratos" data-label="Pratos">${montarTextoPratosLista(item)}</td>
-          </tr>
-        `).join("")
+      ? linhas.map((item) => montarLinhaEditavelListaGerada({
+          totalTxt: item.totalTxt,
+          ingrediente: item.ingrediente,
+          pratosTxt: montarTextoPratosLista(item),
+        })).join("")
       : `
           <tr>
             <td class="print-total" data-label="Total">—</td>
@@ -2278,74 +2540,17 @@ window.excluirPositivo = async function(docId) {
 
 //imprimir positivo//
 
-window.imprimirPositivo = async function(docId) {
-  if (!docId) {
-    alert("ID do positivo não informado.");
-    return;
-  }
-
-  const area = document.getElementById("saidaPrintListaCadastrada");
-  const titulo = document.getElementById("printListaCadastradaNome");
-  const tbody = document.getElementById("printListaCadastradaIngredientes");
-
-  if (!area || !titulo || !tbody) return alert("Área de impressão não encontrada.");
-
-  // limpa antes
-  tbody.innerHTML = "";
-
-  try {
-    const { db, doc, getDoc } = fb();
-    const snap = await getDoc(doc(db, "positivos", docId));
-    if (!snap.exists()) return alert("Positivo não encontrado.");
-    const data = snap.data() || {};
-
-    titulo.textContent = data.nome || "(sem nome)";
-
-    const itens1 = Array.isArray(data.itens) ? data.itens : [];
-    const itens2 = Array.isArray(data.itens2) ? data.itens2 : [];
-
-    const itens = [...itens1, ...itens2].filter(it => (it.ingrediente || "").trim());
-
-    if (!itens.length) {
-      const tr = document.createElement("tr");
-      const tdIng = document.createElement("td");
-      tdIng.className = "print-ing";
-      tdIng.colSpan = 2;
-      tdIng.textContent = "Sem ingredientes cadastrados.";
-      tr.appendChild(tdIng);
-      tbody.appendChild(tr);
-    } else {
-      itens.forEach(it => {
-        const tr = document.createElement("tr");
-
-        const tdQtd = document.createElement("td");
-        tdQtd.className = "print-total";
-        tdQtd.textContent = (it.quantidade || "").trim() || "—";
-
-        const tdIng = document.createElement("td");
-        tdIng.className = "print-ing";
-        tdIng.textContent = it.ingrediente || "—";
-
-        tr.appendChild(tdQtd);
-        tr.appendChild(tdIng);
-        tbody.appendChild(tr);
-      });
-    }
-
-    // mostra e imprime
-    area.style.display = "block";
-    document.body.classList.add("print-lista-cadastrada");
-    window.print();
-
-    // opcional: limpa após impressão
-    area.style.display = "none";
-    tbody.innerHTML = "";
-    document.body.classList.remove("print-lista-cadastrada");
-
-  } catch (e) {
-    console.error(e);
-    alert("Erro ao imprimir positivo. Veja o console.");
-  }
+window.imprimirPositivo = function(docId) {
+  return abrirModalImpressaoListaCadastrada({
+    collectionName: "positivos",
+    docId,
+    tituloModal: "Imprimir positivo",
+    mensagens: {
+      idNaoInformado: "ID do positivo não informado.",
+      naoEncontrado: "Positivo não encontrado.",
+      erro: "Erro ao imprimir positivo. Veja o console (F12).",
+    },
+  });
 };
 
 
@@ -2554,76 +2759,17 @@ window.abrirTelaBanhos = function () {
   window.scrollTo({ top: 0, behavior: "instant" });
 };
 
-window.imprimirBanho = async function(docId) {
-  if (!docId) {
-    alert("ID do banho não informado.");
-    return;
-  }
-
-  const area = document.getElementById("saidaPrintListaCadastrada");
-  const titulo = document.getElementById("printListaCadastradaNome");
-  const tbody = document.getElementById("printListaCadastradaIngredientes");
-
-  if (!area || !titulo || !tbody) {
-    alert("Área de impressão não encontrada.");
-    return;
-  }
-
-  // limpa tabela antes
-  tbody.innerHTML = "";
-
-  try {
-    const { db, doc, getDoc } = fb();
-    const snap = await getDoc(doc(db, "banhos", docId));
-    if (!snap.exists()) return alert("Banho não encontrado.");
-    const data = snap.data() || {};
-
-    titulo.textContent = data.nome || "(sem nome)";
-
-    const itens1 = Array.isArray(data.itens) ? data.itens : [];
-    const itens2 = Array.isArray(data.itens2) ? data.itens2 : [];
-    const itens = [...itens1, ...itens2].filter(it => (it.ingrediente || "").trim());
-
-    if (!itens.length) {
-      const tr = document.createElement("tr");
-      const tdIng = document.createElement("td");
-      tdIng.className = "print-ing";
-      tdIng.colSpan = 2;
-      tdIng.textContent = "Sem ingredientes cadastrados.";
-      tr.appendChild(tdIng);
-      tbody.appendChild(tr);
-    } else {
-      itens.forEach(it => {
-        const tr = document.createElement("tr");
-
-        const tdQtd = document.createElement("td");
-        tdQtd.className = "print-total";
-        tdQtd.textContent = (it.quantidade || "").trim() || "—";
-
-        const tdIng = document.createElement("td");
-        tdIng.className = "print-ing";
-        tdIng.textContent = it.ingrediente || "—";
-
-        tr.appendChild(tdQtd);
-        tr.appendChild(tdIng);
-        tbody.appendChild(tr);
-      });
-    }
-
-    // mostra e imprime
-    area.style.display = "block";
-    document.body.classList.add("print-lista-cadastrada");
-    window.print();
-
-    // opcional: limpa após impressão
-    area.style.display = "none";
-    tbody.innerHTML = "";
-    document.body.classList.remove("print-lista-cadastrada");
-
-  } catch (e) {
-    console.error(e);
-    alert("Erro ao imprimir banho. Veja o console (F12).");
-  }
+window.imprimirBanho = function(docId) {
+  return abrirModalImpressaoListaCadastrada({
+    collectionName: "banhos",
+    docId,
+    tituloModal: "Imprimir banho",
+    mensagens: {
+      idNaoInformado: "ID do banho não informado.",
+      naoEncontrado: "Banho não encontrado.",
+      erro: "Erro ao imprimir banho. Veja o console (F12).",
+    },
+  });
 };
 
 // OFERENDAS//
@@ -2818,59 +2964,17 @@ window.excluirOferenda = async function(docId) {
 };
 
 // Imprimir Oferenda
-window.imprimirOferenda = async function(docId) {
-  const area = document.getElementById("saidaPrintListaCadastrada");
-  const titulo = document.getElementById("printListaCadastradaNome");
-  const tbody = document.getElementById("printListaCadastradaIngredientes");
-
-  if (!area || !titulo || !tbody) return alert("Área de impressão não encontrada.");
-
-  tbody.innerHTML = "";
-
-  try {
-    const { db, doc, getDoc } = fb();
-    const snap = await getDoc(doc(db, "oferendas", docId));
-    if (!snap.exists()) return alert("Oferenda não encontrada.");
-    const data = snap.data() || {};
-
-    titulo.textContent = data.nome || "(sem nome)";
-
-    const itens1 = Array.isArray(data.itens) ? data.itens : [];
-    const itens2 = Array.isArray(data.itens2) ? data.itens2 : [];
-    const itens = [...itens1, ...itens2].filter(it => (it.ingrediente || "").trim());
-
-    if (!itens.length) {
-      const tr = document.createElement("tr");
-      const tdIng = document.createElement("td");
-      tdIng.colSpan = 2;
-      tdIng.textContent = "Sem ingredientes cadastrados.";
-      tr.appendChild(tdIng);
-      tbody.appendChild(tr);
-    } else {
-      itens.forEach(it => {
-        const tr = document.createElement("tr");
-        const tdQtd = document.createElement("td");
-        tdQtd.className = "print-total";
-        tdQtd.textContent = it.quantidade || "—";
-        const tdIng = document.createElement("td");
-        tdIng.className = "print-ing";
-        tdIng.textContent = it.ingrediente || "—";
-        tr.appendChild(tdQtd);
-        tr.appendChild(tdIng);
-        tbody.appendChild(tr);
-      });
-    }
-
-    area.style.display = "block";
-    document.body.classList.add("print-lista-cadastrada");
-    window.print();
-    area.style.display = "none";
-    tbody.innerHTML = "";
-    document.body.classList.remove("print-lista-cadastrada");
-  } catch (e) {
-    console.error(e);
-    alert("Erro ao imprimir oferenda.");
-  }
+window.imprimirOferenda = function(docId) {
+  return abrirModalImpressaoListaCadastrada({
+    collectionName: "oferendas",
+    docId,
+    tituloModal: "Imprimir oferenda",
+    mensagens: {
+      idNaoInformado: "ID da oferenda não informado.",
+      naoEncontrado: "Oferenda não encontrada.",
+      erro: "Erro ao imprimir oferenda. Veja o console (F12).",
+    },
+  });
 };
 
 //ESCONDER TODAS AS TELAS//
@@ -2895,8 +2999,13 @@ function esconderTodasAsTelas() {
   if (saidaPrint) saidaPrint.style.display = "none";
 
   // esconde também a impressão simples
-  const saidaPrintLista = document.getElementById("saidaPrintListaCadastrada");
-  const printLista = document.getElementById("printListaCadastradaIngredientes");
-  if (printLista) printLista.innerHTML = "";
-  if (saidaPrintLista) saidaPrintLista.style.display = "none";
+  try {
+    limparSaidaPrintListaCadastrada();
+  } catch {
+    const saidaPrintLista = document.getElementById("saidaPrintListaCadastrada");
+    if (saidaPrintLista) saidaPrintLista.style.display = "none";
+  }
+
+  printJobPendenteListaCadastrada = null;
+  esconderModalImpressaoListaCadastrada();
 }
