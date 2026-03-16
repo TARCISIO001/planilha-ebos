@@ -1546,32 +1546,6 @@ tbody tr:hover{
   background: #f5f5f5;
 }
 
-#listaGeradaContainer .preview-print-area .print-table input {
-  margin: 0;
-  padding: 8px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 10px;
-  background: #ffffff;
-  color: #020617;
-  font: inherit;
-}
-
-#listaGeradaContainer .preview-print-area .print-table td.print-total input {
-  text-align: center;
-}
-
-#listaGeradaContainer .preview-print-area .print-table .preview-pratos-cell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-#listaGeradaContainer .preview-print-area .print-table .preview-pratos-cell input {
-  width: auto;
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
 @media (max-width: 720px) {
   #listaGeradaContainer .preview-print-title {
     font-size: 20px;
@@ -2027,11 +2001,6 @@ img {
   #listaGeradaContainer .preview-print-area .print-table .print-pratos {
     font-size: 13px;
   }
-
-  #listaGeradaContainer .preview-print-area .print-table .preview-pratos-cell {
-    flex-direction: column;
-    align-items: stretch;
-  }
 }
 
 @media (max-width: 420px) {
@@ -2045,5 +2014,100 @@ img {
 
   #listaGeradaContainer .preview-print-area .print-table td {
     padding: 9px 10px;
+  }
+}
+
+
+/* ===================================================
+   LISTA GERADA - REFORÇO VISUAL MOBILE
+=================================================== */
+@media (max-width: 720px) {
+  #cardListaGerada {
+    padding: 14px;
+  }
+
+  #listaGeradaContainer {
+    margin-top: 8px;
+  }
+
+  #listaGeradaContainer .preview-print-area {
+    border: 2px solid #94a3b8;
+    border-radius: 18px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    overflow: visible;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-header {
+    padding: 16px 14px 10px;
+    border-bottom: 2px solid #cbd5e1;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table tbody {
+    gap: 14px;
+    padding: 12px;
+    background: #f8fafc;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table tbody tr {
+    border: 2px solid #94a3b8;
+    border-radius: 16px;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table td {
+    padding: 12px 14px;
+    border-bottom: 2px solid #e2e8f0;
+    background: #ffffff;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table td::before {
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: #334155;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table td.print-total {
+    background: #eff6ff;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table td.print-ing {
+    background: #ffffff;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table td.print-pratos {
+    background: #f8fafc;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table input {
+    min-height: 46px;
+    padding: 12px 14px;
+    border: 2px solid #cbd5e1;
+    border-radius: 12px;
+    font-size: 16px;
+    background: #ffffff;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  }
+}
+
+@media (max-width: 420px) {
+  #listaGeradaContainer .preview-print-area {
+    border-radius: 16px;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table tbody {
+    padding: 10px;
+    gap: 12px;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table tbody tr {
+    border-radius: 14px;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table td {
+    padding: 11px 12px;
   }
 }
