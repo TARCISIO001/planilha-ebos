@@ -64,6 +64,10 @@
           🌿 Banhos
         </button>
 
+        <button class="menu-btn" onclick="abrirTelaObrigacoes()">
+          📜 Lista Obrigação
+        </button>
+
         <button class="menu-btn" onclick="abrirTelaAdmin()" id="btnAdmin">
           ⚙ Administração
         </button>
@@ -369,6 +373,42 @@
   </div>
 </section>
 
+<!-- =========================
+     LISTA OBRIGAÇÃO
+========================= -->
+<section id="obrigacoesScreen" style="display:none; min-height:100vh;">
+  <div class="app-container">
+
+    <div class="section-head">
+      <h2>Projeto Lista Obrigação</h2>
+      <button class="btn-tertiary" onclick="voltarTelaPrincipal()">Voltar</button>
+    </div>
+
+    <section class="card">
+      <div class="actions-row">
+        <button class="btn-secondary" onclick="abrirModalObrigacoes()">
+          Cadastrar lista
+        </button>
+
+        <input id="pesquisaObrigacoes" type="text" placeholder="Procurar lista..." style="max-width:320px;" oninput="renderizarObrigacoes()" />
+
+        <button class="btn-tertiary" onclick="renderizarObrigacoes()">
+          Procurar
+        </button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-head" style="margin-top:0;">
+        <h2>Listas obrigação cadastradas</h2>
+      </div>
+
+      <div id="obrigacoesSalvosBox" class="saved-list"></div>
+    </section>
+
+  </div>
+</section>
+
   </div>
  
 
@@ -429,6 +469,13 @@
         placeholder="Escreva aqui o modo de fazer..."
         style="width:100%; min-height:120px;"
       ></textarea>
+
+      <div class="oferenda-fotos-box">
+        <label class="label" for="modalFotosLista_1" style="margin-top:12px;">Fotos abaixo do modo de fazer</label>
+        <input id="modalFotosLista_1" type="file" accept="image/*" multiple />
+        <div class="hint">Você pode adicionar até 3 fotos nesta parte.</div>
+        <div id="previewFotosLista_1" class="foto-preview-grid"></div>
+      </div>
     </div>
 
     <!-- ====== BLOCO 3 ====== -->
@@ -468,6 +515,13 @@
         placeholder="Escreva aqui o modo de preparo..."
         style="width:100%; min-height:120px;"
       ></textarea>
+
+      <div class="oferenda-fotos-box">
+        <label class="label" for="modalFotosLista_2" style="margin-top:12px;">Fotos abaixo do modo de preparo</label>
+        <input id="modalFotosLista_2" type="file" accept="image/*" multiple />
+        <div class="hint">Você pode adicionar até 3 fotos nesta parte.</div>
+        <div id="previewFotosLista_2" class="foto-preview-grid"></div>
+      </div>
     </div>
 
     <div class="actions-row" style="margin-top:12px;">
@@ -539,6 +593,13 @@
         placeholder="Escreva aqui o modo de fazer..."
         style="width:100%; min-height:120px;"
       ></textarea>
+
+      <div class="oferenda-fotos-box">
+        <label class="label" for="modalFotosPositivos_1" style="margin-top:12px;">Fotos abaixo do modo de fazer</label>
+        <input id="modalFotosPositivos_1" type="file" accept="image/*" multiple />
+        <div class="hint">Você pode adicionar até 3 fotos nesta parte.</div>
+        <div id="previewFotosPositivos_1" class="foto-preview-grid"></div>
+      </div>
     </div>
 
     <!-- ====== BLOCO 3 ====== -->
@@ -578,6 +639,13 @@
         placeholder="Escreva aqui o modo de preparo..."
         style="width:100%; min-height:120px;"
       ></textarea>
+
+      <div class="oferenda-fotos-box">
+        <label class="label" for="modalFotosPositivos_2" style="margin-top:12px;">Fotos abaixo do modo de preparo</label>
+        <input id="modalFotosPositivos_2" type="file" accept="image/*" multiple />
+        <div class="hint">Você pode adicionar até 3 fotos nesta parte.</div>
+        <div id="previewFotosPositivos_2" class="foto-preview-grid"></div>
+      </div>
     </div>
 
     <div class="actions-row" style="margin-top:12px;">
@@ -634,6 +702,13 @@
     <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
       <div class="saved-title" style="margin-bottom:8px;">Modo de fazer</div>
       <textarea id="modalModoFazerOferenda_1" placeholder="Escreva aqui o modo de fazer..." style="width:100%; min-height:120px;"></textarea>
+
+      <div class="oferenda-fotos-box">
+        <label class="label" for="modalFotosOferenda_1" style="margin-top:12px;">Fotos abaixo do modo de fazer</label>
+        <input id="modalFotosOferenda_1" type="file" accept="image/*" multiple />
+        <div class="hint">Você pode adicionar até 3 fotos nesta parte.</div>
+        <div id="previewFotosOferenda_1" class="foto-preview-grid"></div>
+      </div>
     </div>
 
     <!-- Bloco 3 -->
@@ -664,6 +739,13 @@
     <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
       <div class="saved-title" style="margin-bottom:8px;">Modo de preparo</div>
       <textarea id="modalModoFazerOferenda_2" placeholder="Escreva aqui o modo de preparo..." style="width:100%; min-height:120px;"></textarea>
+
+      <div class="oferenda-fotos-box">
+        <label class="label" for="modalFotosOferenda_2" style="margin-top:12px;">Fotos abaixo do modo de preparo</label>
+        <input id="modalFotosOferenda_2" type="file" accept="image/*" multiple />
+        <div class="hint">Você pode adicionar até 3 fotos nesta parte.</div>
+        <div id="previewFotosOferenda_2" class="foto-preview-grid"></div>
+      </div>
     </div>
 
     <div class="actions-row" style="margin-top:12px;">
@@ -718,6 +800,13 @@
     <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
       <div class="saved-title" style="margin-bottom:8px;">Modo de fazer</div>
       <textarea id="modalModoFazerBanho_1" placeholder="Escreva aqui o modo de fazer..." style="width:100%; min-height:120px;"></textarea>
+
+      <div class="oferenda-fotos-box">
+        <label class="label" for="modalFotosBanho_1" style="margin-top:12px;">Fotos abaixo do modo de fazer</label>
+        <input id="modalFotosBanho_1" type="file" accept="image/*" multiple />
+        <div class="hint">Você pode adicionar até 3 fotos nesta parte.</div>
+        <div id="previewFotosBanho_1" class="foto-preview-grid"></div>
+      </div>
     </div>
 
     <!-- Bloco 3 -->
@@ -748,6 +837,13 @@
     <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
       <div class="saved-title" style="margin-bottom:8px;">Modo de preparo</div>
       <textarea id="modalModoFazerBanho_2" placeholder="Escreva aqui o modo de preparo..." style="width:100%; min-height:120px;"></textarea>
+
+      <div class="oferenda-fotos-box">
+        <label class="label" for="modalFotosBanho_2" style="margin-top:12px;">Fotos abaixo do modo de preparo</label>
+        <input id="modalFotosBanho_2" type="file" accept="image/*" multiple />
+        <div class="hint">Você pode adicionar até 3 fotos nesta parte.</div>
+        <div id="previewFotosBanho_2" class="foto-preview-grid"></div>
+      </div>
     </div>
 
     <div class="actions-row" style="margin-top:12px;">
@@ -756,6 +852,104 @@
     </div>
 
     <div class="hint" id="modalMsgBanhos" style="margin-top:8px;"></div>
+
+  </div>
+</div>
+
+<!-- =========================
+     MODAL LISTA OBRIGAÇÃO
+========================= -->
+<div id="modalBackdropObrigacoes" class="modal-backdrop" style="display:none;">
+  <div class="modal-card">
+
+    <div class="section-head">
+      <h3 style="margin:0;">Cadastrar Lista Obrigação</h3>
+      <button class="btn-danger btn-mini" onclick="fecharModalObrigacoes()">X</button>
+    </div>
+
+    <!-- Bloco 1 -->
+    <div style="margin-top:10px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:10px;">Lista 1</div>
+
+      <label class="label">Nome da obrigação</label>
+      <input id="modalNomeObrigacao_1" type="text" placeholder="Ex: Obrigação de cabeça" />
+
+      <label class="label" style="margin-top:8px;">Subtítulo</label>
+      <input id="modalSubtituloObrigacao_1" type="text" placeholder="Ex: Para firmeza espiritual" />
+
+      <div class="section-head" style="margin:12px 0 8px;">
+        <div class="saved-title">Ingredientes</div>
+        <button class="btn-tertiary btn-mini" onclick="modalAdicionarLinhaObrigacoes('1')">+ Adicionar linha</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Ingrediente</th>
+            <th style="width:160px;">Quantidade</th>
+            <th style="width:120px;">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="modalBodyLinhasObrigacoes_1"></tbody>
+      </table>
+    </div>
+
+    <!-- Bloco 2 -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:8px;">Modo de fazer</div>
+      <textarea id="modalModoFazerObrigacao_1" placeholder="Escreva aqui o modo de fazer..." style="width:100%; min-height:120px;"></textarea>
+
+      <div class="oferenda-fotos-box">
+        <label class="label" for="modalFotosObrigacao_1" style="margin-top:12px;">Fotos abaixo do modo de fazer</label>
+        <input id="modalFotosObrigacao_1" type="file" accept="image/*" multiple />
+        <div class="hint">Você pode adicionar até 3 fotos nesta parte.</div>
+        <div id="previewFotosObrigacao_1" class="foto-preview-grid"></div>
+      </div>
+    </div>
+
+    <!-- Bloco 3 -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:10px;">Lista 2</div>
+
+      <label class="label" style="margin-top:8px;">Subtítulo</label>
+      <input id="modalSubtituloObrigacao_2" type="text" placeholder="Ex: Complemento / segunda parte" />
+
+      <div class="section-head" style="margin:12px 0 8px;">
+        <div class="saved-title">Ingredientes</div>
+        <button class="btn-tertiary btn-mini" onclick="modalAdicionarLinhaObrigacoes('2')">+ Adicionar linha</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Ingrediente</th>
+            <th style="width:160px;">Quantidade</th>
+            <th style="width:120px;">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="modalBodyLinhasObrigacoes_2"></tbody>
+      </table>
+    </div>
+
+    <!-- Bloco 4 -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:8px;">Modo de preparo</div>
+      <textarea id="modalModoFazerObrigacao_2" placeholder="Escreva aqui o modo de preparo..." style="width:100%; min-height:120px;"></textarea>
+
+      <div class="oferenda-fotos-box">
+        <label class="label" for="modalFotosObrigacao_2" style="margin-top:12px;">Fotos abaixo do modo de preparo</label>
+        <input id="modalFotosObrigacao_2" type="file" accept="image/*" multiple />
+        <div class="hint">Você pode adicionar até 3 fotos nesta parte.</div>
+        <div id="previewFotosObrigacao_2" class="foto-preview-grid"></div>
+      </div>
+    </div>
+
+    <div class="actions-row" style="margin-top:12px;">
+      <button class="btn-secondary" onclick="enviarParaBancoObrigacoes()">Enviar para banco de dados</button>
+      <button onclick="fecharModalObrigacoes()">Cancelar</button>
+    </div>
+
+    <div class="hint" id="modalMsgObrigacoes" style="margin-top:8px;"></div>
 
   </div>
 </div>
