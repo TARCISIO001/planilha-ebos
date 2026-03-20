@@ -7,6 +7,9 @@
 const COLLECTION = "listas";
 const USERS_COLLECTION = "users";
 const MASTERS = ["taina", "tata"];
+const OFERENDA_MAX_FOTOS_POR_BLOCO = 3;
+const OFERENDA_FOTO_MAX_LADO = 1280;
+const OFERENDA_FOTO_QUALIDADE = 0.78;
 
 
 let editingDocId = null;
@@ -819,7 +822,9 @@ function modalGetPayloadCompat() {
     return {
       tipo: "novo",
       lista1: { nome: nome1, subtitulo: subtitulo1, modo: modo1, itens: itens1 },
-      lista2: { subtitulo: subtitulo2, modo: modo2, itens: itens2 }
+      lista2: { subtitulo: subtitulo2, modo: modo2, itens: itens2 },
+      fotosModo1: [...normalizarFotosOferenda(getFotosAreaState("listas")["1"])],
+      fotosModo2: [...normalizarFotosOferenda(getFotosAreaState("listas")["2"])],
     };
   }
 
@@ -834,6 +839,7 @@ window.fecharModal = function fecharModal() {
 };
 
 function abrirModal() {
+  prepararModalFotosArea("listas");
   $("modalBackdrop") && ($("modalBackdrop").style.display = "flex");
 }
 
@@ -851,11 +857,11 @@ window.cadastrarLista = function cadastrarLista() {
     if ($("modalSubtitulo_1")) $("modalSubtitulo_1").value = "";
     if ($("modalSubtitulo_2")) $("modalSubtitulo_2").value = "";
 
-
     modalLimparLinhas("1");
     modalLimparLinhas("2");
     modalCriarLinha("1", "", "");
     modalCriarLinha("2", "", "");
+    resetarFotosArea("listas");
   } else {
     if ($("modalNomeEbo")) $("modalNomeEbo").value = "";
     modalLimparLinhas("old");
@@ -984,6 +990,9 @@ window.editarLista = async function editarLista(docId) {
       const itens2 = Array.isArray(data.itens2) ? data.itens2 : [];
       if (itens2.length) itens2.forEach((it) => modalCriarLinha("2", it.ingrediente || "", it.quantidade || ""));
       else modalCriarLinha("2", "", "");
+
+      definirFotosArea("listas", "1", data.fotosModo1);
+      definirFotosArea("listas", "2", data.fotosModo2);
     } else {
       // modal antigo
       if ($("modalNomeEbo")) $("modalNomeEbo").value = data.nome || "";
@@ -1038,6 +1047,7 @@ window.__enviarBancoComAlerta = async function () {
   nome_norm: normalizarTexto(lista1.nome),
   subtitulo: lista1.subtitulo || "",
   modo: lista1.modo || "",
+  fotosModo1: payloadModal.fotosModo1 || [],
   itens: lista1.itens,
 
   // Lista 2 NÃO tem nome
@@ -1045,6 +1055,7 @@ window.__enviarBancoComAlerta = async function () {
   nome2_norm: "",
   subtitulo2: lista2.subtitulo || "",
   modo2: lista2.modo || "",
+  fotosModo2: payloadModal.fotosModo2 || [],
   itens2: lista2.itens || [],
 
   updatedAt: serverTimestamp(),
@@ -1523,7 +1534,7 @@ function blocoTemConteudoImprimivel(bloco, incluirModo) {
   return !!(
     bloco?.itens?.length ||
     (bloco?.subtitulo || "").trim() ||
-    (incluirModo && (bloco?.modo || "").trim())
+    (incluirModo && ((bloco?.modo || "").trim() || bloco?.fotos?.length))
   );
 }
 
@@ -1539,6 +1550,7 @@ function montarConteudoImpressaoListaCadastrada(data, incluirModo) {
       subtitulo: (data?.subtitulo || "").toString().trim(),
       itens: normalizarItensBlocoImpressao(data?.itens),
       modo: (data?.modo || "").toString().trim(),
+      fotos: normalizarFotosOferenda(data?.fotosModo1),
       tituloModo: "Modo de fazer",
     },
     {
@@ -1546,6 +1558,7 @@ function montarConteudoImpressaoListaCadastrada(data, incluirModo) {
       subtitulo: (data?.subtitulo2 || "").toString().trim(),
       itens: normalizarItensBlocoImpressao(data?.itens2),
       modo: (data?.modo2 || "").toString().trim(),
+      fotos: normalizarFotosOferenda(data?.fotosModo2),
       tituloModo: "Modo de preparo",
     },
   ];
@@ -1579,17 +1592,38 @@ function montarConteudoImpressaoListaCadastrada(data, incluirModo) {
     wrap.appendChild(criarTituloSecaoImpressao("Ingredientes"));
     wrap.appendChild(criarTabelaIngredientesBlocoImpressao(bloco.itens));
 
-    if (incluirModo && bloco.modo) {
+    if (incluirModo && (bloco.modo || bloco.fotos?.length)) {
       wrap.appendChild(criarTituloSecaoImpressao(bloco.tituloModo));
 
       const modoBox = document.createElement("div");
       modoBox.className = "print-mode-box";
 
-      const modoTexto = document.createElement("p");
-      modoTexto.className = "print-mode-text";
-      modoTexto.textContent = bloco.modo;
+      if (bloco.modo) {
+        const modoTexto = document.createElement("p");
+        modoTexto.className = "print-mode-text";
+        modoTexto.textContent = bloco.modo;
+        modoBox.appendChild(modoTexto);
+      }
 
-      modoBox.appendChild(modoTexto);
+      if (bloco.fotos?.length) {
+        const fotosWrap = document.createElement("div");
+        fotosWrap.className = "print-mode-photos";
+
+        bloco.fotos.forEach((src, index) => {
+          const fotoBox = document.createElement("div");
+          fotoBox.className = "print-mode-photo";
+
+          const img = document.createElement("img");
+          img.src = src;
+          img.alt = `${bloco.tituloModo} ${index + 1}`;
+
+          fotoBox.appendChild(img);
+          fotosWrap.appendChild(fotoBox);
+        });
+
+        modoBox.appendChild(fotosWrap);
+      }
+
       wrap.appendChild(modoBox);
     }
 
@@ -2317,6 +2351,8 @@ window.voltarTelaPrincipal = function () {
   window.scrollTo({ top: 0, behavior: "instant" });
 };
 window.abrirModalPositivos = function () {
+  limparCamposModalPositivos();
+  prepararModalFotosArea("positivos");
 
   const modal = document.getElementById("modalBackdropPositivos");
 
@@ -2331,6 +2367,24 @@ window.fecharModalPositivos = function () {
   if (modal) modal.style.display = "none";
 
 };
+
+
+function limparCamposModalPositivos() {
+  window.editingDocIdPositivos = null;
+
+  if ($("modalNomeEbo_1Positivos")) $("modalNomeEbo_1Positivos").value = "";
+  if ($("modalSubtitulo_1Positivos")) $("modalSubtitulo_1Positivos").value = "";
+  if ($("modalModoFazer_1Positivos")) $("modalModoFazer_1Positivos").value = "";
+  if ($("modalSubtitulo_2Positivos")) $("modalSubtitulo_2Positivos").value = "";
+  if ($("modalModoFazer_2Positivos")) $("modalModoFazer_2Positivos").value = "";
+
+  modalLimparLinhasPositivos("1");
+  modalLimparLinhasPositivos("2");
+  modalCriarLinhaPositivos("1", "", "");
+  modalCriarLinhaPositivos("2", "", "");
+
+  resetarFotosArea("positivos");
+}
 
 
 // =======================================================
@@ -2390,7 +2444,12 @@ function modalGetPayloadPositivos() {
     itens: getLinhasPositivos("2")
   };
 
-  return { lista1, lista2 };
+  return {
+    lista1,
+    lista2,
+    fotosModo1: [...normalizarFotosOferenda(getFotosAreaState("positivos")["1"])],
+    fotosModo2: [...normalizarFotosOferenda(getFotosAreaState("positivos")["2"])],
+  };
 }
 
 // Enviar Positivos para Firebase
@@ -2409,12 +2468,14 @@ window.enviarParaBancoPositivos = async function() {
       nome_norm: normalizarTexto(payload.lista1.nome),
       subtitulo: payload.lista1.subtitulo || "",
       modo: payload.lista1.modo || "",
+      fotosModo1: payload.fotosModo1 || [],
       itens: payload.lista1.itens,
 
       nome2: "",
       nome2_norm: "",
       subtitulo2: payload.lista2.subtitulo || "",
       modo2: payload.lista2.modo || "",
+      fotosModo2: payload.fotosModo2 || [],
       itens2: payload.lista2.itens || [],
 
       updatedAt: serverTimestamp(),
@@ -2512,6 +2573,9 @@ window.editarPositivo = async function(docId) {
     modalLimparLinhasPositivos("2");
     (data.itens2 || []).forEach(it => modalCriarLinhaPositivos("2", it.ingrediente || "", it.quantidade || ""));
 
+    definirFotosArea("positivos", "1", data.fotosModo1);
+    definirFotosArea("positivos", "2", data.fotosModo2);
+
     // salva o id editando
     window.editingDocIdPositivos = docId;
 
@@ -2555,6 +2619,9 @@ window.imprimirPositivo = function(docId) {
 
 
 window.abrirModalBanhos = function() {
+  limparCamposModalBanhos();
+  prepararModalFotosArea("banhos");
+
   const modal = document.getElementById("modalBackdropBanhos");
   if (modal) modal.style.display = "flex";
 };
@@ -2563,6 +2630,24 @@ window.fecharModalBanhos = function() {
   const modal = document.getElementById("modalBackdropBanhos");
   if (modal) modal.style.display = "none";
 };
+
+
+function limparCamposModalBanhos() {
+  window.editingDocIdBanhos = null;
+
+  if ($("modalNomeBanho_1")) $("modalNomeBanho_1").value = "";
+  if ($("modalSubtituloBanho_1")) $("modalSubtituloBanho_1").value = "";
+  if ($("modalModoFazerBanho_1")) $("modalModoFazerBanho_1").value = "";
+  if ($("modalSubtituloBanho_2")) $("modalSubtituloBanho_2").value = "";
+  if ($("modalModoFazerBanho_2")) $("modalModoFazerBanho_2").value = "";
+
+  modalLimparLinhasBanhos("1");
+  modalLimparLinhasBanhos("2");
+  modalCriarLinhaBanhos("1", "", "");
+  modalCriarLinhaBanhos("2", "", "");
+
+  resetarFotosArea("banhos");
+}
 
 // Adicionar linhas
 function modalLimparLinhasBanhos(listId) {
@@ -2613,7 +2698,12 @@ function modalGetPayloadBanhos() {
     modo: ($("modalModoFazerBanho_2")?.value || "").trim(),
     itens: getLinhasBanhos("2")
   };
-  return { lista1, lista2 };
+  return {
+    lista1,
+    lista2,
+    fotosModo1: [...normalizarFotosOferenda(getFotosAreaState("banhos")["1"])],
+    fotosModo2: [...normalizarFotosOferenda(getFotosAreaState("banhos")["2"])],
+  };
 }
 
 // Enviar para Firebase
@@ -2632,11 +2722,13 @@ window.enviarParaBancoBanhos = async function() {
       nome_norm: normalizarTexto(payload.lista1.nome),
       subtitulo: payload.lista1.subtitulo || "",
       modo: payload.lista1.modo || "",
+      fotosModo1: payload.fotosModo1 || [],
       itens: payload.lista1.itens,
       nome2: "",
       nome2_norm: "",
       subtitulo2: payload.lista2.subtitulo || "",
       modo2: payload.lista2.modo || "",
+      fotosModo2: payload.fotosModo2 || [],
       itens2: payload.lista2.itens || [],
       updatedAt: serverTimestamp(),
       createdAt: serverTimestamp()
@@ -2724,6 +2816,9 @@ window.editarBanho = async function(docId) {
     modalLimparLinhasBanhos("2");
     (data.itens2 || []).forEach(it => modalCriarLinhaBanhos("2", it.ingrediente || "", it.quantidade || ""));
 
+    definirFotosArea("banhos", "1", data.fotosModo1);
+    definirFotosArea("banhos", "2", data.fotosModo2);
+
     window.editingDocIdBanhos = docId;
   } catch (e) {
     console.error(e);
@@ -2774,6 +2869,9 @@ window.imprimirBanho = function(docId) {
 
 // OFERENDAS//
 window.abrirModalOferendas = function() {
+  limparCamposModalOferendas();
+  prepararModalFotosArea("oferendas");
+
   const modal = document.getElementById("modalBackdropOferendas");
   if (modal) modal.style.display = "flex";
 };
@@ -2782,6 +2880,24 @@ window.fecharModalOferendas = function() {
   const modal = document.getElementById("modalBackdropOferendas");
   if (modal) modal.style.display = "none";
 };
+
+
+function limparCamposModalOferendas() {
+  window.editingDocIdOferendas = null;
+
+  if ($("modalNomeOferenda_1")) $("modalNomeOferenda_1").value = "";
+  if ($("modalSubtituloOferenda_1")) $("modalSubtituloOferenda_1").value = "";
+  if ($("modalModoFazerOferenda_1")) $("modalModoFazerOferenda_1").value = "";
+  if ($("modalSubtituloOferenda_2")) $("modalSubtituloOferenda_2").value = "";
+  if ($("modalModoFazerOferenda_2")) $("modalModoFazerOferenda_2").value = "";
+
+  modalLimparLinhasOferendas("1");
+  modalLimparLinhasOferendas("2");
+  modalCriarLinhaOferendas("1", "", "");
+  modalCriarLinhaOferendas("2", "", "");
+
+  resetarFotosArea("oferendas");
+}
 
 // Adicionar linhas
 function modalLimparLinhasOferendas(listId) {
@@ -2830,7 +2946,12 @@ function modalGetPayloadOferendas() {
     modo: ($("modalModoFazerOferenda_2")?.value || "").trim(),
     itens: getLinhasOferendas("2")
   };
-  return { lista1, lista2 };
+  return {
+    lista1,
+    lista2,
+    fotosModo1: [...normalizarFotosOferenda(getFotosAreaState("oferendas")["1"])],
+    fotosModo2: [...normalizarFotosOferenda(getFotosAreaState("oferendas")["2"])],
+  };
 }
 
 // Enviar para Firebase
@@ -2849,11 +2970,13 @@ window.enviarParaBancoOferendas = async function() {
       nome_norm: normalizarTexto(payload.lista1.nome),
       subtitulo: payload.lista1.subtitulo || "",
       modo: payload.lista1.modo || "",
+      fotosModo1: payload.fotosModo1 || [],
       itens: payload.lista1.itens,
       nome2: "",
       nome2_norm: "",
       subtitulo2: payload.lista2.subtitulo || "",
       modo2: payload.lista2.modo || "",
+      fotosModo2: payload.fotosModo2 || [],
       itens2: payload.lista2.itens || [],
       updatedAt: serverTimestamp(),
       createdAt: serverTimestamp()
@@ -2941,6 +3064,9 @@ window.editarOferenda = async function(docId) {
     modalLimparLinhasOferendas("2");
     (data.itens2 || []).forEach(it => modalCriarLinhaOferendas("2", it.ingrediente || "", it.quantidade || ""));
 
+    definirFotosArea("oferendas", "1", data.fotosModo1);
+    definirFotosArea("oferendas", "2", data.fotosModo2);
+
     window.editingDocIdOferendas = docId;
   } catch (e) {
     console.error(e);
@@ -2977,6 +3103,466 @@ window.imprimirOferenda = function(docId) {
   });
 };
 
+
+
+// ============================
+// FOTOS - LISTA OBRIGAÇÃO
+// ============================
+const FOTOS_MODAL_AREAS = {
+  listas: { stateKey: "__listasFotos", inputPrefix: "modalFotosLista_", previewPrefix: "previewFotosLista_" },
+  positivos: { stateKey: "__positivosFotos", inputPrefix: "modalFotosPositivos_", previewPrefix: "previewFotosPositivos_" },
+  oferendas: { stateKey: "__oferendasFotos", inputPrefix: "modalFotosOferenda_", previewPrefix: "previewFotosOferenda_" },
+  banhos: { stateKey: "__banhosFotos", inputPrefix: "modalFotosBanho_", previewPrefix: "previewFotosBanho_" },
+  obrigacoes: { stateKey: "__obrigacoesFotos", inputPrefix: "modalFotosObrigacao_", previewPrefix: "previewFotosObrigacao_" },
+};
+
+function getConfigFotosArea(area) {
+  const config = FOTOS_MODAL_AREAS[String(area || "").toLowerCase()];
+  if (!config) throw new Error(`Área de fotos inválida: ${area}`);
+  return config;
+}
+
+function getFotosAreaState(area) {
+  const config = getConfigFotosArea(area);
+
+  if (!window[config.stateKey] || typeof window[config.stateKey] !== "object") {
+    window[config.stateKey] = { "1": [], "2": [] };
+  }
+
+  ["1", "2"].forEach((id) => {
+    if (!Array.isArray(window[config.stateKey][id])) {
+      window[config.stateKey][id] = [];
+    }
+  });
+
+  return window[config.stateKey];
+}
+
+function normalizarFotosOferenda(lista) {
+  return (Array.isArray(lista) ? lista : [])
+    .map((foto) => (foto || "").toString().trim())
+    .filter(Boolean)
+    .slice(0, OFERENDA_MAX_FOTOS_POR_BLOCO);
+}
+
+function definirFotosArea(area, listId, fotos) {
+  const id = String(listId || "1");
+  const config = getConfigFotosArea(area);
+  const state = getFotosAreaState(area);
+  state[id] = normalizarFotosOferenda(fotos);
+  renderizarPreviewFotosArea(area, id);
+
+  const input = document.getElementById(`${config.inputPrefix}${id}`);
+  if (input) input.value = "";
+}
+
+function resetarFotosArea(area) {
+  ["1", "2"].forEach((id) => definirFotosArea(area, id, []));
+}
+
+function renderizarPreviewFotosArea(area, listId) {
+  const id = String(listId || "1");
+  const config = getConfigFotosArea(area);
+  const box = document.getElementById(`${config.previewPrefix}${id}`);
+  if (!box) return;
+
+  const fotos = getFotosAreaState(area)[id] || [];
+
+  if (!fotos.length) {
+    box.innerHTML = `<div class="foto-preview-empty">Nenhuma foto adicionada nesta parte.</div>`;
+    return;
+  }
+
+  box.innerHTML = fotos.map((src, index) => `
+    <div class="foto-preview-item">
+      <img src="${src}" alt="Foto ${index + 1}" loading="lazy">
+      <div class="foto-preview-actions">
+        <button type="button" class="btn-danger btn-mini" onclick="removerFotoArea('${area}', '${id}', ${index})">Remover</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+window.removerFotoArea = function removerFotoArea(area, listId, index) {
+  const id = String(listId || "1");
+  const fotos = getFotosAreaState(area)[id] || [];
+  if (index < 0 || index >= fotos.length) return;
+
+  fotos.splice(index, 1);
+  renderizarPreviewFotosArea(area, id);
+};
+
+function lerArquivoComoDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error || new Error("Erro ao ler a imagem."));
+    reader.readAsDataURL(file);
+  });
+}
+
+function carregarImagemDataURL(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Não foi possível abrir a imagem."));
+    img.src = src;
+  });
+}
+
+async function compactarFotoOferenda(file) {
+  if (!file || !file.type || !file.type.startsWith("image/")) {
+    throw new Error("Selecione apenas arquivos de imagem.");
+  }
+
+  const original = await lerArquivoComoDataURL(file);
+  const img = await carregarImagemDataURL(original);
+
+  let largura = img.naturalWidth || img.width || 0;
+  let altura = img.naturalHeight || img.height || 0;
+
+  if (!largura || !altura) {
+    return original;
+  }
+
+  if (largura > OFERENDA_FOTO_MAX_LADO || altura > OFERENDA_FOTO_MAX_LADO) {
+    const escala = Math.min(OFERENDA_FOTO_MAX_LADO / largura, OFERENDA_FOTO_MAX_LADO / altura);
+    largura = Math.max(1, Math.round(largura * escala));
+    altura = Math.max(1, Math.round(altura * escala));
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = largura;
+  canvas.height = altura;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return original;
+
+  ctx.drawImage(img, 0, 0, largura, altura);
+  return canvas.toDataURL("image/jpeg", OFERENDA_FOTO_QUALIDADE);
+}
+
+async function handleFotosAreaSelecionadas(area, listId) {
+  const id = String(listId || "1");
+  const config = getConfigFotosArea(area);
+  const input = document.getElementById(`${config.inputPrefix}${id}`);
+  const files = Array.from(input?.files || []);
+  if (!files.length) return;
+
+  const state = getFotosAreaState(area);
+  const fotosAtuais = state[id] || [];
+  const vagas = OFERENDA_MAX_FOTOS_POR_BLOCO - fotosAtuais.length;
+
+  if (vagas <= 0) {
+    alert(`Você pode adicionar até ${OFERENDA_MAX_FOTOS_POR_BLOCO} fotos nesta parte.`);
+    if (input) input.value = "";
+    return;
+  }
+
+  const arquivosSelecionados = files.slice(0, vagas);
+  if (files.length > vagas) {
+    alert(`Só as primeiras ${vagas} foto(s) foram adicionadas. Limite: ${OFERENDA_MAX_FOTOS_POR_BLOCO}.`);
+  }
+
+  try {
+    if (input) input.disabled = true;
+
+    for (const file of arquivosSelecionados) {
+      const fotoCompactada = await compactarFotoOferenda(file);
+      fotosAtuais.push(fotoCompactada);
+    }
+
+    renderizarPreviewFotosArea(area, id);
+  } catch (e) {
+    console.error(e);
+    alert("Não foi possível adicionar as fotos. Tente novamente.");
+  } finally {
+    if (input) {
+      input.disabled = false;
+      input.value = "";
+    }
+  }
+}
+
+function inicializarInputsFotosArea(area) {
+  const config = getConfigFotosArea(area);
+
+  ["1", "2"].forEach((id) => {
+    const input = document.getElementById(`${config.inputPrefix}${id}`);
+    if (!input || input.dataset.boundFotos === "1") return;
+
+    input.addEventListener("change", () => handleFotosAreaSelecionadas(area, id));
+    input.dataset.boundFotos = "1";
+  });
+}
+
+function prepararModalFotosArea(area) {
+  inicializarInputsFotosArea(area);
+  renderizarPreviewFotosArea(area, "1");
+  renderizarPreviewFotosArea(area, "2");
+}
+
+// ============================
+// FUNÇÃO LISTA OBRIGAÇÃO
+// ============================
+window.abrirTelaObrigacoes = function () {
+  esconderTodasAsTelas();
+
+  const obrigacoes = document.getElementById("obrigacoesScreen");
+  if (obrigacoes) obrigacoes.style.display = "block";
+
+  renderizarObrigacoes();
+  window.scrollTo({ top: 0, behavior: "instant" });
+};
+
+window.abrirModalObrigacoes = function() {
+  limparCamposModalObrigacoes();
+  prepararModalFotosArea("obrigacoes");
+  const modal = document.getElementById("modalBackdropObrigacoes");
+  if (modal) modal.style.display = "flex";
+};
+
+window.fecharModalObrigacoes = function() {
+  const modal = document.getElementById("modalBackdropObrigacoes");
+  if (modal) modal.style.display = "none";
+};
+
+function limparCamposModalObrigacoes() {
+  window.editingDocIdObrigacoes = null;
+
+  if ($("modalNomeObrigacao_1")) $("modalNomeObrigacao_1").value = "";
+  if ($("modalSubtituloObrigacao_1")) $("modalSubtituloObrigacao_1").value = "";
+  if ($("modalModoFazerObrigacao_1")) $("modalModoFazerObrigacao_1").value = "";
+  if ($("modalSubtituloObrigacao_2")) $("modalSubtituloObrigacao_2").value = "";
+  if ($("modalModoFazerObrigacao_2")) $("modalModoFazerObrigacao_2").value = "";
+
+  modalLimparLinhasObrigacoes("1");
+  modalLimparLinhasObrigacoes("2");
+  modalCriarLinhaObrigacoes("1", "", "");
+  modalCriarLinhaObrigacoes("2", "", "");
+
+  resetarFotosArea("obrigacoes");
+}
+
+function modalLimparLinhasObrigacoes(listId) {
+  const tbody = document.getElementById(`modalBodyLinhasObrigacoes_${listId}`);
+  if (tbody) tbody.innerHTML = "";
+}
+
+function modalCriarLinhaObrigacoes(listId = "1", ingrediente = "", quantidade = "") {
+  const tbody = document.getElementById(`modalBodyLinhasObrigacoes_${listId}`);
+  if (!tbody) return;
+
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td><input class="modalIng" type="text" placeholder="Ex: Pipoca" value="${escaparValorInput(ingrediente)}" /></td>
+    <td><input class="modalQtd" type="text" placeholder="Ex: 7" value="${escaparValorInput(quantidade)}" /></td>
+    <td><button class="btn-danger btn-mini" type="button">Remover</button></td>
+  `;
+  tr.querySelector("button").onclick = () => tr.remove();
+  tbody.appendChild(tr);
+}
+
+window.modalAdicionarLinhaObrigacoes = function(listId) {
+  modalCriarLinhaObrigacoes(listId, "", "");
+};
+
+function getLinhasObrigacoes(listId) {
+  const linhas = [];
+  const selector = `#modalBodyLinhasObrigacoes_${listId} tr`;
+  document.querySelectorAll(selector).forEach((tr) => {
+    const ing = (tr.querySelector(".modalIng")?.value || "").trim();
+    const qtd = (tr.querySelector(".modalQtd")?.value || "").trim();
+    if (ing || qtd) linhas.push({ ingrediente: ing, quantidade: qtd });
+  });
+  return linhas;
+}
+
+function modalGetPayloadObrigacoes() {
+  const lista1 = {
+    nome: ($("modalNomeObrigacao_1")?.value || "").trim(),
+    subtitulo: ($("modalSubtituloObrigacao_1")?.value || "").trim(),
+    modo: ($("modalModoFazerObrigacao_1")?.value || "").trim(),
+    itens: getLinhasObrigacoes("1")
+  };
+
+  const lista2 = {
+    subtitulo: ($("modalSubtituloObrigacao_2")?.value || "").trim(),
+    modo: ($("modalModoFazerObrigacao_2")?.value || "").trim(),
+    itens: getLinhasObrigacoes("2")
+  };
+
+  return {
+    lista1,
+    lista2,
+    fotosModo1: [...normalizarFotosOferenda(getFotosAreaState("obrigacoes")["1"])],
+    fotosModo2: [...normalizarFotosOferenda(getFotosAreaState("obrigacoes")["2"])],
+  };
+}
+
+window.enviarParaBancoObrigacoes = async function() {
+  try {
+    const payload = modalGetPayloadObrigacoes();
+    const { db, collection, doc, setDoc, addDoc, serverTimestamp } = fb();
+
+    if (!payload.lista1.nome) return alert("Digite o nome da obrigação (Lista 1).");
+    if (!payload.lista1.itens || !payload.lista1.itens.some(i => (i.ingrediente || "").trim())) {
+      return alert("Adicione ao menos 1 ingrediente na Lista 1.");
+    }
+
+    const docPayload = {
+      nome: payload.lista1.nome,
+      nome_norm: normalizarTexto(payload.lista1.nome),
+      subtitulo: payload.lista1.subtitulo || "",
+      modo: payload.lista1.modo || "",
+      fotosModo1: payload.fotosModo1 || [],
+      itens: payload.lista1.itens,
+      nome2: "",
+      nome2_norm: "",
+      subtitulo2: payload.lista2.subtitulo || "",
+      modo2: payload.lista2.modo || "",
+      fotosModo2: payload.fotosModo2 || [],
+      itens2: payload.lista2.itens || [],
+      updatedAt: serverTimestamp(),
+      createdAt: serverTimestamp()
+    };
+
+    if (window.editingDocIdObrigacoes) {
+      await setDoc(doc(db, "obrigacoes", window.editingDocIdObrigacoes), docPayload, { merge: true });
+      window.editingDocIdObrigacoes = null;
+      alert("✅ Lista obrigação atualizada com sucesso!");
+    } else {
+      await addDoc(collection(db, "obrigacoes"), docPayload);
+      alert("✅ Lista obrigação cadastrada com sucesso!");
+    }
+
+    renderizarObrigacoes();
+    fecharModalObrigacoes();
+  } catch (e) {
+    console.error(e);
+    alert(`❌ Erro ao enviar: ${e?.code || e?.message || "erro desconhecido"}`);
+  }
+};
+
+window.renderizarObrigacoes = async function() {
+  const box = $("obrigacoesSalvosBox");
+  if (!box) return;
+
+  const { db, collection, getDocs, query, orderBy, limit } = fb();
+  const termo = normalizarTexto($("pesquisaObrigacoes")?.value || "");
+
+  box.innerHTML = `<div class="saved-item"><div><div class="saved-title">Carregando...</div></div></div>`;
+
+  try {
+    const q = query(collection(db, "obrigacoes"), orderBy("updatedAt", "desc"), limit(100));
+    const snaps = await getDocs(q);
+    let items = [];
+    snaps.forEach((s) => items.push({ id: s.id, ...s.data() }));
+
+    if (termo) {
+      items = items.filter((item) => {
+        const nome = normalizarTexto(item.nome || "");
+        const subtitulo = normalizarTexto(item.subtitulo || "");
+        const subtitulo2 = normalizarTexto(item.subtitulo2 || "");
+        return nome.includes(termo) || subtitulo.includes(termo) || subtitulo2.includes(termo);
+      });
+    }
+
+    if (!items.length) {
+      box.innerHTML = `<div class="saved-item"><div><div class="saved-title">Nenhuma lista obrigação cadastrada.</div></div></div>`;
+      return;
+    }
+
+    box.innerHTML = items.map((item) => {
+      const nItens1 = Array.isArray(item.itens) ? item.itens.length : 0;
+      const nItens2 = Array.isArray(item.itens2) ? item.itens2.length : 0;
+      return `
+        <div class="saved-item">
+          <div>
+            <div class="saved-title">${item.nome || "(sem nome)"}</div>
+            <div class="saved-meta">Itens Lista 1: ${nItens1} • Itens Lista 2: ${nItens2}</div>
+          </div>
+          <div class="saved-actions-row">
+            <button class="btn-mini btn-mini-open" onclick="editarObrigacao('${item.id}')">Editar</button>
+            <button class="btn-mini btn-mini-del" onclick="excluirObrigacao('${item.id}')">Excluir</button>
+            <button class="btn-mini btn-print" onclick="imprimirObrigacao('${item.id}')">Imprimir</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  } catch (e) {
+    console.error(e);
+    box.innerHTML = `<div class="saved-item"><div><div class="saved-title">Erro ao carregar</div></div></div>`;
+  }
+};
+
+window.editarObrigacao = async function(docId) {
+  const { db, doc, getDoc } = fb();
+  try {
+    const snap = await getDoc(doc(db, "obrigacoes", docId));
+    if (!snap.exists()) return alert("Lista obrigação não encontrada.");
+    const data = snap.data();
+
+    limparCamposModalObrigacoes();
+    prepararModalFotosArea("obrigacoes");
+    const modal = document.getElementById("modalBackdropObrigacoes");
+    if (modal) modal.style.display = "flex";
+
+    if ($("modalNomeObrigacao_1")) $("modalNomeObrigacao_1").value = data.nome || "";
+    if ($("modalSubtituloObrigacao_1")) $("modalSubtituloObrigacao_1").value = data.subtitulo || "";
+    if ($("modalModoFazerObrigacao_1")) $("modalModoFazerObrigacao_1").value = data.modo || "";
+    modalLimparLinhasObrigacoes("1");
+    if (Array.isArray(data.itens) && data.itens.length) {
+      data.itens.forEach((it) => modalCriarLinhaObrigacoes("1", it.ingrediente || "", it.quantidade || ""));
+    } else {
+      modalCriarLinhaObrigacoes("1", "", "");
+    }
+
+    if ($("modalSubtituloObrigacao_2")) $("modalSubtituloObrigacao_2").value = data.subtitulo2 || "";
+    if ($("modalModoFazerObrigacao_2")) $("modalModoFazerObrigacao_2").value = data.modo2 || "";
+    modalLimparLinhasObrigacoes("2");
+    if (Array.isArray(data.itens2) && data.itens2.length) {
+      data.itens2.forEach((it) => modalCriarLinhaObrigacoes("2", it.ingrediente || "", it.quantidade || ""));
+    } else {
+      modalCriarLinhaObrigacoes("2", "", "");
+    }
+
+    definirFotosArea("obrigacoes", "1", data.fotosModo1);
+    definirFotosArea("obrigacoes", "2", data.fotosModo2);
+    window.editingDocIdObrigacoes = docId;
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao editar lista obrigação.");
+  }
+};
+
+window.excluirObrigacao = async function(docId) {
+  const ok = confirm("Tem certeza que deseja excluir esta lista obrigação?");
+  if (!ok) return;
+  const { db, doc, deleteDoc } = fb();
+  try {
+    await deleteDoc(doc(db, "obrigacoes", docId));
+    alert("Lista obrigação excluída!");
+    renderizarObrigacoes();
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao excluir lista obrigação.");
+  }
+};
+
+window.imprimirObrigacao = function(docId) {
+  return abrirModalImpressaoListaCadastrada({
+    collectionName: "obrigacoes",
+    docId,
+    tituloModal: "Imprimir lista obrigação",
+    mensagens: {
+      idNaoInformado: "ID da lista obrigação não informado.",
+      naoEncontrado: "Lista obrigação não encontrada.",
+      erro: "Erro ao imprimir lista obrigação. Veja o console (F12).",
+    },
+  });
+};
+
 //ESCONDER TODAS AS TELAS//
 function esconderTodasAsTelas() {
   const ids = [
@@ -2984,7 +3570,8 @@ function esconderTodasAsTelas() {
     "adminScreen",
     "oferendasScreen",
     "banhosScreen",
-    "positivosScreen"
+    "positivosScreen",
+    "obrigacoesScreen"
   ];
 
   ids.forEach((id) => {
