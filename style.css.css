@@ -2111,3 +2111,315 @@ img {
     padding: 11px 12px;
   }
 }
+
+
+/* =========================================
+   LISTA OBRIGAÇÃO
+========================================= */
+#modalBackdropObrigacoes {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+}
+
+#modalBackdropObrigacoes .modal-card,
+#modalBackdropObrigacoes input,
+#modalBackdropObrigacoes textarea,
+#modalBackdropObrigacoes button,
+#modalBackdropObrigacoes table,
+#modalBackdropObrigacoes th,
+#modalBackdropObrigacoes td {
+  pointer-events: auto;
+}
+
+@media (max-width: 720px) {
+  #pesquisaObrigacoes {
+    max-width: 100% !important;
+  }
+
+  #obrigacoesSalvosBox {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+}
+
+/* =========================================
+   BOTÕES BONITOS RESTAURADOS
+========================================= */
+:root {
+  --btn-shadow: 0 10px 20px rgba(15, 23, 42, 0.14);
+  --btn-shadow-hover: 0 14px 28px rgba(15, 23, 42, 0.18);
+}
+
+button,
+input[type="file"]::file-selector-button,
+input[type="file"]::-webkit-file-upload-button {
+  font-family: inherit;
+}
+
+button {
+  position: relative;
+  overflow: hidden;
+  min-height: 44px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: var(--btn-shadow);
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    filter .18s ease,
+    opacity .18s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--btn-shadow-hover);
+  filter: brightness(1.04);
+}
+
+button:active {
+  transform: translateY(0);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14);
+}
+
+button:focus-visible,
+input[type="file"]:focus-visible,
+input[type="file"]::file-selector-button:focus-visible,
+input[type="file"]::-webkit-file-upload-button:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 4px rgba(59, 130, 246, 0.18),
+    var(--btn-shadow-hover);
+}
+
+button[disabled] {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
+  color: #ffffff;
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: #ffffff;
+}
+
+.btn-tertiary {
+  background: linear-gradient(135deg, #334155 0%, #0f172a 100%);
+  color: #ffffff;
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  color: #ffffff;
+}
+
+.btn-print {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+  color: #ffffff;
+}
+
+.btn-mini {
+  min-height: 38px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.12);
+}
+
+.menu-btn {
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.06) 100%);
+  color: #ffffff;
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.menu-btn:hover {
+  background: linear-gradient(135deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.10) 100%);
+}
+
+.top-actions .btn-danger,
+.auth-actions .btn-secondary,
+.actions-row > button,
+.saved-actions-row > button,
+.section-head > button {
+  border: 0;
+}
+
+input[type="file"] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  color: #475569;
+}
+
+input[type="file"]::file-selector-button,
+input[type="file"]::-webkit-file-upload-button {
+  margin-right: 12px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 18px rgba(37, 99, 235, 0.22);
+  transition: transform .18s ease, filter .18s ease, box-shadow .18s ease;
+}
+
+input[type="file"]::file-selector-button:hover,
+input[type="file"]::-webkit-file-upload-button:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+  box-shadow: 0 12px 20px rgba(37, 99, 235, 0.28);
+}
+
+.oferenda-fotos-box {
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.foto-preview-actions .btn-danger {
+  width: 100%;
+}
+
+@media (max-width: 720px) {
+  button {
+    min-height: 48px;
+    padding: 14px 16px;
+    border-radius: 16px;
+  }
+
+  .btn-mini {
+    min-height: 42px;
+    padding: 10px 12px;
+  }
+
+  .menu-btn {
+    min-height: 48px;
+    border-radius: 14px;
+  }
+
+  input[type="file"] {
+    padding: 12px;
+  }
+
+  input[type="file"]::file-selector-button,
+  input[type="file"]::-webkit-file-upload-button {
+    margin-right: 0;
+    margin-bottom: 10px;
+    width: 100%;
+  }
+}
+
+
+/* =========================================
+   FOTOS NOS MODAIS E IMPRESSÃO
+========================================= */
+.foto-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.foto-preview-item {
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.foto-preview-item img {
+  display: block;
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  background: #e2e8f0;
+}
+
+.foto-preview-actions {
+  padding: 10px;
+  background: #ffffff;
+}
+
+.foto-preview-empty {
+  padding: 16px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  background: #f8fafc;
+  color: #64748b;
+  text-align: center;
+  font-size: 13px;
+}
+
+.print-mode-photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.print-mode-photo {
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 8px;
+  background: #ffffff;
+}
+
+.print-mode-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 240px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+@media (max-width: 720px) {
+  .foto-preview-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+
+  .foto-preview-item img {
+    height: 120px;
+  }
+}
+
+@media print {
+  body.print-lista-cadastrada .print-mode-photos {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  body.print-lista-cadastrada .print-mode-photo {
+    padding: 6px !important;
+    page-break-inside: avoid !important;
+  }
+
+  body.print-lista-cadastrada .print-mode-photo img {
+    max-height: 180px !important;
+  }
+}
