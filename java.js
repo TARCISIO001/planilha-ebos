@@ -163,6 +163,11 @@ function setAuthMsg(msg, isError = false) {
 function showApp(isLogged) {
   const authCard = $("authCard");
   const postLogin = $("postLogin");
+
+  if (!isLogged) {
+    esconderTodasAsTelas();
+  }
+
   if (authCard) authCard.style.display = isLogged ? "none" : "block";
   if (postLogin) postLogin.style.display = isLogged ? "block" : "none";
 }
@@ -227,12 +232,14 @@ window.criarConta = async function criarConta() {
 window.sair = async function sair() {
   try {
     pararControleInatividade();
+    esconderTodasAsTelas();
+    showApp(false);
 
     const { auth, signOut } = fb();
     await signOut(auth);
-        limparSaidaPrint();
-    try { limparSaidaPrintListaCadastrada(); } catch {}
 
+    limparSaidaPrint();
+    try { limparSaidaPrintListaCadastrada(); } catch {}
 
     setAuthMsg("Você saiu.");
   } catch (e) {
@@ -991,8 +998,15 @@ window.editarLista = async function editarLista(docId) {
       if (itens2.length) itens2.forEach((it) => modalCriarLinha("2", it.ingrediente || "", it.quantidade || ""));
       else modalCriarLinha("2", "", "");
 
-      definirFotosArea("listas", "1", data.fotosModo1);
-      definirFotosArea("listas", "2", data.fotosModo2);
+     definirFotosArea("listas", "1", (data.fotosModo1 || []).map(f => ({
+  src: f.src || f,
+  legenda: f.legenda || ""
+})));
+
+definirFotosArea("listas", "2", (data.fotosModo2 || []).map(f => ({
+  src: f.src || f,
+  legenda: f.legenda || ""
+})));
     } else {
       // modal antigo
       if ($("modalNomeEbo")) $("modalNomeEbo").value = data.nome || "";
@@ -1042,23 +1056,43 @@ window.__enviarBancoComAlerta = async function () {
       if (!lista1.itens || !lista1.itens.some(i => (i.ingrediente || "").trim())) 
         return alert("Erro: adicione ao menos 1 ingrediente na Lista 1.");
 
-     payload = {
+/// Captura legendas da Lista 1
+const preview1 = document.getElementById(`previewFotosLista_1`);
+const legendas1 = Array.from(preview1.querySelectorAll(".foto-legenda-input"))
+  .map(input => {
+    if (!input) return "";                        // evita undefined
+    if (input.value !== undefined) return input.value.trim(); // textarea ou input
+    if (input.innerText !== undefined) return input.innerText.trim(); // div contenteditable
+    return "";
+  });
+
+const preview2 = document.getElementById(`previewFotosLista_2`);
+const legendas2 = Array.from(preview2.querySelectorAll(".foto-legenda-input"))
+  .map(input => {
+    if (!input) return "";
+    if (input.value !== undefined) return input.value.trim();
+    if (input.innerText !== undefined) return input.innerText.trim();
+    return "";
+  });
+
+payload = {
   nome: lista1.nome,
   nome_norm: normalizarTexto(lista1.nome),
   subtitulo: lista1.subtitulo || "",
   modo: lista1.modo || "",
-  fotosModo1: payloadModal.fotosModo1 || [],
+fotosModo1: (payloadModal.fotosModo1 || []).map((f, i) => ({
+  src: f.src || f,
+  legenda: f.legenda || legendas1[i] || ""
+})),
+
+fotosModo2: (payloadModal.fotosModo2 || []).map((f, i) => ({
+  src: f.src || f,
+  legenda: f.legenda || legendas2[i] || ""
+})),
+
   itens: lista1.itens,
-
-  // Lista 2 NÃO tem nome
-  nome2: "",
-  nome2_norm: "",
-  subtitulo2: lista2.subtitulo || "",
-  modo2: lista2.modo || "",
-  fotosModo2: payloadModal.fotosModo2 || [],
   itens2: lista2.itens || [],
-
-  updatedAt: serverTimestamp(),
+  updatedAt: serverTimestamp()
 };
 
 
@@ -1233,13 +1267,11 @@ function consolidarItensDaLista(itens) {
     return { ingrediente: g.ingrediente, quantidade: "" };
   });
 }
-window.abrirTelaAdmin = function () {
-  const app = document.getElementById("postLogin");
-  const admin = document.getElementById("adminScreen");
-  const oferendas = document.getElementById("oferendasScreen");
 
-  if (app) app.style.display = "none";
-  if (oferendas) oferendas.style.display = "none";
+window.abrirTelaAdmin = function () {
+  esconderTodasAsTelas();
+
+  const admin = document.getElementById("adminScreen");
   if (admin) admin.style.display = "block";
 
   window.scrollTo({ top: 0, behavior: "instant" });
@@ -1266,22 +1298,23 @@ const { auth, onAuthStateChanged } = fb();
 onAuthStateChanged(auth, (user) => {
   if (user) {
     const username = emailToUsername(user.email);
+
+    esconderTodasAsTelas();
     showApp(true);
     showAdminPanel(MASTERS.includes(username));
+
     const btnAdmin = document.getElementById("btnAdmin");
-if (btnAdmin) {
-  btnAdmin.style.display = MASTERS.includes(username) ? "inline-block" : "none";
-}
+    if (btnAdmin) {
+      btnAdmin.style.display = MASTERS.includes(username) ? "inline-block" : "none";
+    }
 
     setAuthMsg(`Logado como: ${username}`);
     setUserBadge(`Logado como: ${username}`);
     setFirebaseStatus(true, "Firebase: conectado");
-    procurarListas(); //se nao quiser que a lista cadastrada apareça , so comentar essa linha, só vai aparecer quando apertar o botão procurar 
-     iniciarControleInatividade(); // 🔥 aqui
-
-    
-
+    procurarListas();
+    iniciarControleInatividade();
   } else {
+    esconderTodasAsTelas();
     showApp(false);
     showAdminPanel(false);
     setFirebaseStatus(false, "Firebase: não conectado");
@@ -1420,7 +1453,8 @@ function esconderModalImpressaoListaCadastrada() {
 function abrirModalImpressaoListaCadastrada(config = {}) {
   const modal = document.getElementById("modalImpressaoListaCadastrada");
   const titulo = document.getElementById("modalImpressaoTitulo");
-  const checkbox = document.getElementById("checkImprimirModosListaCadastrada");
+  const checkboxModos = document.getElementById("checkImprimirModosListaCadastrada");
+  const checkboxFotos = document.getElementById("checkImprimirFotosListaCadastrada");
 
   printJobPendenteListaCadastrada = config;
 
@@ -1429,12 +1463,13 @@ function abrirModalImpressaoListaCadastrada(config = {}) {
       config.collectionName,
       config.docId,
       config.mensagens,
-      { incluirModo: true }
+      { incluirModo: true, incluirFotos: true }
     );
   }
 
   if (titulo) titulo.textContent = config.tituloModal || "Imprimir lista";
-  if (checkbox) checkbox.checked = true;
+  if (checkboxModos) checkboxModos.checked = true;
+  if (checkboxFotos) checkboxFotos.checked = true;
 
   modal.style.display = "flex";
 }
@@ -1447,6 +1482,7 @@ window.fecharModalImpressaoListaCadastrada = function fecharModalImpressaoListaC
 window.confirmarImpressaoListaCadastrada = async function confirmarImpressaoListaCadastrada() {
   const job = printJobPendenteListaCadastrada;
   const incluirModo = !!document.getElementById("checkImprimirModosListaCadastrada")?.checked;
+  const incluirFotos = !!document.getElementById("checkImprimirFotosListaCadastrada")?.checked;
 
   printJobPendenteListaCadastrada = null;
   esconderModalImpressaoListaCadastrada();
@@ -1455,9 +1491,9 @@ window.confirmarImpressaoListaCadastrada = async function confirmarImpressaoList
 
   await imprimirRegistroListaCadastrada(job.collectionName, job.docId, job.mensagens, {
     incluirModo,
+    incluirFotos,
   });
 };
-
 function limparSaidaPrintListaCadastrada() {
   document.body.classList.remove("print-lista-cadastrada");
 
@@ -1530,11 +1566,12 @@ function criarTituloSecaoImpressao(texto) {
   return titulo;
 }
 
-function blocoTemConteudoImprimivel(bloco, incluirModo) {
+function blocoTemConteudoImprimivel(bloco, incluirModo, incluirFotos) {
   return !!(
     bloco?.itens?.length ||
     (bloco?.subtitulo || "").trim() ||
-    (incluirModo && ((bloco?.modo || "").trim() || bloco?.fotos?.length))
+    (incluirModo && (bloco?.modo || "").trim()) ||
+    (incluirFotos && bloco?.fotos?.length)
   );
 }
 
@@ -1569,7 +1606,8 @@ function montarConteudoImpressaoListaCadastrada(data, incluirModo) {
     blocosAtivos = [blocos[0]];
   }
 
-  const mostrarTituloLista = blocosAtivos.length > 1 || blocosAtivos[0]?.tituloLista === "Lista 2";
+  const mostrarTituloLista =
+    blocosAtivos.length > 1 || blocosAtivos[0]?.tituloLista === "Lista 2";
 
   blocosAtivos.forEach((bloco) => {
     const wrap = document.createElement("div");
@@ -1609,15 +1647,23 @@ function montarConteudoImpressaoListaCadastrada(data, incluirModo) {
         const fotosWrap = document.createElement("div");
         fotosWrap.className = "print-mode-photos";
 
-        bloco.fotos.forEach((src, index) => {
+        bloco.fotos.forEach((foto, index) => {
           const fotoBox = document.createElement("div");
           fotoBox.className = "print-mode-photo";
 
           const img = document.createElement("img");
-          img.src = src;
-          img.alt = `${bloco.tituloModo} ${index + 1}`;
-
+          img.src = foto?.src || foto;
+          img.alt = (foto?.legenda || "").trim() || `${bloco.tituloModo} ${index + 1}`;
           fotoBox.appendChild(img);
+
+          const legendaTexto = (foto?.legenda || "").trim();
+          if (legendaTexto) {
+            const legenda = document.createElement("div");
+            legenda.className = "print-mode-caption";
+            legenda.textContent = legendaTexto;
+            fotoBox.appendChild(legenda);
+          }
+
           fotosWrap.appendChild(fotoBox);
         });
 
@@ -1678,11 +1724,12 @@ async function imprimirRegistroListaCadastrada(collectionName, docId, mensagens 
       return;
     }
 
-    const data = snap.data() || {};
-    const incluirModo = opcoes?.incluirModo !== false;
+ const data = snap.data() || {};
+const incluirModo = opcoes?.incluirModo !== false;
+const incluirFotos = opcoes?.incluirFotos !== false;
 
-    titulo.textContent = data.nome || "(sem nome)";
-    montarConteudoImpressaoListaCadastrada(data, incluirModo);
+titulo.textContent = data.nome || "(sem nome)";
+montarConteudoImpressaoListaCadastrada(data, incluirModo, incluirFotos);
 
     area.style.display = "block";
     document.body.classList.add("print-lista-cadastrada");
@@ -2260,34 +2307,7 @@ function abrirTelaAdmin() {
 // ============================
 // NOVA FUNÇÃO , OFERENDAS
 // ============================
-window.abrirTelaOferendas = function () {
-  const app = document.getElementById("postLogin");
-  const admin = document.getElementById("adminScreen");
-  const banhos = document.getElementById("banhosScreen");
-  const oferendas = document.getElementById("oferendasScreen");
 
-  if (app) app.style.display = "none";
-  if (admin) admin.style.display = "none";
-  if (banhos) banhos.style.display = "none";
-
-  if (oferendas) oferendas.style.display = "block";
-
-  // 🔹 Renderizar todas as listas cadastradas ao abrir a tela
-  renderizarOferendas();
-
-  window.scrollTo({ top: 0, behavior: "instant" });
-};
-window.voltarTelaPrincipal = function () {
-  const app = document.getElementById("postLogin");
-  const admin = document.getElementById("adminScreen");
-  const oferendas = document.getElementById("oferendasScreen");
-
-  if (admin) admin.style.display = "none";
-  if (oferendas) oferendas.style.display = "none";
-  if (app) app.style.display = "block";
-
-  window.scrollTo({ top: 0, behavior: "instant" });
-};
 
 //Isso elimina definitivamente o bug de foco preso
 document.addEventListener("DOMContentLoaded", () => {
@@ -2949,8 +2969,8 @@ function modalGetPayloadOferendas() {
   return {
     lista1,
     lista2,
-    fotosModo1: [...normalizarFotosOferenda(getFotosAreaState("oferendas")["1"])],
-    fotosModo2: [...normalizarFotosOferenda(getFotosAreaState("oferendas")["2"])],
+ fotosModo1: montarFotosComLegenda("oferendas", "1", getFotosAreaState("oferendas")["1"]),
+fotosModo2: montarFotosComLegenda("oferendas", "2", getFotosAreaState("oferendas")["2"]),
   };
 }
 
@@ -3140,11 +3160,21 @@ function getFotosAreaState(area) {
 
 function normalizarFotosOferenda(lista) {
   return (Array.isArray(lista) ? lista : [])
-    .map((foto) => (foto || "").toString().trim())
-    .filter(Boolean)
-    .slice(0, OFERENDA_MAX_FOTOS_POR_BLOCO);
-}
+    .filter(foto => foto)
+    .slice(0, OFERENDA_MAX_FOTOS_POR_BLOCO)
+    .map(foto => {
+      if (!foto) return null;
 
+      // Se for string, transforma em objeto
+      if (typeof foto === "string") return { src: foto, legenda: "" };
+
+      // Se já for objeto com src, mantém
+      if (typeof foto === "object" && foto.src) return { src: foto.src, legenda: foto.legenda || "" };
+
+      return null;
+    })
+    .filter(f => f !== null);
+}
 function definirFotosArea(area, listId, fotos) {
   const id = String(listId || "1");
   const config = getConfigFotosArea(area);
@@ -3173,15 +3203,17 @@ function renderizarPreviewFotosArea(area, listId) {
     return;
   }
 
-  box.innerHTML = fotos.map((src, index) => `
-    <div class="foto-preview-item">
-      <img src="${src}" alt="Foto ${index + 1}" loading="lazy">
-      <div class="foto-preview-actions">
-        <button type="button" class="btn-danger btn-mini" onclick="removerFotoArea('${area}', '${id}', ${index})">Remover</button>
-      </div>
+box.innerHTML = fotos.map((foto, index) => `
+  <div class="foto-preview-item">
+    <img src="${foto.src || foto}" alt="Foto ${index + 1}" loading="lazy">
+    <div class="foto-legenda-input" contenteditable="true" placeholder="Digite a legenda aqui">${foto.legenda || ""}</div>
+    <div class="foto-preview-actions">
+      <button type="button" class="btn-danger btn-mini" onclick="removerFotoArea('${area}', '${id}', ${index})">Remover</button>
     </div>
-  `).join("");
+  </div>
+`).join("");
 }
+
 
 window.removerFotoArea = function removerFotoArea(area, listId, index) {
   const id = String(listId || "1");
@@ -3268,14 +3300,20 @@ async function handleFotosAreaSelecionadas(area, listId) {
     if (input) input.disabled = true;
 
     for (const file of arquivosSelecionados) {
-      const fotoCompactada = await compactarFotoOferenda(file);
-      fotosAtuais.push(fotoCompactada);
+      try {
+        const fotoCompactada = await compactarFotoOferenda(file);
+        fotosAtuais.push({
+          src: fotoCompactada,
+          legenda: "",
+          file // mantém referência ao arquivo original
+        });
+      } catch (err) {
+        console.error("Erro ao processar foto:", err);
+        alert(`Erro ao adicionar a foto: ${file.name}`);
+      }
     }
 
     renderizarPreviewFotosArea(area, id);
-  } catch (e) {
-    console.error(e);
-    alert("Não foi possível adicionar as fotos. Tente novamente.");
   } finally {
     if (input) {
       input.disabled = false;
@@ -3395,8 +3433,15 @@ function modalGetPayloadObrigacoes() {
   return {
     lista1,
     lista2,
-    fotosModo1: [...normalizarFotosOferenda(getFotosAreaState("obrigacoes")["1"])],
-    fotosModo2: [...normalizarFotosOferenda(getFotosAreaState("obrigacoes")["2"])],
+fotosModo1: (payloadModal.fotosModo1 || []).map((foto) => ({
+  src: foto.src || foto,
+  legenda: foto.legenda || ""
+})),
+
+fotosModo2: (payloadModal.fotosModo2 || []).map((foto) => ({
+  src: foto.src || foto,
+  legenda: foto.legenda || ""
+})),
   };
 }
 
@@ -3595,4 +3640,22 @@ function esconderTodasAsTelas() {
 
   printJobPendenteListaCadastrada = null;
   esconderModalImpressaoListaCadastrada();
+}
+
+
+function montarFotosComLegenda(area, listId, fotosBase) {
+  const config = getConfigFotosArea(area);
+  const preview = document.getElementById(`${config.previewPrefix}${listId}`);
+
+  const legendas = Array.from(preview?.querySelectorAll(".foto-legenda-input") || []).map((el) => {
+    if (!el) return "";
+    if (el.value !== undefined) return el.value.trim();
+    if (el.innerText !== undefined) return el.innerText.trim();
+    return "";
+  });
+
+  return normalizarFotosOferenda(fotosBase).map((foto, i) => ({
+    src: foto?.src || foto,
+    legenda: legendas[i] || foto?.legenda || ""
+  }));
 }
