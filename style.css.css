@@ -864,21 +864,7 @@ td.print-pratos { text-align: center; vertical-align: middle; }
    - sem mexer na impressão padrão (#saidaPrint)
 ========================================= */
 @media print {
-  /* Quando for impressão da lista cadastrada */
-  body.print-lista-cadastrada * {
-    visibility: hidden !important;
-  }
-
-  body.print-lista-cadastrada #saidaPrintListaCadastrada,
-  body.print-lista-cadastrada #saidaPrintListaCadastrada * {
-    visibility: visible !important;
-  }
-
-  /* esconde explicitamente a impressão padrão */
-  body.print-lista-cadastrada #saidaPrint {
-    display: none !important;
-    visibility: hidden !important;
-  }
+  
 
   body.print-lista-cadastrada #saidaPrintListaCadastrada {
     display: block !important;
@@ -1223,17 +1209,7 @@ tbody tr:hover{
 
 @media print {
 
-  /* Mostra apenas a área de impressão */
-  body.print-lista-cadastrada * {
-    visibility: hidden !important;
-  }
-
-  #saidaPrintListaCadastrada,
-  #saidaPrintListaCadastrada * {
-    visibility: visible !important;
-  }
-
-  #saidaPrintListaCadastrada {
+   #saidaPrintListaCadastrada {
     display: block !important;
     width: 100% !important;
     padding: 10px !important;
@@ -2377,34 +2353,67 @@ input[type="file"]::-webkit-file-upload-button:hover {
 
 .print-mode-photos {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
   margin-top: 12px;
 }
 
 .print-mode-photo {
+  display: flex;
+  flex-direction: column;
   border: 1px solid #d1d5db;
   border-radius: 12px;
-  padding: 8px;
+  padding: 10px;
   background: #ffffff;
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 
 .print-mode-photo img {
   display: block;
   width: 100%;
   height: auto;
-  max-height: 240px;
-  object-fit: cover;
+  max-height: none;
+  object-fit: contain;
   border-radius: 8px;
+  background: #f8fafc;
 }
 
-@media (max-width: 720px) {
-  .foto-preview-grid {
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+.print-mode-caption {
+  margin-top: 8px;
+  padding: 6px 4px 0;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #334155;
+  white-space: pre-line;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+@media print {
+  body.print-lista-cadastrada .print-mode-photos {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
   }
 
-  .foto-preview-item img {
-    height: 120px;
+  body.print-lista-cadastrada .print-mode-photo {
+    padding: 8px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  body.print-lista-cadastrada .print-mode-photo img {
+    width: auto !important;
+    max-width: 100% !important;
+    max-height: 320px !important;
+    margin: 0 auto !important;
+    object-fit: contain !important;
+  }
+
+  body.print-lista-cadastrada .print-mode-caption {
+    font-size: 10pt !important;
+    margin-top: 6px !important;
   }
 }
 
@@ -2421,5 +2430,258 @@ input[type="file"]::-webkit-file-upload-button:hover {
 
   body.print-lista-cadastrada .print-mode-photo img {
     max-height: 180px !important;
+  }
+}
+
+
+/* =========================================
+   AJUSTE DE FOTOS PROPORCIONAIS E NÍTIDAS
+========================================= */
+
+.foto-preview-item img {
+  display: block;
+  width: 100%;       /* ocupa toda largura do container */
+  max-width: 300px;  /* largura máxima desejada */
+  height: auto;      /* mantém proporção */
+  object-fit: cover; /* mantém corte agradável */
+  border-radius: 8px;
+}
+
+.foto-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+/* ===============================
+   Legenda para todas as fotos dos modais
+================================= */
+.foto-preview-item {
+  position: relative; /* necessário para overlay */
+  overflow: hidden;
+}
+
+.foto-legenda {
+  text-align: center;
+  font-size: 14px;
+  color: #333;
+  margin-top: 6px;      /* distância da imagem */
+}
+
+/* Overlay opcional: texto sobre a foto */
+.foto-overlay {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+  text-shadow: 0 0 6px rgba(0,0,0,0.6);
+  pointer-events: none; /* não bloqueia cliques */
+}
+
+
+/* ==========================
+   Legenda editável das fotos
+========================== */
+.foto-legenda-input {
+  width: 100%;              /* ocupa toda largura do container */
+  padding: 6px;             /* espaçamento interno */
+  margin-top: 6px;          /* distância da foto */
+  border: 1px solid #ccc;   /* borda leve */
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+/* Opcional: overlay sobre a foto */
+.foto-overlay-input {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  width: calc(100% - 16px);
+  background: rgba(0,0,0,0.5);
+  color: white;
+  border: none;
+  padding: 4px;
+  font-size: 14px;
+  border-radius: 4px;
+}
+
+
+
+/* Container da foto e legenda */
+.foto-preview-item {
+  display: flex;
+  flex-direction: column; /* foto em cima, legenda embaixo */
+  width: 100%;            /* ocupa toda a coluna da grid */
+  max-width: 200px;       /* ajuste máximo da largura da foto */
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+/* Foto responsiva */
+.foto-preview-item img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  border-radius: 8px 8px 0 0;
+}
+
+
+
+/* =========================================
+   FOTO PREVIEW – ESTÉTICA FINAL
+   Grid responsivo, legenda quebrando linha
+========================================= */
+
+/* Container da foto */
+.foto-preview-item {
+  display: flex;
+  flex-direction: column; /* foto em cima, legenda embaixo */
+  width: 100%;            /* ocupa toda a coluna da grid */
+  max-width: 200px;       /* largura máxima da foto */
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+/* Imagem responsiva */
+.foto-preview-item img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  border-radius: 8px 8px 0 0;
+}
+
+/* Legenda editável */
+.foto-legenda-input {
+  width: 100%;
+  min-height: 40px;           /* altura inicial */
+  padding: 6px;
+  margin-top: 6px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+
+  background-color: #ffffff;  /* fundo branco */
+  color: #1f2937;             /* texto escuro visível */
+  resize: vertical;           /* usuário pode aumentar altura */
+  white-space: normal;        /* permite múltiplas linhas */
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Grid de fotos responsivo */
+.foto-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+/* Ajustes para mobile */
+@media (max-width: 720px) {
+  .foto-preview-item {
+    max-width: 100%;  /* ocupa toda largura do container */
+  }
+
+  .foto-preview-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+  }
+}
+
+/* Garantia de que legenda longa quebre linha e apareça */
+.foto-preview-item textarea.foto-legenda-input {
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+
+/* Grid com exatamente 3 fotos por linha */
+.foto-preview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; /* 3 colunas iguais */
+  gap: 12px;                          /* espaçamento entre fotos */
+  margin-top: 12px;
+  width: 100%;
+}
+
+.foto-preview-item {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;         /* ocupa toda coluna */
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+/* Imagem */
+.foto-preview-item img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  border-radius: 8px 8px 0 0;
+}
+
+/* Legenda */
+.foto-legenda-input {
+  width: 100%;
+  min-height: 40px;
+  padding: 6px;
+  margin-top: 6px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: #fff;
+  color: #1f2937;
+  box-sizing: border-box;
+
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  text-align: center; /* centraliza o texto da legenda */
+}
+
+/* Mobile – grid quebra para uma coluna */
+@media (max-width: 720px) {
+  .foto-preview-grid {
+    grid-template-columns: 1fr; /* 1 foto por linha no mobile */
+  }
+}
+
+@media print {
+  body.print-lista-cadastrada > :not(#saidaPrintListaCadastrada) {
+    display: none !important;
+  }
+
+  body.print-lista-cadastrada #saidaPrintListaCadastrada {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 10px !important;
+    background: #fff !important;
+    overflow: visible !important;
+  }
+
+  body.print-lista-cadastrada #printListaCadastradaConteudo,
+  body.print-lista-cadastrada #printListaCadastradaConteudo * {
+    visibility: visible !important;
   }
 }
