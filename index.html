@@ -68,7 +68,7 @@
         </button>
 
         <button class="menu-btn" onclick="abrirTelaObrigacoes()">
-          📜 Lista Obrigação
+          📝 Listas
         </button>
 
         <button class="menu-btn" onclick="abrirTelaAdmin()" id="btnAdmin">
@@ -291,28 +291,98 @@
 <!-- =========================
      OFERENDAS
 ========================= -->
+<!-- =========================
+     OFERENDAS
+========================= -->
 <section id="oferendasScreen" style="display:none; min-height:100vh;">
   <div class="app-container">
 
-    <!-- Card projeto Oferendas -->
-    <section class="card">
-      <div class="section-head">
-        <h2>Projeto Oferendas</h2>
-        <button class="btn-tertiary" onclick="voltarTelaPrincipal()">Voltar</button>
+    <!-- Tela de escolha dentro da aba Oferendas -->
+    <section class="card oferendas-hero-card" id="oferendasEscolha">
+      <div class="oferendas-hero-badge">Projeto Oferendas</div>
+
+      <div class="oferendas-hero-header">
+        <div>
+          <h2 class="oferendas-hero-title">Escolha o tipo de oferenda</h2>
+          <p class="oferendas-hero-text">
+            Escolha entre Oferendas Orixá ou Oferendas Ebó.
+          </p>
+        </div>
+
+        <button class="btn-tertiary" id="voltar-oferendas">Voltar</button>
       </div>
-      <div class="actions-row">
-        <button class="btn-secondary" onclick="abrirModalOferendas()">Cadastrar lista</button>
-        <input id="pesquisaOferendas" type="text" placeholder="Procurar lista..." style="max-width:320px;" />
-        <button class="btn-tertiary">Procurar</button>
+
+      <div class="oferendas-type-grid">
+        <button class="oferenda-type-card orixa" id="btn-projeto-orixas">
+          <span class="oferenda-type-icon">🕯️</span>
+          <span class="oferenda-type-title">Oferendas Orixá</span>
+        </button>
+
+        <button class="oferenda-type-card ebo" id="btn-projeto-ebo">
+          <span class="oferenda-type-icon">📿</span>
+          <span class="oferenda-type-title">Oferendas Ebó</span>
+        </button>
       </div>
     </section>
 
-    <!-- Card Oferendas cadastradas -->
-    <section class="card">
+    <!-- Container Oferendas Orixá -->
+    <section class="card" id="container-projeto-orixas" style="display:none;">
       <div class="section-head">
-        <h2>Oferendas cadastradas</h2>
+        <h2>Oferendas Orixá</h2>
+        <button class="btn-tertiary" id="voltar-orixas">Voltar</button>
       </div>
-      <div id="oferendasSalvosBox" class="saved-list"></div>
+
+      <section class="card" style="padding:0; border:none; box-shadow:none; background:transparent;">
+        <div class="actions-row">
+          <button class="btn-secondary" onclick="abrirModalOferendas()">Cadastrar oferenda</button>
+          <input
+            id="pesquisaOferendas"
+            type="text"
+            placeholder="Procurar oferenda de orixá..."
+            style="max-width:320px;"
+            oninput="renderizarOferendas()"
+          />
+          <button class="btn-tertiary" onclick="renderizarOferendas()">Procurar</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-head" style="margin-top:0;">
+          <h2>Oferendas Orixá cadastradas</h2>
+        </div>
+
+        <div id="oferendasSalvosBox" class="saved-list"></div>
+      </section>
+    </section>
+
+    <!-- Container Oferendas Ebó -->
+    <section class="card" id="container-projeto-ebo" style="display:none;">
+      <div class="section-head">
+        <h2>Oferendas Ebó</h2>
+        <button class="btn-tertiary" id="voltar-ebo">Voltar</button>
+      </div>
+
+      <section class="card" style="padding:0; border:none; box-shadow:none; background:transparent;">
+        <div class="actions-row">
+          <button class="btn-secondary" onclick="abrirModalOferendasEbo()">Cadastrar oferenda</button>
+          <input
+            id="pesquisaOferendasEbo"
+            type="text"
+            placeholder="Procurar oferenda de ebó..."
+            style="max-width:320px;"
+            oninput="renderizarOferendasEbo()"
+          />
+          <button class="btn-tertiary" onclick="renderizarOferendasEbo()">Procurar</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-head" style="margin-top:0;">
+          <h2>Oferendas Ebó cadastradas</h2>
+        </div>
+
+        <div id="oferendasEboSalvosBox" class="saved-list"></div>
+      </section>
     </section>
 
   </div>
@@ -387,41 +457,95 @@
 <!-- =========================
      LISTA OBRIGAÇÃO
 ========================= -->
-<section id="obrigacoesScreen" style="display:none; min-height:100vh;">
+<section id="listaScreen" style="display:none; min-height:100vh;">
   <div class="app-container">
 
-    <div class="section-head">
-      <h2>Projeto Lista Obrigação</h2>
-      <button class="btn-tertiary" onclick="voltarTelaPrincipal()">Voltar</button>
+    <!-- Tela de escolha dentro da aba Lista -->
+    <section class="card oferendas-hero-card" id="listaEscolha">
+      <div class="oferendas-hero-badge">Projeto Listas</div>
+
+      <div class="oferendas-hero-header">
+        <div>
+          <h2 class="oferendas-hero-title">Escolha o tipo de lista</h2>
+          <p class="oferendas-hero-text">
+            Escolha entre Lista Obrigação ou Lista Ibá Orixá.
+          </p>
+        </div>
+
+        <!-- Botão voltar para painel principal -->
+        <button class="btn-tertiary" id="voltar-lista">Voltar</button>
+      </div>
+
+      <div class="oferendas-type-grid">
+        <button class="oferenda-type-card orixa" id="btn-lista-obrigacao">
+          <span class="oferenda-type-icon">📋</span>
+          <span class="oferenda-type-title">Lista Obrigação</span>
+        </button>
+
+        <button class="oferenda-type-card ebo" id="btn-lista-iba-orixa">
+          <span class="oferenda-type-icon">🏺</span>
+          <span class="oferenda-type-title">Lista Ibá Orixá</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Container Lista Obrigação -->
+    <section class="card" id="container-lista-obrigacao" style="display:none;">
+  <div class="section-head">
+    <h2>Lista Obrigação</h2>
+    <button class="btn-tertiary" id="voltar-lista-obrigacao">Voltar</button>
+  </div>
+
+  <section class="card" style="padding:0; border:none; box-shadow:none; background:transparent;">
+    <div class="actions-row">
+      <button class="btn-secondary" onclick="abrirModalObrigacoes()">Cadastrar lista</button>
+      <input id="pesquisaObrigacoes" type="text" placeholder="Procurar lista..." style="max-width:320px;" oninput="renderizarObrigacoes()" />
+      <button class="btn-tertiary" onclick="renderizarObrigacoes()">Procurar</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-head" style="margin-top:0;">
+      <h2>Obrigações cadastradas</h2>
     </div>
 
-    <section class="card">
-      <div class="actions-row">
-        <button class="btn-secondary" onclick="abrirModalObrigacoes()">
-          Cadastrar lista
-        </button>
+    <div id="obrigacoesSalvosBox" class="saved-list"></div>
+  </section>
+</section>
 
-        <input id="pesquisaObrigacoes" type="text" placeholder="Procurar lista..." style="max-width:320px;" oninput="renderizarObrigacoes()" />
+    <!-- Container Lista Ibá Orixá -->
+  <section class="card" id="container-lista-iba-orixa" style="display:none;">
+  <div class="section-head">
+    <h2>Lista Ibá Orixá</h2>
+    <button class="btn-tertiary" id="voltar-lista-iba-orixa">Voltar</button>
+  </div>
 
-        <button class="btn-tertiary" onclick="renderizarObrigacoes()">
-          Procurar
-        </button>
-      </div>
-    </section>
+  <div class="actions-row">
+   <button class="btn-secondary" onclick="abrirModalListaIbaOrixa()">Cadastrar Lista Ibá Orixá</button>
+  <input id="pesquisaIbaOrixa" type="text" placeholder="Procurar lista Ibá Orixá..." oninput="renderizarIbaOrixa()" />
+  <button class="btn-tertiary" onclick="renderizarIbaOrixa()">Procurar</button>
+</div>
 
-    <section class="card">
-      <div class="section-head" style="margin-top:0;">
-        <h2>Listas obrigação cadastradas</h2>
-      </div>
+  <div class="card" style="margin-top:18px; padding:18px;">
+    <div style="
+      background:#0f172a;
+      color:#fff;
+      border-radius:14px;
+      padding:14px 18px;
+      font-weight:700;
+      font-size:20px;
+      margin-bottom:16px;
+    ">
+      Ibá Orixás cadastrados
+    </div>
 
-      <div id="obrigacoesSalvosBox" class="saved-list"></div>
-    </section>
-
+    <div id="ibaOrixaSalvosBox" class="saved-list"></div>
   </div>
 </section>
 
   </div>
- 
+</section>
+
 
 <!-- =========================
      MODAL
@@ -770,6 +894,104 @@
 </div>
 
 <!-- =========================
+     MODAL OFERENDAS EBÓ
+========================= -->
+<div id="modalBackdropOferendasEbo" class="modal-backdrop" style="display:none;">
+  <div class="modal-card">
+
+    <div class="section-head">
+      <h3 style="margin:0;">Cadastrar Oferenda de Ebó</h3>
+      <button class="btn-danger btn-mini" onclick="fecharModalOferendasEbo()">X</button>
+    </div>
+
+    <!-- Bloco 1 -->
+    <div style="margin-top:10px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:10px;">Lista 1</div>
+
+      <label class="label">Nome da oferenda de ebó</label>
+      <input id="modalNomeOferendaEbo_1" type="text" placeholder="Ex: Oferenda de ebó para limpeza" />
+
+      <label class="label" style="margin-top:8px;">Subtítulo</label>
+      <input id="modalSubtituloOferendaEbo_1" type="text" placeholder="Ex: Para firmeza e descarrego" />
+
+      <div class="section-head" style="margin:12px 0 8px;">
+        <div class="saved-title">Ingredientes</div>
+        <button class="btn-tertiary btn-mini" onclick="modalAdicionarLinhaOferendasEbo('1')">+ Adicionar linha</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Ingrediente</th>
+            <th style="width:160px;">Quantidade</th>
+            <th style="width:120px;">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="modalBodyLinhasOferendasEbo_1"></tbody>
+      </table>
+    </div>
+
+    <!-- Bloco 2 -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:8px;">Modo de fazer</div>
+      <textarea id="modalModoFazerOferendaEbo_1" placeholder="Escreva aqui o modo de fazer..." style="width:100%; min-height:120px;"></textarea>
+
+      <div class="oferenda-fotos-box">
+        <label class="label" for="modalFotosOferendaEbo_1" style="margin-top:12px;">Fotos abaixo do modo de fazer</label>
+        <input id="modalFotosOferendaEbo_1" type="file" accept="image/*" multiple />
+        <div class="hint">Você pode adicionar até 3 fotos nesta parte.</div>
+        <div id="previewFotosOferendaEbo_1" class="foto-preview-grid"></div>
+      </div>
+    </div>
+
+    <!-- Bloco 3 -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:10px;">Lista 2</div>
+
+      <label class="label" style="margin-top:8px;">Subtítulo</label>
+      <input id="modalSubtituloOferendaEbo_2" type="text" placeholder="Ex: Complemento / segunda parte" />
+
+      <div class="section-head" style="margin:12px 0 8px;">
+        <div class="saved-title">Ingredientes</div>
+        <button class="btn-tertiary btn-mini" onclick="modalAdicionarLinhaOferendasEbo('2')">+ Adicionar linha</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Ingrediente</th>
+            <th style="width:160px;">Quantidade</th>
+            <th style="width:120px;">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="modalBodyLinhasOferendasEbo_2"></tbody>
+      </table>
+    </div>
+
+    <!-- Bloco 4 -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:8px;">Modo de preparo</div>
+      <textarea id="modalModoFazerOferendaEbo_2" placeholder="Escreva aqui o modo de preparo..." style="width:100%; min-height:120px;"></textarea>
+
+      <div class="oferenda-fotos-box">
+        <label class="label" for="modalFotosOferendaEbo_2" style="margin-top:12px;">Fotos abaixo do modo de preparo</label>
+        <input id="modalFotosOferendaEbo_2" type="file" accept="image/*" multiple />
+        <div class="hint">Você pode adicionar até 3 fotos nesta parte.</div>
+        <div id="previewFotosOferendaEbo_2" class="foto-preview-grid"></div>
+      </div>
+    </div>
+
+    <div class="actions-row" style="margin-top:12px;">
+      <button class="btn-secondary" onclick="enviarParaBancoOferendasEbo()">Enviar para banco de dados</button>
+      <button onclick="fecharModalOferendasEbo()">Cancelar</button>
+    </div>
+
+    <div class="hint" id="modalMsgOferendasEbo" style="margin-top:8px;"></div>
+
+  </div>
+</div>
+
+<!-- =========================
      MODAL BANHOS
 ========================= -->
 <div id="modalBackdropBanhos" class="modal-backdrop" style="display:none;">
@@ -964,6 +1186,104 @@
 
   </div>
 </div>
+
+<!--MODAL LISTA IBÁ ORIXAS -->
+
+<div id="modalBackdropListaIbaOrixa" class="modal-backdrop" style="display:none;">
+  <div class="modal-card">
+
+    <div class="section-head">
+      <h3 style="margin:0;">Cadastrar Lista Ibá Orixá</h3>
+      <button class="btn-danger btn-mini" onclick="fecharModalListaIbaOrixa()">X</button>
+    </div>
+
+    <!-- ====== BLOCO 1 ====== -->
+    <div style="margin-top:10px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:10px;">Lista 1</div>
+
+      <label class="label">Nome da Lista Ibá Orixá</label>
+      <input id="modalNomeIbaOrixa_1" type="text" placeholder="Ex: Ibá Exu" />
+
+      <label class="label" style="margin-top:8px;">Subtítulo</label>
+      <input id="modalSubtituloIbaOrixa_1" type="text" placeholder="Ex: Para firmeza espiritual" />
+
+      <div class="section-head" style="margin:12px 0 8px;">
+        <div class="saved-title">Ingredientes</div>
+        <button class="btn-tertiary btn-mini" onclick="modalAdicionarLinhaIbaOrixa('1')">+ Adicionar linha</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Ingrediente</th>
+            <th style="width:160px;">Quantidade</th>
+            <th style="width:120px;">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="modalBodyLinhasIbaOrixa_1"></tbody>
+      </table>
+    </div>
+
+    <!-- ====== BLOCO 2 ====== -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:8px;">Modo de preparo</div>
+      <textarea id="modalModoFazerIbaOrixa_1" placeholder="Escreva aqui o modo de preparo..." style="width:100%; min-height:120px;"></textarea>
+
+      <div class="oferenda-fotos-box">
+        <label class="label" for="modalFotosIbaOrixa_1" style="margin-top:12px;">Fotos abaixo do modo de preparo</label>
+        <input id="modalFotosIbaOrixa_1" type="file" accept="image/*" multiple />
+        <div class="hint">Você pode adicionar até 3 fotos nesta parte.</div>
+        <div id="previewFotosIbaOrixa_1" class="foto-preview-grid"></div>
+      </div>
+    </div>
+
+    <!-- ====== BLOCO 3 ====== -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:10px;">Lista 2</div>
+
+      <label class="label" style="margin-top:8px;">Subtítulo</label>
+      <input id="modalSubtituloIbaOrixa_2" type="text" placeholder="Ex: Complemento / segunda parte" />
+
+      <div class="section-head" style="margin:12px 0 8px;">
+        <div class="saved-title">Ingredientes</div>
+        <button class="btn-tertiary btn-mini" onclick="modalAdicionarLinhaIbaOrixa('2')">+ Adicionar linha</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Ingrediente</th>
+            <th style="width:160px;">Quantidade</th>
+            <th style="width:120px;">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="modalBodyLinhasIbaOrixa_2"></tbody>
+      </table>
+    </div>
+
+    <!-- ====== BLOCO 4 ====== -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:8px;">Modo de preparo</div>
+      <textarea id="modalModoFazerIbaOrixa_2" placeholder="Escreva aqui o modo de preparo..." style="width:100%; min-height:120px;"></textarea>
+
+      <div class="oferenda-fotos-box">
+        <label class="label" for="modalFotosIbaOrixa_2" style="margin-top:12px;">Fotos abaixo do modo de preparo</label>
+        <input id="modalFotosIbaOrixa_2" type="file" accept="image/*" multiple />
+        <div class="hint">Você pode adicionar até 3 fotos nesta parte.</div>
+        <div id="previewFotosIbaOrixa_2" class="foto-preview-grid"></div>
+      </div>
+    </div>
+
+    <div class="actions-row" style="margin-top:12px;">
+      <button class="btn-secondary" onclick="enviarListaIbaOrixa()">Enviar para banco de dados</button>
+      <button onclick="fecharModalListaIbaOrixa()">Cancelar</button>
+    </div>
+
+    <div class="hint" id="modalMsgIbaOrixa" style="margin-top:8px;"></div>
+
+  </div>
+</div>
+
 <!-- FIREBASE -->
 <script type="module">
   const firebaseConfig = {
