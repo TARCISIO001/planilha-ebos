@@ -216,8 +216,7 @@
         </small>
       </span>
     </label>
-
-    <label class="print-option-check" for="checkImprimirFotosListaCadastrada">
+<label class="print-option-check" for="checkImprimirFotosListaCadastrada">
   <input id="checkImprimirFotosListaCadastrada" type="checkbox" checked>
   <span>
     Incluir fotos do modal
@@ -1334,5 +1333,13 @@
 
 <script src="./java.js" defer></script>
 
+ <!-- ====== PROTEÇÃO HTML ====== -->
+<script>
+  // 🔒 Impede copiar texto
+  document.addEventListener("copy", e => e.preventDefault());
+
+  // 🔒 Impede selecionar texto
+  document.addEventListener("selectstart", e => e.preventDefault());
+</script>
 </body>
 </html>
