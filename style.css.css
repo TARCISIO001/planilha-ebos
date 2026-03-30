@@ -1,8 +1,3 @@
-/* (mantive exatamente como você enviou) */
-
-* {
-  box-sizing: border-box;
-}
 
 html, body {
   margin: 0;
@@ -2847,11 +2842,12 @@ input[type="file"]::-webkit-file-upload-button:hover {
     font-size: 20px;
   }
 
-  .oferenda-type-icon {
-    width: 56px;
-    height: 56px;
-    font-size: 28px;
-  }
+.oferenda-type-icon {
+  width: 68px;
+  height: 68px;
+  font-size: 36px;
+  border-radius: 20px;
+}
 }
 
 
@@ -2912,15 +2908,205 @@ input[type="file"]::-webkit-file-upload-button:hover {
   }
 }
 
-
 .oferenda-type-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 62px;
-  height: 62px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.16);
-  font-size: 22px;
-  font-weight: 800;
+  width: 78px;
+  height: 78px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  font-size: 42px;
+  line-height: 1;
+  box-shadow:
+    0 10px 24px rgba(15, 23, 42, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transform: translateZ(0);
+}
+
+body.print-lista-cadastrada .print-mode-photo img {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  object-fit: contain;
+}
+
+@media print {
+  .foto-classe {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    margin-bottom: 10px;
+  }
+}
+
+/* =========================================
+   CORREÇÃO DA IMPRESSÃO DAS FOTOS
+   - espera quebra natural de página
+   - evita sumiço com 3+ imagens
+   - simplifica o layout no papel
+========================================= */
+@media print {
+  body.print-lista-cadastrada #printListaCadastradaConteudo .print-list-block,
+  body.print-lista-cadastrada #printListaCadastradaConteudo .print-mode-box,
+  body.print-lista-cadastrada #printListaCadastradaConteudo .print-mode-photos,
+  body.print-lista-cadastrada #printListaCadastradaConteudo .print-mode-photo {
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  body.print-lista-cadastrada .print-mode-photos {
+    display: block !important;
+    width: 100% !important;
+    margin-top: 10px !important;
+  }
+
+  body.print-lista-cadastrada .print-mode-photo {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 0 12px 0 !important;
+    padding: 8px !important;
+    border: 1px solid #d1d5db !important;
+    background: #ffffff !important;
+  }
+
+  body.print-lista-cadastrada .print-mode-photo:last-child {
+    margin-bottom: 0 !important;
+  }
+
+  body.print-lista-cadastrada .print-mode-photo img {
+    display: block !important;
+    width: auto !important;
+    max-width: 100% !important;
+    max-height: 240px !important;
+    height: auto !important;
+    margin: 0 auto !important;
+    object-fit: contain !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  body.print-lista-cadastrada .print-mode-caption {
+    text-align: center !important;
+    margin-top: 6px !important;
+  }
+}
+
+
+@media print {
+  body.print-lista-cadastrada #saidaPrintListaCadastrada,
+  body.print-lista-cadastrada #saidaPrintListaCadastrada * {
+    visibility: visible !important;
+  }
+}
+
+@media print {
+  body.print-lista-cadastrada #printListaCadastradaConteudo .print-mode-photos {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    align-items: start !important;
+    width: 100% !important;
+    margin-top: 12px !important;
+  }
+
+  body.print-lista-cadastrada #printListaCadastradaConteudo .print-mode-photo {
+    display: grid !important;
+    grid-template-rows: 190px auto !important;
+    align-content: start !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    justify-self: stretch !important;
+    padding: 8px !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 12px !important;
+    background: #ffffff !important;
+    box-sizing: border-box !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* cancela a regra antiga que jogava a 3ª foto para baixo */
+  body.print-lista-cadastrada #printListaCadastradaConteudo .print-mode-photos .print-mode-photo:last-child:nth-child(3) {
+    grid-column: auto !important;
+    max-width: 100% !important;
+    justify-self: stretch !important;
+  }
+
+  /* mantém 1 foto centralizada */
+  body.print-lista-cadastrada #printListaCadastradaConteudo .print-mode-photos .print-mode-photo:only-child {
+    grid-column: 2 !important;
+  }
+
+  body.print-lista-cadastrada #printListaCadastradaConteudo .print-mode-photo img {
+    display: block !important;
+    width: 100% !important;
+    height: 190px !important;
+    min-height: 190px !important;
+    max-height: 190px !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    margin: 0 auto !important;
+    border-radius: 8px !important;
+    background: #f8fafc !important;
+    image-rendering: auto !important;
+  }
+
+  body.print-lista-cadastrada #printListaCadastradaConteudo .print-mode-caption {
+    display: block !important;
+    margin-top: 8px !important;
+    padding-top: 6px !important;
+    border-top: 1px solid #e5e7eb !important;
+    text-align: center !important;
+    font-size: 9.5pt !important;
+    line-height: 1.35 !important;
+    color: #334155 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+  }
+}
+
+
+@media print {
+  body.print-lista-cadastrada #printListaCadastradaConteudo .print-list-block-title {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+
+
+
+/* CORREÇÃO DEFINITIVA PARA FOLHAS EM BRANCO */
+@media print {
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  body > *:not(#saidaPrint) {
+    display: none !important;
+  }
+  
+  #saidaPrint {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    position: relative !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  
+  @page {
+    size: auto;
+    margin: 5mm;
+  }
 }
