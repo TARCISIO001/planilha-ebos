@@ -1,3 +1,4 @@
+
 // =======================================================
 // Ebó - App (CLEAN v2 - compatível com modal antigo e novo)
 // =======================================================
@@ -8,8 +9,8 @@ const COLLECTION = "listas";
 const USERS_COLLECTION = "users";
 const MASTERS = ["taina", "tata"];
 const OFERENDA_MAX_FOTOS_POR_BLOCO = 3;
-const OFERENDA_FOTO_MAX_LADO = 1280;
-const OFERENDA_FOTO_QUALIDADE = 0.78;
+const OFERENDA_FOTO_MAX_LADO = 900;
+const OFERENDA_FOTO_QUALIDADE = 0.68;
 const OFERENDAS_ORIXA_COLLECTION = "oferendas";
 const OFERENDAS_EBO_COLLECTION = "oferendas_ebo";
 
@@ -422,6 +423,34 @@ function escaparValorInput(value) {
     .replace(/>/g, "&gt;");
 }
 
+function escaparHTML(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+window.__fotosProcessando = window.__fotosProcessando || 0;
+
+function iniciarProcessamentoFotos() {
+  window.__fotosProcessando = Number(window.__fotosProcessando || 0) + 1;
+}
+
+function finalizarProcessamentoFotos() {
+  window.__fotosProcessando = Math.max(0, Number(window.__fotosProcessando || 0) - 1);
+}
+
+async function aguardarProcessamentoFotos() {
+  const limite = 8000;
+  const inicio = Date.now();
+
+  while (Number(window.__fotosProcessando || 0) > 0 && (Date.now() - inicio) < limite) {
+    await new Promise(resolve => setTimeout(resolve, 120));
+  }
+}
+
 function montarLinhaEditavelListaGerada(item = {}, manual = false) {
   const total = item?.totalTxt ?? item?.quantidade ?? "";
   const ingrediente = item?.ingrediente ?? "";
@@ -754,7 +783,7 @@ tbody.appendChild(tr);
   $("saidaPrint")?.scrollIntoView?.({ behavior: "smooth" });
 
   // 🔄 sempre voltar Quantidade de Pessoas para 1
-  resetarQuantidadePessoasPara1();
+  //resetarQuantidadePessoasPara1();
 
 };
 
@@ -832,8 +861,8 @@ function modalGetPayloadCompat() {
       tipo: "novo",
       lista1: { nome: nome1, subtitulo: subtitulo1, modo: modo1, itens: itens1 },
       lista2: { subtitulo: subtitulo2, modo: modo2, itens: itens2 },
-      fotosModo1: [...normalizarFotosOferenda(getFotosAreaState("listas")["1"])],
-      fotosModo2: [...normalizarFotosOferenda(getFotosAreaState("listas")["2"])],
+      fotosModo1: montarFotosComLegenda("listas", "1", getFotosAreaState("listas")["1"]),
+      fotosModo2: montarFotosComLegenda("listas", "2", getFotosAreaState("listas")["2"]),
     };
   }
 
@@ -943,9 +972,9 @@ window.procurarListas = async function procurarListas(silent = false) {
               <div class="saved-meta">Itens: ${n} • Criada: ${created} • Atualizada: ${updated}</div>
             </div>
             <div class="saved-actions-row">
-              <button class="btn-mini btn-print" onclick="imprimirListaCadastrada('${item.id}')">Imprimir</button>
               <button class="btn-mini btn-mini-open" onclick="editarLista('${item.id}')">Editar</button>
               <button class="btn-mini btn-mini-del" onclick="excluirLista('${item.id}')">Excluir</button>
+              <button class="btn-mini btn-print" onclick="imprimirListaCadastrada('${item.id}')">Imprimir</button>
             </div>
           </div>
         `;
@@ -1044,6 +1073,7 @@ window.excluirLista = async function excluirLista(docId) {
 // 4) ENVIAR PARA BANCO (Firestore) - compatível
 // =======================================================
 window.__enviarBancoComAlerta = async function () {
+  await aguardarProcessamentoFotos();
   try {
     const payloadModal = modalGetPayloadCompat();
 
@@ -1481,6 +1511,31 @@ window.fecharModalImpressaoListaCadastrada = function fecharModalImpressaoListaC
   esconderModalImpressaoListaCadastrada();
 };
 
+function confirmarImpressaoListaCadastrada() {
+  const incluirFotos = document.getElementById("checkImprimirFotosListaCadastrada").checked;
+
+  // Limpa a área de impressão antes de adicionar novos elementos
+  const areaImpressao = document.getElementById("saidaPrintListaCadastrada");
+  areaImpressao.innerHTML = "";  // Limpa a área
+
+  if (incluirFotos) {
+    // Seleciona todas as imagens com a classe 'foto-classe'
+    const imagensModais = document.querySelectorAll(".foto-classe");
+    
+    imagensModais.forEach(img => {
+      const imgClone = img.cloneNode(true); // Clona a imagem
+      // Adiciona a imagem clonada à área de impressão imediatamente
+      areaImpressao.appendChild(imgClone);
+    });
+  }
+
+  // Exibe a área de impressão (apenas quando for necessário)
+  document.getElementById("saidaPrintListaCadastrada").style.display = 'block';
+
+  // Realiza a impressão
+  window.print();
+}
+
 window.confirmarImpressaoListaCadastrada = async function confirmarImpressaoListaCadastrada() {
   const job = printJobPendenteListaCadastrada;
   const incluirModo = !!document.getElementById("checkImprimirModosListaCadastrada")?.checked;
@@ -1577,7 +1632,7 @@ function blocoTemConteudoImprimivel(bloco, incluirModo, incluirFotos) {
   );
 }
 
-function montarConteudoImpressaoListaCadastrada(data, incluirModo) {
+function montarConteudoImpressaoListaCadastrada(data, incluirModo = true, incluirFotos = true) {
   const conteudo = document.getElementById("printListaCadastradaConteudo");
   if (!conteudo) return;
 
@@ -1602,14 +1657,22 @@ function montarConteudoImpressaoListaCadastrada(data, incluirModo) {
     },
   ];
 
-  let blocosAtivos = blocos.filter((bloco) => blocoTemConteudoImprimivel(bloco, incluirModo));
+  // Filtra apenas os blocos que têm conteúdo
+  const blocosAtivos = blocos.filter((bloco) => {
+    return (
+      bloco.itens.length > 0 || // Tem itens
+      (bloco.subtitulo && bloco.subtitulo.trim()) || // Tem subtítulo
+      (incluirModo && bloco.modo && bloco.modo.trim()) || // Tem modo de fazer
+      (incluirFotos && bloco.fotos && bloco.fotos.length > 0) // Tem fotos
+    );
+  });
 
   if (!blocosAtivos.length) {
-    blocosAtivos = [blocos[0]];
+    conteudo.innerHTML = `<div class="print-empty-message">Nenhum conteúdo disponível para impressão.</div>`;
+    return;
   }
 
-  const mostrarTituloLista =
-    blocosAtivos.length > 1 || blocosAtivos[0]?.tituloLista === "Lista 2";
+  const mostrarTituloLista = blocosAtivos.length > 1;
 
   blocosAtivos.forEach((bloco) => {
     const wrap = document.createElement("div");
@@ -1629,23 +1692,28 @@ function montarConteudoImpressaoListaCadastrada(data, incluirModo) {
       wrap.appendChild(subtitulo);
     }
 
-    wrap.appendChild(criarTituloSecaoImpressao("Ingredientes"));
-    wrap.appendChild(criarTabelaIngredientesBlocoImpressao(bloco.itens));
+    // Só mostra ingredientes se houver itens
+    if (bloco.itens.length > 0) {
+      wrap.appendChild(criarTabelaIngredientesBlocoImpressao(bloco.itens));
+    }
 
-    if (incluirModo && (bloco.modo || bloco.fotos?.length)) {
+    const deveMostrarModo = incluirModo && bloco.modo;
+    const deveMostrarFotos = incluirFotos && bloco.fotos.length > 0;
+
+    if (deveMostrarModo || deveMostrarFotos) {
       wrap.appendChild(criarTituloSecaoImpressao(bloco.tituloModo));
 
       const modoBox = document.createElement("div");
       modoBox.className = "print-mode-box";
 
-      if (bloco.modo) {
+      if (deveMostrarModo) {
         const modoTexto = document.createElement("p");
         modoTexto.className = "print-mode-text";
         modoTexto.textContent = bloco.modo;
         modoBox.appendChild(modoTexto);
       }
 
-      if (bloco.fotos?.length) {
+      if (deveMostrarFotos) {
         const fotosWrap = document.createElement("div");
         fotosWrap.className = "print-mode-photos";
 
@@ -1654,6 +1722,8 @@ function montarConteudoImpressaoListaCadastrada(data, incluirModo) {
           fotoBox.className = "print-mode-photo";
 
           const img = document.createElement("img");
+          img.loading = "eager";
+          img.decoding = "sync";
           img.src = foto?.src || foto;
           img.alt = (foto?.legenda || "").trim() || `${bloco.tituloModo} ${index + 1}`;
           fotoBox.appendChild(img);
@@ -1677,6 +1747,72 @@ function montarConteudoImpressaoListaCadastrada(data, incluirModo) {
 
     conteudo.appendChild(wrap);
   });
+}
+
+function aguardarFramesImpressao(quantidade = 2) {
+  return new Promise((resolve) => {
+    const passo = () => {
+      if (quantidade <= 0) {
+        resolve();
+        return;
+      }
+      quantidade -= 1;
+      requestAnimationFrame(passo);
+    };
+    requestAnimationFrame(passo);
+  });
+}
+
+function aguardarImagemPronta(img, timeout = 12000) {
+  return new Promise((resolve) => {
+    if (!img) {
+      resolve();
+      return;
+    }
+
+    let finalizado = false;
+    const encerrar = () => {
+      if (finalizado) return;
+      finalizado = true;
+      clearTimeout(timer);
+      img.removeEventListener("load", onLoad);
+      img.removeEventListener("error", onError);
+      resolve();
+    };
+
+    const onLoad = async () => {
+      try {
+        if (typeof img.decode === "function") {
+          await img.decode().catch(() => {});
+        }
+      } catch {}
+      encerrar();
+    };
+
+    const onError = () => encerrar();
+    const timer = setTimeout(encerrar, timeout);
+
+    if (img.complete && img.naturalWidth > 0) {
+      onLoad();
+      return;
+    }
+
+    if (img.complete) {
+      encerrar();
+      return;
+    }
+
+    img.addEventListener("load", onLoad, { once: true });
+    img.addEventListener("error", onError, { once: true });
+  });
+}
+
+async function aguardarImagensAreaImpressao(area) {
+  const imagens = Array.from(area?.querySelectorAll("img") || []);
+  if (!imagens.length) return;
+
+  await Promise.all(imagens.map((img) => aguardarImagemPronta(img)));
+  await aguardarFramesImpressao(2);
 }
 
 async function imprimirRegistroListaCadastrada(collectionName, docId, mensagens = {}, opcoes = {}) {
@@ -1735,6 +1871,11 @@ montarConteudoImpressaoListaCadastrada(data, incluirModo, incluirFotos);
 
     area.style.display = "block";
     document.body.classList.add("print-lista-cadastrada");
+
+    await aguardarFramesImpressao(2);
+    void area.offsetHeight;
+    await aguardarImagensAreaImpressao(area);
+    await new Promise((resolve) => setTimeout(resolve, 180));
 
     window.addEventListener("afterprint", cleanup);
 
@@ -2181,11 +2322,11 @@ window.adicionarListaAcumulada = async function () {
 
   const itens1 = Array.isArray(lista.itens) ? lista.itens : [];
   const itens2 = Array.isArray(lista.itens2) ? lista.itens2 : [];
-
   const itensConsolidados = consolidarItensDaLista([...itens1, ...itens2]);
 
   const chaveNova = `${normalizarTexto(eboNome)}|${pratos}`;
   const jaExiste = window.__listasAcumuladas.some(l => `${normalizarTexto(l.nome)}|${l.pratos}` === chaveNova);
+  
   if (!jaExiste) {
     window.__listasAcumuladas.push({
       nome: eboNome,
@@ -2195,20 +2336,55 @@ window.adicionarListaAcumulada = async function () {
   }
 
   renderizarListasAcumuladas();
-  resetarQuantidadePessoasPara1();
+  
+  // 🔄 RESETA OS CAMPOS APÓS ADICIONAR
+  if ($("eboNome")) $("eboNome").value = "";
+  if ($("numPratos")) $("numPratos").value = "1";
+  
+  // Foca no campo do nome do ebó para facilitar a próxima entrada
+  if ($("eboNome")) $("eboNome").focus();
 
   // 🔹 NOVO: gera a lista final automaticamente
   window.gerarListaFinalAcumulada();
 
-  // 🔄 limpa o input do ebó
-  const inputEbo = document.getElementById("eboNome");
-  if (inputEbo) {
-    inputEbo.value = "";
-    inputEbo.focus();
+// Novo código (copie e cole isto)
+const feedback = document.createElement('div');
+feedback.textContent = '✅ Lista adicionada com sucesso!';
+feedback.style.position = 'fixed';
+feedback.style.top = '20px';
+feedback.style.left = '50%';
+feedback.style.transform = 'translateX(-50%)';
+feedback.style.background = '#4CAF50';
+feedback.style.color = 'white';
+feedback.style.padding = '12px 24px';
+feedback.style.borderRadius = '4px';
+feedback.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+feedback.style.zIndex = '1000';
+feedback.style.fontFamily = 'Arial, sans-serif';
+feedback.style.fontSize = '14px';
+feedback.style.animation = 'fadeIn 0.3s ease-out';
+
+document.body.appendChild(feedback);
+
+// Adiciona animações CSS dinamicamente
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, -20px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
   }
-};
+  @keyframes fadeOut {
+    from { opacity: 1; transform: translate(-50%, 0); }
+    to { opacity: 0; transform: translate(-50%, -20px); }
+  }
+`;
+document.head.appendChild(style);
 
-
+setTimeout(() => {
+  feedback.style.animation = 'fadeOut 0.3s ease-out';
+  setTimeout(() => feedback.remove(), 300);
+}, 2000);
+}
 // Força fundo branco no formulário "Gerar lista de ebó"
 document.addEventListener("DOMContentLoaded", () => {
   const inputEbo = document.getElementById("eboNome");
@@ -2469,13 +2645,14 @@ function modalGetPayloadPositivos() {
   return {
     lista1,
     lista2,
-    fotosModo1: [...normalizarFotosOferenda(getFotosAreaState("positivos")["1"])],
-    fotosModo2: [...normalizarFotosOferenda(getFotosAreaState("positivos")["2"])],
+    fotosModo1: montarFotosComLegenda("positivos", "1", getFotosAreaState("positivos")["1"]),
+    fotosModo2: montarFotosComLegenda("positivos", "2", getFotosAreaState("positivos")["2"]),
   };
 }
 
 // Enviar Positivos para Firebase
 window.enviarParaBancoPositivos = async function() {
+  await aguardarProcessamentoFotos();
   try {
     const payload = modalGetPayloadPositivos();
     const { db, collection, doc, setDoc, addDoc, serverTimestamp } = fb();
@@ -2723,13 +2900,14 @@ function modalGetPayloadBanhos() {
   return {
     lista1,
     lista2,
-    fotosModo1: [...normalizarFotosOferenda(getFotosAreaState("banhos")["1"])],
-    fotosModo2: [...normalizarFotosOferenda(getFotosAreaState("banhos")["2"])],
+    fotosModo1: montarFotosComLegenda("banhos", "1", getFotosAreaState("banhos")["1"]),
+    fotosModo2: montarFotosComLegenda("banhos", "2", getFotosAreaState("banhos")["2"]),
   };
 }
 
 // Enviar para Firebase
 window.enviarParaBancoBanhos = async function() {
+  await aguardarProcessamentoFotos();
   try {
     const payload = modalGetPayloadBanhos();
     const { db, collection, doc, setDoc, addDoc, serverTimestamp } = fb();
@@ -2989,6 +3167,7 @@ function modalGetPayloadOferendas() {
 
 // Enviar para Firebase
 window.enviarParaBancoOferendas = async function() {
+  await aguardarProcessamentoFotos();
   try {
     const payload = modalGetPayloadOferendas();
     const { db, collection, doc, setDoc, addDoc, serverTimestamp } = fb();
@@ -3232,6 +3411,7 @@ function modalGetPayloadOferendasEbo() {
   };
 }
 window.enviarParaBancoOferendasEbo = async function () {
+  await aguardarProcessamentoFotos();
   const { auth, db, collection, doc, setDoc, addDoc, serverTimestamp } = fb();
 
   const payload = modalGetPayloadOferendasEbo();
@@ -3556,24 +3736,57 @@ function renderizarPreviewFotosArea(area, listId) {
   const box = document.getElementById(`${config.previewPrefix}${id}`);
   if (!box) return;
 
-  const fotos = getFotosAreaState(area)[id] || [];
+  const fotos = normalizarFotosOferenda(getFotosAreaState(area)[id] || []);
+  box.innerHTML = "";
 
   if (!fotos.length) {
     box.innerHTML = `<div class="foto-preview-empty">Nenhuma foto adicionada nesta parte.</div>`;
     return;
   }
 
-box.innerHTML = fotos.map((foto, index) => `
-  <div class="foto-preview-item">
-    <img src="${foto.src || foto}" alt="Foto ${index + 1}" loading="lazy">
-    <div class="foto-legenda-input" contenteditable="true" placeholder="Digite a legenda aqui">${foto.legenda || ""}</div>
-    <div class="foto-preview-actions">
-      <button type="button" class="btn-danger btn-mini" onclick="removerFotoArea('${area}', '${id}', ${index})">Remover</button>
-    </div>
-  </div>
-`).join("");
-}
+  fotos.forEach((foto, index) => {
+    const item = document.createElement("div");
+    item.className = "foto-preview-item";
 
+    const img = document.createElement("img");
+    img.alt = `Foto ${index + 1}`;
+    img.loading = "eager";
+    img.decoding = "async";
+    img.src = foto?.src || foto || "";
+
+    img.addEventListener("error", () => {
+      img.removeAttribute("src");
+      img.alt = `Foto ${index + 1} indisponível`;
+      img.style.display = "none";
+
+      const erro = document.createElement("div");
+      erro.className = "foto-preview-empty";
+      erro.textContent = "Esta foto não conseguiu abrir. Remova e envie novamente em JPG ou PNG.";
+      item.insertBefore(erro, legenda);
+    }, { once: true });
+
+    const legenda = document.createElement("div");
+    legenda.className = "foto-legenda-input";
+    legenda.contentEditable = "true";
+    legenda.setAttribute("placeholder", "Digite a legenda aqui");
+    legenda.innerHTML = escaparHTML(foto?.legenda || "");
+
+    const actions = document.createElement("div");
+    actions.className = "foto-preview-actions";
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn-danger btn-mini";
+    btn.textContent = "Remover";
+    btn.addEventListener("click", () => removerFotoArea(area, id, index));
+
+    actions.appendChild(btn);
+    item.appendChild(img);
+    item.appendChild(legenda);
+    item.appendChild(actions);
+    box.appendChild(item);
+  });
+}
 
 window.removerFotoArea = function removerFotoArea(area, listId, index) {
   const id = String(listId || "1");
@@ -3660,20 +3873,21 @@ async function handleFotosAreaSelecionadas(area, listId) {
     if (input) input.disabled = true;
 
     for (const file of arquivosSelecionados) {
+      iniciarProcessamentoFotos();
       try {
         const fotoCompactada = await compactarFotoOferenda(file);
         fotosAtuais.push({
           src: fotoCompactada,
-          legenda: "",
-          file // mantém referência ao arquivo original
+          legenda: ""
         });
+        renderizarPreviewFotosArea(area, id);
       } catch (err) {
         console.error("Erro ao processar foto:", err);
         alert(`Erro ao adicionar a foto: ${file.name}`);
+      } finally {
+        finalizarProcessamentoFotos();
       }
     }
-
-    renderizarPreviewFotosArea(area, id);
   } finally {
     if (input) {
       input.disabled = false;
@@ -3698,6 +3912,10 @@ function prepararModalFotosArea(area) {
   inicializarInputsFotosArea(area);
   renderizarPreviewFotosArea(area, "1");
   renderizarPreviewFotosArea(area, "2");
+  requestAnimationFrame(() => {
+    renderizarPreviewFotosArea(area, "1");
+    renderizarPreviewFotosArea(area, "2");
+  });
 }
 
 // ============================
@@ -3796,12 +4014,13 @@ function modalGetPayloadObrigacoes() {
   return {
     lista1,
     lista2,
-    fotosModo1: fotos["1"] || [],
-    fotosModo2: fotos["2"] || [],
+    fotosModo1: montarFotosComLegenda("obrigacoes", "1", fotos["1"]),
+    fotosModo2: montarFotosComLegenda("obrigacoes", "2", fotos["2"]),
   };
 }
 
 window.enviarParaBancoObrigacoes = async function() {
+  await aguardarProcessamentoFotos();
   try {
     const payload = modalGetPayloadObrigacoes();
     const { db, collection, addDoc, serverTimestamp } = fb();
@@ -4333,6 +4552,7 @@ function getLinhasIbaOrixa(listId) {
 }
 
 window.enviarListaIbaOrixa = async function () {
+  await aguardarProcessamentoFotos();
   const { auth, db, collection, addDoc, doc, setDoc, serverTimestamp } = fb();
 
   const nome = ($("modalNomeIbaOrixa_1")?.value || "").trim();
@@ -4343,6 +4563,8 @@ window.enviarListaIbaOrixa = async function () {
   const subtitulo2 = ($("modalSubtituloIbaOrixa_2")?.value || "").trim();
   const modo2 = ($("modalModoFazerIbaOrixa_2")?.value || "").trim();
   const itens2 = getLinhasIbaOrixa("2");
+  const fotosModo1 = montarFotosComLegenda("iba_orixa", "1", getFotosAreaState("iba_orixa")["1"]);
+  const fotosModo2 = montarFotosComLegenda("iba_orixa", "2", getFotosAreaState("iba_orixa")["2"]);
 
   console.log("[Ibá Orixá] project:", db.app.options.projectId);
   console.log("[Ibá Orixá] user:", auth.currentUser?.uid || null, auth.currentUser?.email || null);
@@ -4369,14 +4591,14 @@ window.enviarListaIbaOrixa = async function () {
     nome_norm: normalizarTexto(nome),
     subtitulo,
     modo,
-    fotosModo1: [],
+    fotosModo1,
     itens,
 
     nome2: "",
     nome2_norm: "",
     subtitulo2,
     modo2,
-    fotosModo2: [],
+    fotosModo2,
     itens2,
 
     createdBy: auth.currentUser.uid,
@@ -4494,3 +4716,42 @@ window.editarIbaOrixa = async function(docId) {
     alert("Erro ao editar Lista Ibá Orixá.");
   }
 };
+
+
+
+
+
+
+
+//PROTEÇÃO NO JS//
+if (mostrarTituloLista) {
+  const tituloLista = document.createElement("h2");
+  tituloLista.className = "print-list-block-title";
+  tituloLista.textContent = bloco.tituloLista;
+  wrap.appendChild(tituloLista);
+}
+
+
+// 🔒 BLOQUEAR CLIQUE DIREITO
+document.addEventListener("contextmenu", function(e) {
+  e.preventDefault();
+});
+
+// 🔒 BLOQUEAR F12, CTRL+SHIFT+I, CTRL+U
+document.addEventListener("keydown", function(e) {
+  if (
+    e.key === "F12" ||
+    (e.ctrlKey && e.shiftKey && e.key === "I") ||
+    (e.ctrlKey && e.key === "u")
+  ) {
+    e.preventDefault();
+  }
+});
+
+// 🔒 DETECTAR DEVTOOLS ABERTO
+setInterval(function() {
+  const aberto = window.outerWidth - window.innerWidth > 160;
+  if (aberto) {
+    document.body.innerHTML = "<h1 style='color:red;text-align:center'>Acesso bloqueado</h1>";
+  }
+}, 1000);
