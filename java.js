@@ -4755,3 +4755,18 @@ setInterval(function() {
     document.body.innerHTML = "<h1 style='color:red;text-align:center'>Acesso bloqueado</h1>";
   }
 }, 1000);
+
+function imprimirLista() {
+  window.print();
+}
+
+function imprimirLista() {
+  window.print();
+}
+
+function imprimirLista() {
+  window.print();
+}
+
+// Chame esta função quando quiser imprimir
+imprimirLista();
