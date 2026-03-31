@@ -4768,3 +4768,12 @@ function imprimirLista() {
   window.print();
 }
 
+// Versão alternativa para Safari
+function safariPrint() {
+  const content = document.querySelector('.print-area').innerHTML;
+  const originalContent = document.body.innerHTML;
+  
+  document.body.innerHTML = content;
+  window.print();
+  document.body.innerHTML = originalContent;
+}
