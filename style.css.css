@@ -102,8 +102,14 @@ button {
    BOTÃO IMPRIMIR
 ========================= */
 .btn-print {
-  background: #7c3aed;       /* roxo elegante */
+  background: #7c3aed;
   color: #ffffff;
+
+  width: auto;           /* 🔥 impede de esticar */
+  display: inline-block; /* 🔥 tamanho natural */
+  padding: 10px 14px;
+
+  white-space: nowrap;   /* 🔥 evita quebrar texto */
 }
 
 .btn-print:hover {
@@ -291,7 +297,7 @@ th, td {
   #eboNome {
     font-size: 20px;        /* maior que os outros */
     font-weight: 600;
-    padding: 18px 20px;
+    padding: 18px 1px;
   }
 
 }
@@ -3110,3 +3116,139 @@ body.print-lista-cadastrada .print-mode-photo img {
     margin: 5mm;
   }
 }
+/* controle mobile css */
+.modal-card {
+  width: 90%; /* padrão para mobile e PC */
+  max-width: 600px; /* largura máxima para desktop */
+  margin: 0 auto; /* centraliza */
+  padding: 20px; /* espaçamento interno */
+  border-radius: 20px; /* bordas arredondadas */
+  background: #ffffff; /* fundo branco */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* sombra suave */
+  overflow-y: auto; /* permite rolagem vertical se necessário */
+  position: fixed; /* fixa o modal na tela */
+  left: 50%; /* centraliza horizontalmente */
+  top: 50%; /* centraliza verticalmente */
+  transform: translate(-50%, -50%); /* ajusta o posicionamento */
+}
+
+@media (max-width: 720px) {
+  .modal-card {
+    width: 95%; /* ocupa quase toda a tela no mobile */
+    max-width: 95%; /* não ultrapassa 95% da largura */
+    padding: 16px; /* espaçamento interno menor para mobile */
+    border-radius: 18px; /* bordas mais arredondadas */
+    max-height: 90vh; /* altura máxima para não ultrapassar a tela */
+  }
+}
+.modal-card {
+     width: 90% !important;
+     max-width: 600px !important;
+   }
+#authCard {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+input, select, textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.modal-card {
+  overflow-x: hidden;
+}
+
+@media (max-width: 720px) {
+  .modal-backdrop {
+    padding: 10px;
+  }
+
+  .modal-card {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
+
+.lista-container,
+.lista,
+.tabela-lista {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+@media (max-width: 720px) {
+  table {
+    font-size: 13px;
+  }
+
+  th, td {
+    padding: 6px 8px;
+    white-space: nowrap;
+  }
+}
+
+.card,
+.lista-item,
+.bloco,
+.modal-card {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+@media (max-width: 720px) {
+  .lista-container {
+    width: 95%;
+    margin: 0 auto;
+  }
+
+  .card,
+  .lista-item {
+    width: 100%;
+    margin: 8px 0;
+  }
+}
+
+/* stilo premium  */
+
+body {
+  background: #f5f7fa;
+  color: #1e293b;
+}
+
+input, select {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+
+  border-radius: 10px;
+  padding: 10px;
+
+  font-size: 14px;
+}
+h1, h2, h3 {
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+label {
+  font-size: 13px;
+  color: #64748b;
+}
+.lista-container {
+  padding: 16px;
+  gap: 12px;
+}
+@media (max-width: 720px) {
+  .card {
+    border-radius: 14px;
+    padding: 14px;
+  }
+} 
+
