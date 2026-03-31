@@ -1511,37 +1511,23 @@ window.fecharModalImpressaoListaCadastrada = function fecharModalImpressaoListaC
 
 function confirmarImpressaoListaCadastrada() {
 
-  const incluirFotos = document.getElementById("checkImprimirFotosListaCadastrada").checked;
-  const area = document.getElementById("saidaPrintListaCadastrada");
+  const areaPrint = document.getElementById("saidaPrintListaCadastrada");
+  const lista = document.querySelector(".lista-gerada");
 
-  // mantém escondido
-  area.style.display = "none";
+  if (!lista) {
+    alert("Nenhuma lista encontrada");
+    return;
+  }
 
-  setTimeout(() => {
+  // limpa
+  areaPrint.innerHTML = "";
 
-    if (incluirFotos) {
-      const imagens = document.querySelectorAll(".foto-classe");
+  // clona lista completa
+  const clone = lista.cloneNode(true);
 
-      imagens.forEach(img => {
-        const clone = img.cloneNode(true);
-        area.appendChild(clone);
-      });
-    }
+  areaPrint.appendChild(clone);
 
-    // mostra só para impressão
-    area.style.display = "block";
-
-    setTimeout(() => {
-      window.print();
-
-      // esconde depois
-      setTimeout(()=>{
-        area.style.display = "none";
-      },300);
-
-    },50);
-
-  },50);
+  window.print();
 }
 
 window.confirmarImpressaoListaCadastrada = async function confirmarImpressaoListaCadastrada() {
