@@ -1499,11 +1499,9 @@ function abrirModalImpressaoListaCadastrada(config = {}) {
     );
   }
 
-  if (titulo) titulo.textContent = config.tituloModal || "Imprimir lista";
-  if (checkboxModos) checkboxModos.checked = true;
-  if (checkboxFotos) checkboxFotos.checked = true;
-
+requestAnimationFrame(()=>{
   modal.style.display = "flex";
+});
 }
 
 window.fecharModalImpressaoListaCadastrada = function fecharModalImpressaoListaCadastrada() {
@@ -1512,28 +1510,38 @@ window.fecharModalImpressaoListaCadastrada = function fecharModalImpressaoListaC
 };
 
 function confirmarImpressaoListaCadastrada() {
+
   const incluirFotos = document.getElementById("checkImprimirFotosListaCadastrada").checked;
+  const area = document.getElementById("saidaPrintListaCadastrada");
 
-  // Limpa a área de impressão antes de adicionar novos elementos
-  const areaImpressao = document.getElementById("saidaPrintListaCadastrada");
-  areaImpressao.innerHTML = "";  // Limpa a área
+  // mantém escondido
+  area.style.display = "none";
 
-  if (incluirFotos) {
-    // Seleciona todas as imagens com a classe 'foto-classe'
-    const imagensModais = document.querySelectorAll(".foto-classe");
-    
-    imagensModais.forEach(img => {
-      const imgClone = img.cloneNode(true); // Clona a imagem
-      // Adiciona a imagem clonada à área de impressão imediatamente
-      areaImpressao.appendChild(imgClone);
-    });
-  }
+  setTimeout(() => {
 
-  // Exibe a área de impressão (apenas quando for necessário)
-  document.getElementById("saidaPrintListaCadastrada").style.display = 'block';
+    if (incluirFotos) {
+      const imagens = document.querySelectorAll(".foto-classe");
 
-  // Realiza a impressão
-  window.print();
+      imagens.forEach(img => {
+        const clone = img.cloneNode(true);
+        area.appendChild(clone);
+      });
+    }
+
+    // mostra só para impressão
+    area.style.display = "block";
+
+    setTimeout(() => {
+      window.print();
+
+      // esconde depois
+      setTimeout(()=>{
+        area.style.display = "none";
+      },300);
+
+    },50);
+
+  },50);
 }
 
 window.confirmarImpressaoListaCadastrada = async function confirmarImpressaoListaCadastrada() {
@@ -4724,56 +4732,34 @@ window.editarIbaOrixa = async function(docId) {
 
 
 //PROTEÇÃO NO JS//
-if (mostrarTituloLista) {
-  const tituloLista = document.createElement("h2");
-  tituloLista.className = "print-list-block-title";
-  tituloLista.textContent = bloco.tituloLista;
-  wrap.appendChild(tituloLista);
-}
+//if (mostrarTituloLista) {
+  //const tituloLista = document.createElement("h2");
+  //tituloLista.className = "print-list-block-title";
+  //tituloLista.textContent = bloco.tituloLista;
+  //wrap.appendChild(tituloLista);
+//}
 
 
- //🔒 BLOQUEAR CLIQUE DIREITO
-document.addEventListener("contextmenu", function(e) {
-  e.preventDefault();
-});
+// 🔒 BLOQUEAR CLIQUE DIREITO
+//document.addEventListener("contextmenu", function(e) {
+  //e.preventDefault();
+//});
 
 // 🔒 BLOQUEAR F12, CTRL+SHIFT+I, CTRL+U/
-document.addEventListener("keydown", function(e) {
-  if (
-    e.key === "F12" ||
-    (e.ctrlKey && e.shiftKey && e.key === "I") ||
-    (e.ctrlKey && e.key === "u")
-  ) {
-    e.preventDefault();
- }
-});
+//document.addEventListener("keydown", function(e) {
+  //if (
+    //e.key === "F12" ||
+    //(e.ctrlKey && e.shiftKey && e.key === "I") ||
+    //(e.ctrlKey && e.key === "u")
+  //) {
+    //e.preventDefault();
+ // }
+//});
 
 // 🔒 DETECTAR DEVTOOLS ABERTO//
-setInterval(function() {
-  const aberto = window.outerWidth - window.innerWidth > 160;
-  if (aberto) {
-    document.body.innerHTML = "<h1 style='color:red;text-align:center'>Acesso bloqueado</h1>";
-  }
-}, 1000);
-
-function imprimirLista() {
-  window.print();
-}
-
-function imprimirLista() {
-  window.print();
-}
-
-function imprimirLista() {
-  window.print();
-}
-
-// Versão alternativa para Safari
-function safariPrint() {
-  const content = document.querySelector('.print-area').innerHTML;
-  const originalContent = document.body.innerHTML;
-  
-  document.body.innerHTML = content;
-  window.print();
-  document.body.innerHTML = originalContent;
-}
+//setInterval(function() {
+  //const aberto = window.outerWidth - window.innerWidth > 160;
+  //if (aberto) {
+    //document.body.innerHTML = "<h1 style='color:red;text-align:center'>Acesso bloqueado</h1>";
+  //}
+//}, 1000);
