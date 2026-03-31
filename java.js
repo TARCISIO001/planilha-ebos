@@ -4732,12 +4732,12 @@ if (mostrarTituloLista) {
 }
 
 
-// 🔒 BLOQUEAR CLIQUE DIREITO
+ //🔒 BLOQUEAR CLIQUE DIREITO
 document.addEventListener("contextmenu", function(e) {
   e.preventDefault();
 });
 
-// 🔒 BLOQUEAR F12, CTRL+SHIFT+I, CTRL+U
+// 🔒 BLOQUEAR F12, CTRL+SHIFT+I, CTRL+U/
 document.addEventListener("keydown", function(e) {
   if (
     e.key === "F12" ||
@@ -4745,10 +4745,10 @@ document.addEventListener("keydown", function(e) {
     (e.ctrlKey && e.key === "u")
   ) {
     e.preventDefault();
-  }
+ }
 });
 
-// 🔒 DETECTAR DEVTOOLS ABERTO
+// 🔒 DETECTAR DEVTOOLS ABERTO//
 setInterval(function() {
   const aberto = window.outerWidth - window.innerWidth > 160;
   if (aberto) {
