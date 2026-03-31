@@ -4768,5 +4768,3 @@ function imprimirLista() {
   window.print();
 }
 
-// Chame esta função quando quiser imprimir
-imprimirLista();
