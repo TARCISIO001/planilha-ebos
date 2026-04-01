@@ -1361,31 +1361,25 @@ onAuthStateChanged(auth, (user) => {
 });
 
 // Imprimir lista Gerada
-window.imprimirListaGerada = function imprimirListaGerada() {
+window.imprimirListaGerada = function () {
 
   const area = document.getElementById("saidaPrint");
 
-  if (!area) return;
+  area.style.left = "0";
+  area.style.zIndex = "9999";
 
-  // mostra area
-  area.style.display = "block";
-  area.style.visibility = "hidden";
-
-  // força render IOS / Android
   requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
+    setTimeout(() => {
 
-      area.style.visibility = "visible";
+      window.print();
 
-      setTimeout(() => {
-        window.print();
-      }, 80);
+      area.style.left = "-9999px";
+      area.style.zIndex = "-1";
 
-    });
+    }, 80);
   });
 
 };
-
 //ADICIONAR FUNCAO NOVA LINHA ANTES DE IMPRIMIR//
 
 function adicionarLinhaManual(){
