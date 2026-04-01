@@ -1362,100 +1362,29 @@ onAuthStateChanged(auth, (user) => {
 
 // Imprimir lista Gerada
 window.imprimirListaGerada = function imprimirListaGerada() {
+
   const area = document.getElementById("saidaPrint");
-  const tbody = document.getElementById("printIngredientes");
 
-  if (!area || !tbody) {
-    alert("Não achei a área de impressão no HTML.");
-    return;
-  }
+  if (!area) return;
 
-  let linhasEditadas = coletarLinhasEditaveisListaGerada();
+  // mostra area
+  area.style.display = "block";
+  area.style.visibility = "hidden";
 
-  if (!linhasEditadas.length && window.__listasAcumuladas?.length) {
-    try {
-      window.gerarListaFinalAcumulada();
-      linhasEditadas = coletarLinhasEditaveisListaGerada();
-    } catch (e) {
-      console.error(e);
-    }
-  }
+  // força render IOS / Android
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
 
-  if (!linhasEditadas.length) {
-    alert("Adicione a lista primeiro para imprimir.");
-    return;
-  }
+      area.style.visibility = "visible";
 
-  try { limparSaidaPrintListaCadastrada(); } catch {}
+      setTimeout(() => {
+        window.print();
+      }, 80);
 
-  tbody.innerHTML = "";
-
-  linhasEditadas.forEach((item) => {
-    const tr = document.createElement("tr");
-
-    const tdTotal = document.createElement("td");
-    tdTotal.className = "print-total";
-    tdTotal.textContent = item.quantidade || "—";
-
-    const tdIng = document.createElement("td");
-    tdIng.className = "print-ing";
-    tdIng.textContent = item.ingrediente || "—";
-
-    const tdPratos = document.createElement("td");
-    tdPratos.className = "print-pratos";
-    tdPratos.textContent = item.pratos || "—";
-
-    tr.appendChild(tdTotal);
-    tr.appendChild(tdIng);
-    tr.appendChild(tdPratos);
-    tbody.appendChild(tr);
+    });
   });
 
-  const displayAnterior = area.style.display;
-  area.style.display = "block";
-
-setTimeout(() => {
-  window.print();
-}, 50);
-
-  let mq = null;
-  let onChange = null;
-  let cleaned = false;
-
-  const cleanup = () => {
-    if (cleaned) return;
-    cleaned = true;
-
-    area.style.display = displayAnterior || "none";
-    window.removeEventListener("afterprint", cleanup);
-
-    try {
-      if (mq) {
-        if (mq.removeEventListener) mq.removeEventListener("change", onChange);
-        else if (mq.removeListener) mq.removeListener(onChange);
-      }
-    } catch {}
-  };
-
-  window.addEventListener("afterprint", cleanup);
-
-  try {
-    mq = window.matchMedia("print");
-    onChange = (e) => {
-      if (!e.matches) cleanup();
-    };
-
-    if (mq.addEventListener) mq.addEventListener("change", onChange);
-    else if (mq.addListener) mq.addListener(onChange);
-  } catch {}
-
-  area.style.display = "block";
-
-setTimeout(() => {
-  window.print();
-}, 50);
 };
-
 
 //ADICIONAR FUNCAO NOVA LINHA ANTES DE IMPRIMIR//
 
@@ -4723,6 +4652,14 @@ window.editarIbaOrixa = async function(docId) {
   }
 };
 
+// IMPRIMIR MAIS RÁPIDO//
+
+window.onafterprint = function () {
+  const area = document.getElementById("saidaPrint");
+  if(area){
+    area.style.display = "none";
+  }
+};
 
 
 
