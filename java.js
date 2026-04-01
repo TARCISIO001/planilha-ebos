@@ -1414,6 +1414,10 @@ window.imprimirListaGerada = function imprimirListaGerada() {
   const displayAnterior = area.style.display;
   area.style.display = "block";
 
+setTimeout(() => {
+  window.print();
+}, 50);
+
   let mq = null;
   let onChange = null;
   let cleaned = false;
@@ -1445,7 +1449,11 @@ window.imprimirListaGerada = function imprimirListaGerada() {
     else if (mq.addListener) mq.addListener(onChange);
   } catch {}
 
+  area.style.display = "block";
+
+setTimeout(() => {
   window.print();
+}, 50);
 };
 
 
