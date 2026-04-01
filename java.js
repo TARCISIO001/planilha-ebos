@@ -944,6 +944,7 @@ window.procurarListas = async function procurarListas(silent = false) {
     const snaps = await getDocs(q);
     const items = [];
     snaps.forEach((s) => items.push({ id: s.id, ...s.data() }));
+    salvarCacheImpressaoLista(COLLECTION, items);
 
     if (!items.length) {
       box.innerHTML = `
@@ -1406,7 +1407,41 @@ window.adicionarLinhaManual = adicionarLinhaManual;
 // - segue a ordem do modal: ingredientes → modo / ingredientes → modo
 // =======================================================
 
+// =======================================================
+// 🔹 IMPRESSÃO DAS LISTAS CADASTRADAS
+// - abre o modal antes de imprimir
+// - usa cache local para evitar buscar sempre no Firebase
+// - no mobile desmarca fotos por padrão
+// - evita limpar cedo demais a área impressa
+// =======================================================
+
 let printJobPendenteListaCadastrada = null;
+window.__cacheImpressaoListas = window.__cacheImpressaoListas || {};
+
+function salvarCacheImpressaoLista(collectionName, items = []) {
+  if (!collectionName) return;
+
+  const chaveColecao = String(collectionName).trim();
+  if (!chaveColecao) return;
+
+  if (!window.__cacheImpressaoListas[chaveColecao] || typeof window.__cacheImpressaoListas[chaveColecao] !== "object") {
+    window.__cacheImpressaoListas[chaveColecao] = {};
+  }
+
+  (Array.isArray(items) ? items : []).forEach((item) => {
+    const id = String(item?.id || "").trim();
+    if (!id) return;
+    window.__cacheImpressaoListas[chaveColecao][id] = item;
+  });
+}
+
+function obterCacheImpressaoLista(collectionName, docId) {
+  const chaveColecao = String(collectionName || "").trim();
+  const chaveDoc = String(docId || "").trim();
+
+  if (!chaveColecao || !chaveDoc) return null;
+  return window.__cacheImpressaoListas?.[chaveColecao]?.[chaveDoc] || null;
+}
 
 function esconderModalImpressaoListaCadastrada() {
   const modal = document.getElementById("modalImpressaoListaCadastrada");
@@ -1430,36 +1465,24 @@ function abrirModalImpressaoListaCadastrada(config = {}) {
     );
   }
 
-requestAnimationFrame(()=>{
-  modal.style.display = "flex";
-});
+  if (titulo) {
+    titulo.textContent = config.tituloModal || "Imprimir lista";
+  }
+
+  const mobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent || "");
+
+  if (checkboxModos) checkboxModos.checked = true;
+  if (checkboxFotos) checkboxFotos.checked = !mobile;
+
+  requestAnimationFrame(() => {
+    modal.style.display = "flex";
+  });
 }
 
 window.fecharModalImpressaoListaCadastrada = function fecharModalImpressaoListaCadastrada() {
   printJobPendenteListaCadastrada = null;
   esconderModalImpressaoListaCadastrada();
 };
-
-function confirmarImpressaoListaCadastrada() {
-
-  const areaPrint = document.getElementById("saidaPrintListaCadastrada");
-  const lista = document.querySelector(".lista-gerada");
-
-  if (!lista) {
-    alert("Nenhuma lista encontrada");
-    return;
-  }
-
-  // limpa
-  areaPrint.innerHTML = "";
-
-  // clona lista completa
-  const clone = lista.cloneNode(true);
-
-  areaPrint.appendChild(clone);
-
-  window.print();
-}
 
 window.confirmarImpressaoListaCadastrada = async function confirmarImpressaoListaCadastrada() {
   const job = printJobPendenteListaCadastrada;
@@ -1476,6 +1499,7 @@ window.confirmarImpressaoListaCadastrada = async function confirmarImpressaoList
     incluirFotos,
   });
 };
+
 function limparSaidaPrintListaCadastrada() {
   document.body.classList.remove("print-lista-cadastrada");
 
@@ -1488,12 +1512,64 @@ function limparSaidaPrintListaCadastrada() {
   if (area) area.style.display = "none";
 }
 
+function prepararLimpezaRetornoImpressaoListaCadastrada() {
+  let finalizado = false;
+
+  const finalizar = () => {
+    if (finalizado) return;
+    finalizado = true;
+
+    document.removeEventListener("visibilitychange", aoVoltarVisibilidade, true);
+    window.removeEventListener("focus", aoVoltarFoco, true);
+
+    setTimeout(() => {
+      limparSaidaPrintListaCadastrada();
+    }, 250);
+  };
+
+  const aoVoltarVisibilidade = () => {
+    if (document.visibilityState === "visible") {
+      finalizar();
+    }
+  };
+
+  const aoVoltarFoco = () => {
+    setTimeout(finalizar, 250);
+  };
+
+  document.addEventListener("visibilitychange", aoVoltarVisibilidade, true);
+  window.addEventListener("focus", aoVoltarFoco, true);
+
+  setTimeout(finalizar, 60000);
+}
+
 function normalizarItensBlocoImpressao(itens = []) {
   return (Array.isArray(itens) ? itens : []).filter((it) => {
     const ing = (it?.ingrediente || "").toString().trim();
     const qtd = (it?.quantidade || "").toString().trim();
     return ing || qtd;
   });
+}
+
+function normalizarFotosImpressaoLista(lista = []) {
+  return (Array.isArray(lista) ? lista : [])
+    .filter(Boolean)
+    .slice(0, 3)
+    .map((foto) => {
+      if (typeof foto === "string") {
+        return { src: foto, legenda: "" };
+      }
+
+      if (typeof foto === "object" && foto?.src) {
+        return {
+          src: foto.src,
+          legenda: (foto.legenda || "").toString().trim(),
+        };
+      }
+
+      return null;
+    })
+    .filter(Boolean);
 }
 
 function criarTabelaIngredientesBlocoImpressao(itens = []) {
@@ -1548,15 +1624,6 @@ function criarTituloSecaoImpressao(texto) {
   return titulo;
 }
 
-function blocoTemConteudoImprimivel(bloco, incluirModo, incluirFotos) {
-  return !!(
-    bloco?.itens?.length ||
-    (bloco?.subtitulo || "").trim() ||
-    (incluirModo && (bloco?.modo || "").trim()) ||
-    (incluirFotos && bloco?.fotos?.length)
-  );
-}
-
 function montarConteudoImpressaoListaCadastrada(data, incluirModo = true, incluirFotos = true) {
   const conteudo = document.getElementById("printListaCadastradaConteudo");
   if (!conteudo) return;
@@ -1568,31 +1635,30 @@ function montarConteudoImpressaoListaCadastrada(data, incluirModo = true, inclui
       tituloLista: "Lista 1",
       subtitulo: (data?.subtitulo || "").toString().trim(),
       itens: normalizarItensBlocoImpressao(
-  data?.itens || data?.linhas || data?.ingredientes || []
-),
+        data?.itens || data?.linhas || data?.ingredientes || []
+      ),
       modo: (data?.modo || "").toString().trim(),
-      fotos: normalizarFotosOferenda(data?.fotosModo1),
+      fotos: normalizarFotosImpressaoLista(data?.fotosModo1),
       tituloModo: "Modo de fazer",
     },
     {
       tituloLista: "Lista 2",
       subtitulo: (data?.subtitulo2 || "").toString().trim(),
       itens: normalizarItensBlocoImpressao(
-  data?.itens2 || data?.linhas2 || data?.ingredientes2 || []
-),
+        data?.itens2 || data?.linhas2 || data?.ingredientes2 || []
+      ),
       modo: (data?.modo2 || "").toString().trim(),
-      fotos: normalizarFotosOferenda(data?.fotosModo2),
+      fotos: normalizarFotosImpressaoLista(data?.fotosModo2),
       tituloModo: "Modo de preparo",
     },
   ];
 
-  // Filtra apenas os blocos que têm conteúdo
   const blocosAtivos = blocos.filter((bloco) => {
     return (
-      bloco.itens.length > 0 || // Tem itens
-      (bloco.subtitulo && bloco.subtitulo.trim()) || // Tem subtítulo
-      (incluirModo && bloco.modo && bloco.modo.trim()) || // Tem modo de fazer
-      (incluirFotos && bloco.fotos && bloco.fotos.length > 0) // Tem fotos
+      bloco.itens.length > 0 ||
+      !!bloco.subtitulo ||
+      (incluirModo && !!bloco.modo) ||
+      (incluirFotos && bloco.fotos.length > 0)
     );
   });
 
@@ -1621,12 +1687,11 @@ function montarConteudoImpressaoListaCadastrada(data, incluirModo = true, inclui
       wrap.appendChild(subtitulo);
     }
 
-    // Só mostra ingredientes se houver itens
     if (bloco.itens.length > 0) {
       wrap.appendChild(criarTabelaIngredientesBlocoImpressao(bloco.itens));
     }
 
-    const deveMostrarModo = incluirModo && bloco.modo;
+    const deveMostrarModo = incluirModo && !!bloco.modo;
     const deveMostrarFotos = incluirFotos && bloco.fotos.length > 0;
 
     if (deveMostrarModo || deveMostrarFotos) {
@@ -1653,8 +1718,8 @@ function montarConteudoImpressaoListaCadastrada(data, incluirModo = true, inclui
           const img = document.createElement("img");
           img.loading = "eager";
           img.decoding = "sync";
-          img.src = foto?.src || foto;
-          img.alt = (foto?.legenda || "").trim() || `${bloco.tituloModo} ${index + 1}`;
+          img.src = foto?.src || "";
+          img.alt = foto?.legenda || `${bloco.tituloModo} ${index + 1}`;
           fotoBox.appendChild(img);
 
           const legendaTexto = (foto?.legenda || "").trim();
@@ -1685,9 +1750,11 @@ function aguardarFramesImpressao(quantidade = 2) {
         resolve();
         return;
       }
+
       quantidade -= 1;
       requestAnimationFrame(passo);
     };
+
     requestAnimationFrame(passo);
   });
 }
@@ -1700,6 +1767,7 @@ function aguardarImagemPronta(img, timeout = 12000) {
     }
 
     let finalizado = false;
+
     const encerrar = () => {
       if (finalizado) return;
       finalizado = true;
@@ -1714,7 +1782,7 @@ function aguardarImagemPronta(img, timeout = 12000) {
         if (typeof img.decode === "function") {
           await img.decode().catch(() => {});
         }
-      } catch {}
+      } catch (_) {}
       encerrar();
     };
 
@@ -1761,70 +1829,48 @@ async function imprimirRegistroListaCadastrada(collectionName, docId, mensagens 
 
   limparSaidaPrintListaCadastrada();
 
-  let mq = null;
-  let onChange = null;
-  let cleaned = false;
-
-  const cleanup = () => {
-    if (cleaned) return;
-    cleaned = true;
-
-    limparSaidaPrintListaCadastrada();
-    window.removeEventListener("afterprint", cleanup);
-
-    try {
-      if (mq) {
-        if (mq.removeEventListener) mq.removeEventListener("change", onChange);
-        else if (mq.removeListener) mq.removeListener(onChange);
-      }
-    } catch {
-      // no-op
-    }
-  };
-
   try {
-    const { db, doc, getDoc } = fb();
-    const snap = await getDoc(doc(db, collectionName, String(docId)));
+    let data = obterCacheImpressaoLista(collectionName, docId);
 
-    if (!snap.exists()) {
-      alert(mensagens.naoEncontrado || "Registro não encontrado.");
-      return;
+    if (!data) {
+      const { db, doc, getDoc } = fb();
+      const snap = await getDoc(doc(db, collectionName, String(docId)));
+
+      if (!snap.exists()) {
+        alert(mensagens.naoEncontrado || "Registro não encontrado.");
+        return;
+      }
+
+      data = { id: String(docId), ...(snap.data() || {}) };
+      salvarCacheImpressaoLista(collectionName, [data]);
     }
 
- const data = snap.data() || {};
-const incluirModo = opcoes?.incluirModo !== false;
-const incluirFotos = opcoes?.incluirFotos !== false;
+    const incluirModo = opcoes?.incluirModo !== false;
+    const incluirFotos = opcoes?.incluirFotos !== false;
 
-titulo.textContent = data.nome || "(sem nome)";
-montarConteudoImpressaoListaCadastrada(data, incluirModo, incluirFotos);
+    titulo.textContent = data.nome || "(sem nome)";
+    montarConteudoImpressaoListaCadastrada(data, incluirModo, incluirFotos);
 
     area.style.display = "block";
     document.body.classList.add("print-lista-cadastrada");
 
     await aguardarFramesImpressao(2);
     void area.offsetHeight;
-    await aguardarImagensAreaImpressao(area);
-    await new Promise((resolve) => setTimeout(resolve, 180));
 
-    window.addEventListener("afterprint", cleanup);
-
-    try {
-      mq = window.matchMedia("print");
-      onChange = (e) => {
-        if (!e.matches) cleanup();
-      };
-
-      if (mq.addEventListener) mq.addEventListener("change", onChange);
-      else if (mq.addListener) mq.addListener(onChange);
-    } catch {
-      // no-op
+    if (incluirFotos) {
+      await aguardarImagensAreaImpressao(area);
+    } else {
+      await aguardarFramesImpressao(1);
     }
 
+    await new Promise((resolve) => setTimeout(resolve, 80));
+
+    prepararLimpezaRetornoImpressaoListaCadastrada();
     window.print();
   } catch (e) {
     console.error(e);
     alert(mensagens.erro || "Erro ao imprimir. Veja o console (F12).");
-    cleanup();
+    limparSaidaPrintListaCadastrada();
   }
 }
 
