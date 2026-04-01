@@ -3252,30 +3252,53 @@ label {
   }
 } 
 
-/* para não aparecer lisa no finl celular*/
+/* área de impressão das listas cadastradas fica fora da tela no modo normal */
+#saidaPrintListaCadastrada {
+  display: block;
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 210mm;
+  max-width: 100%;
+  background: #ffffff;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: -1;
+}
 
-#saidaPrintListaCadastrada{
-display:none;
+@media screen {
+  body.print-lista-cadastrada #saidaPrintListaCadastrada {
+    left: -10000px !important;
+    top: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
 }
 
 @media print {
+  body.print-lista-cadastrada * {
+    visibility: hidden !important;
+  }
 
-body *{
-visibility:hidden;
-}
+  body.print-lista-cadastrada #saidaPrintListaCadastrada,
+  body.print-lista-cadastrada #saidaPrintListaCadastrada * {
+    visibility: visible !important;
+  }
 
-#saidaPrintListaCadastrada,
-#saidaPrintListaCadastrada *{
-visibility:visible;
-}
-
-#saidaPrintListaCadastrada{
-display:block;
-position:absolute;
-top:0;
-left:0;
-width:100%;
-}
+  body.print-lista-cadastrada #saidaPrintListaCadastrada {
+    display: block !important;
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 10px !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+    pointer-events: auto !important;
+    z-index: auto !important;
+  }
 }
 
 #saidaPrint{
