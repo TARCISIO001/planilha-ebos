@@ -1644,7 +1644,9 @@ function montarConteudoImpressaoListaCadastrada(data, incluirModo = true, inclui
     {
       tituloLista: "Lista 1",
       subtitulo: (data?.subtitulo || "").toString().trim(),
-      itens: normalizarItensBlocoImpressao(data?.itens),
+      itens: normalizarItensBlocoImpressao(
+  data?.itens || data?.linhas || data?.ingredientes || []
+),
       modo: (data?.modo || "").toString().trim(),
       fotos: normalizarFotosOferenda(data?.fotosModo1),
       tituloModo: "Modo de fazer",
@@ -1652,7 +1654,9 @@ function montarConteudoImpressaoListaCadastrada(data, incluirModo = true, inclui
     {
       tituloLista: "Lista 2",
       subtitulo: (data?.subtitulo2 || "").toString().trim(),
-      itens: normalizarItensBlocoImpressao(data?.itens2),
+      itens: normalizarItensBlocoImpressao(
+  data?.itens2 || data?.linhas2 || data?.ingredientes2 || []
+),
       modo: (data?.modo2 || "").toString().trim(),
       fotos: normalizarFotosOferenda(data?.fotosModo2),
       tituloModo: "Modo de preparo",
