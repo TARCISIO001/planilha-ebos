@@ -3279,8 +3279,10 @@ width:100%;
 }
 
 #saidaPrint{
-display:block;
-position:fixed;
-left:-9999px;
-top:0;
+position: fixed;
+left: -9999px;
+top: 0;
+width: 210mm;
+background: white;
+z-index: -1;
 }
