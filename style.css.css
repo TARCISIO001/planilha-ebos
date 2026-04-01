@@ -3276,5 +3276,11 @@ top:0;
 left:0;
 width:100%;
 }
+}
 
+#saidaPrint{
+display:block;
+position:fixed;
+left:-9999px;
+top:0;
 }
