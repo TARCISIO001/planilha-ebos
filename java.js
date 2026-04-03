@@ -1113,21 +1113,25 @@ payload = {
   nome_norm: normalizarTexto(lista1.nome),
   subtitulo: lista1.subtitulo || "",
   modo: lista1.modo || "",
-fotosModo1: (payloadModal.fotosModo1 || []).map((f, i) => ({
-  src: f.src || f,
-  legenda: f.legenda || legendas1[i] || ""
-})),
 
-fotosModo2: (payloadModal.fotosModo2 || []).map((f, i) => ({
-  src: f.src || f,
-  legenda: f.legenda || legendas2[i] || ""
-})),
+  // CORREÇÃO
+  subtitulo2: lista2.subtitulo || "",
+  modo2: lista2.modo || "",
+
+  fotosModo1: (payloadModal.fotosModo1 || []).map((f, i) => ({
+    src: f.src || f,
+    legenda: f.legenda || legendas1[i] || ""
+  })),
+
+  fotosModo2: (payloadModal.fotosModo2 || []).map((f, i) => ({
+    src: f.src || f,
+    legenda: f.legenda || legendas2[i] || ""
+  })),
 
   itens: lista1.itens,
   itens2: lista2.itens || [],
   updatedAt: serverTimestamp()
 };
-
 
       
     } else {
