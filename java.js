@@ -1989,29 +1989,53 @@ function formatarDetalhesQualidadesPade(agregado) {
   return partes.length ? partes.join(", ") : "—";
 }
 
-function montarTextoPratosLista(item) {
-  let textoPratos = item?.pratosTxt || "—";
-  const ingrediente = (item?.ingrediente || "").toLowerCase();
-  const qtd = parseInt(item?.totalTxt, 10) || 1;
+// Função para padronizar qualquer variação de tiras de morim branco
+function padronizarTirasMorimBranco(ingrediente) {
+  if (!ingrediente) return null;
 
-  // ⚡ Exceção: se for TIRAS DE MORIM BRANCO, mantém o texto original
-  if (ingrediente.includes("tiras morim branco")) {
-    return `${qtd} Tiras morim branco`;
+  // normaliza: remove acentos, minúsculas, espaços extras
+  const normalizado = ingrediente
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // verifica se contém "tiras morim branco" ou "tiras de morim branco"
+  if (normalizado.includes("tiras morim branco") || normalizado.includes("tiras de morim branco")) {
+    return "Tiras de morim branco"; // pode mudar para "morim branco" se quiser
   }
 
-  // Lógica existente para morim e casal de bruxo
-  if (ingrediente.includes("morim")) {
+  return null;
+}
+
+// Função atualizada de montar texto em pratos
+function montarTextoPratosLista(item) {
+  let textoPratos = item?.pratosTxt || "—";
+  const ingrediente = item?.ingrediente || "";
+  const qtd = parseInt(item?.totalTxt, 10) || 1;
+
+  // 1️⃣ Verifica se é tiras de morim branco
+  const tirasPadronizado = padronizarTirasMorimBranco(ingrediente);
+  if (tirasPadronizado) {
+    return `${qtd} ${tirasPadronizado}`;
+  }
+
+  // 2️⃣ Lógica existente para outros morims e casal de bruxo
+  const ingLower = ingrediente.toLowerCase();
+  if (ingLower.includes("morim")) {
     textoPratos = `${qtd} morim preto, vermelho e branco`;
-  } else if (ingrediente.includes("casal de bruxo")) {
+  } else if (ingLower.includes("casal de bruxo")) {
     textoPratos = `${qtd} casal de bruxo`;
   }
 
-  if (ingrediente.includes("morim")) {
+  if (ingLower.includes("morim")) {
     textoPratos = textoPratos
       .replace(/pratos/g, "morim")
       .replace(/prato/g, "morim");
   }
 
+  // 3️⃣ Retorna o texto final
   return textoPratos || "—";
 }
 
