@@ -1992,9 +1992,14 @@ function formatarDetalhesQualidadesPade(agregado) {
 function montarTextoPratosLista(item) {
   let textoPratos = item?.pratosTxt || "—";
   const ingrediente = (item?.ingrediente || "").toLowerCase();
-
   const qtd = parseInt(item?.totalTxt, 10) || 1;
 
+  // ⚡ Exceção: se for TIRAS DE MORIM BRANCO, mantém o texto original
+  if (ingrediente.includes("tiras morim branco")) {
+    return `${qtd} Tiras morim branco`;
+  }
+
+  // Lógica existente para morim e casal de bruxo
   if (ingrediente.includes("morim")) {
     textoPratos = `${qtd} morim preto, vermelho e branco`;
   } else if (ingrediente.includes("casal de bruxo")) {
@@ -2009,7 +2014,6 @@ function montarTextoPratosLista(item) {
 
   return textoPratos || "—";
 }
-
 
 window.gerarListaFinalAcumulada = function () {
   try {
