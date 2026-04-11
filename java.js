@@ -96,28 +96,26 @@ function normalizarForte(s) {
  * - regra 1ª + 3ª palavra (se existir) para reduzir variações do meio
  */
 function chaveIngrediente(ingrediente) {
-  const base = normalizarForte(ingrediente);
-  if (!base) return "";
+  if (!ingrediente) return "";
 
+  // 1️⃣ Normaliza: remove acentos, pontuação, deixa minúsculas
+  const base = (ingrediente || "")
+    .toString()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")      // remove acentos
+    .replace(/[^a-z0-9\s]+/g, " ")       // remove pontuação
+    .replace(/\s+/g, " ")                // colapsa espaços duplicados
+    .trim();
+
+  // 2️⃣ Quebra em tokens e aplica singularização
   let tokens = base
     .split(" ")
     .map(t => singularizarBasico(t))
     .filter(t => t && !STOPWORDS_ING.has(t));
 
-  if (!tokens.length) return "";
-
-  // ✅ SUA REGRA: usa 1ª e 3ª palavra quando existir
-  if (tokens.length >= 3) {
-    return `${tokens[0]} ${tokens[2]}`;
-  }
-
-  // caso tenha 2 palavras, mantém as 2
-  if (tokens.length === 2) {
-    return `${tokens[0]} ${tokens[1]}`;
-  }
-
-  // caso tenha 1 palavra, usa ela
-  return tokens[0];
+  // 3️⃣ Usa todas as palavras como chave
+  return tokens.join(" ");
 }
 
 
