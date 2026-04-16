@@ -47,42 +47,28 @@
 
   <!-- TOPO -->
   <section class="card">
-    <div class="topbar">
+<div class="topbar">
 
-      <div class="logo-area">
-        <img src="./imagem.png" class="logo-sistema">
-        <span class="sistema-nome">Painel</span>
-      </div>
+  <div class="logo-area">
+    <img src="./imagem.png" class="logo-sistema">
+    <span class="sistema-nome">Painel</span>
+  </div>
 
-      <div class="menu-topo">
+  <div class="menu-topo">
+    <button class="menu-btn" onclick="abrirTelaOferendas()">🪔 Oferendas</button>
+    <button class="menu-btn" onclick="abrirTelaPositivos()">✨ Positivos</button>
+    <button class="menu-btn" onclick="abrirTelaBanhos()">🌿 Banhos</button>
+    <button class="menu-btn" onclick="abrirTelaObrigacoes()">📝 Listas</button>
+    <button class="menu-btn" onclick="abrirTelaAleatorio()">🎲 Aleatório</button>
+    <button class="menu-btn" id="btnAdmin">⚙ Administração</button>
+  </div>
 
-        <button class="menu-btn" onclick="abrirTelaOferendas()">
-          🪔 Oferendas
-        </button>
-       <button class="menu-btn" onclick="abrirTelaPositivos()">    
-  ✨ Positivos
-</button>
+  <div class="top-actions">
+    <div class="firebase-pill" id="firebaseStatus"></div>
+    <button class="btn-danger" onclick="sair()">Sair</button>
+  </div>
 
-        <button class="menu-btn" onclick="abrirTelaBanhos()">   
-          🌿 Banhos
-        </button>
-
-        <button class="menu-btn" onclick="abrirTelaObrigacoes()">
-          📝 Listas
-        </button>
-
-        <button class="menu-btn" onclick="abrirTelaAdmin()" id="btnAdmin">
-          ⚙ Administração
-        </button>
-
-      </div>
-
-      <div class="top-actions">
-        <div class="firebase-pill" id="firebaseStatus"></div>
-        <button class="btn-danger" onclick="sair()">Sair</button>
-      </div>
-
-    </div>
+</div>
   </section>
 
   <!-- GERAR LISTA -->
@@ -94,7 +80,7 @@
     <input id="eboNome" type="text" placeholder="Ex: Ebó Exu" oninput="autoCarregarListaDebounced()" />
 
     <label class="label" style="margin-top:12px;">Quantidade de Pessoas</label>
-    <input id="numPratos" type="number" min="1" value="1" />
+   <!-- <input id="numPratos" type="number" min="1" value="1" /> -->
 
     <div class="actions-row">
       <button class="btn-secondary" onclick="adicionarListaAcumulada()">Adicionar lista</button> 
@@ -146,6 +132,7 @@
       <button class="btn-secondary" onclick="cadastrarLista()">Cadastrar lista</button>
       <input id="pesquisaListas" type="text" placeholder="Procurar lista pelo nome..." style="max-width:320px;" />
       <button class="btn-tertiary" onclick="procurarListas()">Procurar</button>
+      
     </div>
 
     <div id="listasSalvasBox" class="saved-list"></div>
@@ -543,6 +530,117 @@
   </div>
 </section>
 
+
+
+<!-- MODAL ALEATÓRIO -->
+<!-- ABA ALEATÓRIO -->
+<section id="aleatorioScreen" style="display:none; min-height:100vh;">
+  <div class="app-container">
+    <div class="section-head">
+      <h2>Projeto Aleatório</h2>
+      <button class="btn-tertiary" onclick="voltarTelaPrincipal()">Voltar</button>
+    </div>
+
+    <section class="card">
+      <div class="actions-row">
+        <button class="btn-secondary" onclick="abrirModalAleatorio()">Cadastrar Aleatório</button>
+        <input id="pesquisaAleatorio" type="text" placeholder="Procurar..." style="max-width:320px;" />
+        <button class="btn-tertiary" onclick="renderizarAleatorio()">Procurar</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-head" style="margin-top:0;">
+        <h2>Itens cadastrados</h2>
+      </div>
+      <div id="aleatorioSalvosBox" class="saved-list"></div>
+    </section>
+  </div>
+</section>
+
+<!-- MODAL ALEATÓRIO -->
+<div id="modalBackdropAleatorio" class="modal-backdrop" style="display:none;">
+  <div class="modal-card">
+    <div class="section-head">
+      <h3 style="margin:0;" id="modalTituloAleatorio">Cadastrar Aleatório</h3>
+      <button class="btn-danger btn-mini" onclick="fecharModalAleatorio()">X</button>
+    </div>
+
+    <!-- BLOCO 1 -->
+    <div style="margin-top:10px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title">Lista 1</div>
+      <label class="label">Nome</label>
+      <input id="modalNomeAleatorio_1" type="text" placeholder="Ex: Nome Aleatório" />
+      <label class="label">Subtítulo</label>
+      <input id="modalSubtituloAleatorio_1" type="text" placeholder="Ex: Para abertura de caminhos" />
+
+      <div class="section-head" style="margin:12px 0 8px;">
+        <div class="saved-title">Itens</div>
+        <button class="btn-tertiary btn-mini" onclick="modalAdicionarLinhaAleatorio('1')">+ Adicionar linha</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Ingrediente</th>
+            <th style="width:160px;">Quantidade</th>
+            <th style="width:120px;">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="modalBodyLinhasAleatorio_1"></tbody>
+      </table>
+    </div>
+
+    <!-- BLOCO 2 -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title">Modo de fazer</div>
+      <textarea id="modalModoFazerAleatorio_1" placeholder="Escreva aqui o modo de fazer..." style="width:100%; min-height:120px;"></textarea>
+      <div class="oferenda-fotos-box">
+        <label class="label" for="modalFotosAleatorio_1">Fotos abaixo do modo</label>
+        <input id="modalFotosAleatorio_1" type="file" accept="image/*" multiple />
+        <div id="previewFotosAleatorio_1" class="foto-preview-grid"></div>
+      </div>
+    </div>
+
+    <!-- BLOCO 3 -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title">Lista 2</div>
+      <label class="label">Subtítulo</label>
+      <input id="modalSubtituloAleatorio_2" type="text" placeholder="Ex: Complemento / segunda parte" />
+      <div class="section-head" style="margin:12px 0 8px;">
+        <div class="saved-title">Itens</div>
+        <button class="btn-tertiary btn-mini" onclick="modalAdicionarLinhaAleatorio('2')">+ Adicionar linha</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Ingrediente</th>
+            <th style="width:160px;">Quantidade</th>
+            <th style="width:120px;">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="modalBodyLinhasAleatorio_2"></tbody>
+      </table>
+    </div>
+
+    <!-- BLOCO 4 -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title">Modo de preparo</div>
+      <textarea id="modalModoFazerAleatorio_2" placeholder="Escreva aqui o modo de preparo..." style="width:100%; min-height:120px;"></textarea>
+      <div class="oferenda-fotos-box">
+        <label class="label" for="modalFotosAleatorio_2">Fotos abaixo do modo</label>
+        <input id="modalFotosAleatorio_2" type="file" accept="image/*" multiple />
+        <div id="previewFotosAleatorio_2" class="foto-preview-grid"></div>
+      </div>
+    </div>
+
+    <div class="actions-row" style="margin-top:12px;">
+      <button class="btn-secondary" onclick="enviarParaBancoAleatorio()">Enviar para banco de dados</button>
+      <button onclick="fecharModalAleatorio()">Cancelar</button>
+    </div>
+
+  </div>
+</div>
 
 <!-- =========================
      MODAL
@@ -1281,6 +1379,114 @@
   </div>
 </div>
 
+<!--MODAL ALEARÓTIO -->
+<!-- =========================
+     MODAL ALEATÓRIO
+========================= -->
+<div id="modalBackdropAleatorio" class="modal-backdrop" style="display:none;">
+  <div class="modal-card">
+
+    <div class="section-head">
+      <h3 style="margin:0;" id="modalTituloAleatorio">Cadastrar Aleatório</h3>
+      <button class="btn-danger btn-mini" onclick="fecharModalAleatorio()">X</button>
+    </div>
+
+    <!-- ====== BLOCO 1 ====== -->
+    <div style="margin-top:10px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:10px;">Lista 1</div>
+
+      <label class="label">Nome</label>
+      <input id="modalNomeAleatorio_1" type="text" placeholder="Ex: Nome Aleatório" />
+
+      <label class="label" style="margin-top:8px;">Subtítulo</label>
+      <input id="modalSubtituloAleatorio_1" type="text" placeholder="Ex: Para abertura de caminhos" />
+
+      <div class="section-head" style="margin:12px 0 8px;">
+        <div class="saved-title">Ingredientes</div>
+        <button class="btn-tertiary btn-mini" onclick="modalAdicionarLinhaAleatorio('1')">+ Adicionar linha</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Ingrediente</th>
+            <th style="width:160px;">Quantidade</th>
+            <th style="width:120px;">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="modalBodyLinhasAleatorio_1"></tbody>
+      </table>
+    </div>
+
+    <!-- ====== BLOCO 2 ====== -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:8px;">Modo de fazer</div>
+      <textarea
+        id="modalModoFazerAleatorio_1"
+        placeholder="Escreva aqui o modo de fazer..."
+        style="width:100%; min-height:120px;"
+      ></textarea>
+
+      <div class="oferenda-fotos-box">
+        <label class="label" for="modalFotosAleatorio_1" style="margin-top:12px;">Fotos abaixo do modo</label>
+        <input id="modalFotosAleatorio_1" type="file" accept="image/*" multiple />
+        <div class="hint">Você pode adicionar até 3 fotos nesta parte.</div>
+        <div id="previewFotosAleatorio_1" class="foto-preview-grid"></div>
+      </div>
+    </div>
+
+    <!-- ====== BLOCO 3 ====== -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:10px;">Lista 2</div>
+
+      <label class="label" style="margin-top:8px;">Subtítulo</label>
+      <input id="modalSubtituloAleatorio_2" type="text" placeholder="Ex: Complemento / segunda parte" />
+
+      <div class="section-head" style="margin:12px 0 8px;">
+        <div class="saved-title">Ingredientes</div>
+        <button class="btn-tertiary btn-mini" onclick="modalAdicionarLinhaAleatorio('2')">+ Adicionar linha</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Ingrediente</th>
+            <th style="width:160px;">Quantidade</th>
+            <th style="width:120px;">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="modalBodyLinhasAleatorio_2"></tbody>
+      </table>
+    </div>
+
+    <!-- ====== BLOCO 4 ====== -->
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:12px;">
+      <div class="saved-title" style="margin-bottom:8px;">Modo de preparo</div>
+      <textarea
+        id="modalModoFazerAleatorio_2"
+        placeholder="Escreva aqui o modo de preparo..."
+        style="width:100%; min-height:120px;"
+      ></textarea>
+
+      <div class="oferenda-fotos-box">
+        <label class="label" for="modalFotosAleatorio_2" style="margin-top:12px;">Fotos abaixo do modo</label>
+        <input id="modalFotosAleatorio_2" type="file" accept="image/*" multiple />
+        <div class="hint">Você pode adicionar até 3 fotos nesta parte.</div>
+        <div id="previewFotosAleatorio_2" class="foto-preview-grid"></div>
+      </div>
+    </div>
+
+    <!-- BOTÕES -->
+    <div class="actions-row" style="margin-top:12px;">
+      <button class="btn-secondary" onclick="enviarParaBancoAleatorio()">Enviar para banco de dados</button>
+      <button onclick="fecharModalAleatorio()">Cancelar</button>
+    </div>
+
+    <div class="hint" id="modalMsgAleatorio" style="margin-top:8px;"></div>
+
+  </div>
+</div>
+
 <!-- FIREBASE -->
 <script type="module">
   const firebaseConfig = {
@@ -1328,10 +1534,13 @@
     createUserWithEmailAndPassword,
     signOut
   };
+
+  document.getElementById('btn-aleatorio').addEventListener('click', abrirTelaAleatorio);
 </script>
 <script src="./java.js" defer></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.12.0/mammoth.browser.min.js" defer></script>
 <script src="./importador_excel_modal.js" defer></script>
+
 </body>
 </html>
