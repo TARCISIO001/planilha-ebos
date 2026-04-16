@@ -3309,3 +3309,196 @@ width: 210mm;
 background: white;
 z-index: -1;
 }
+
+#aleatorioScreen[style*="display: none"] {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+#aleatorioScreen {
+  display: none;       /* escondida por padrão */
+  position: absolute;  /* sai do fluxo do DOM */
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 16px 0;    /* opcional, mantém padding interno */
+  z-index: 10;        /* acima do restante do conteúdo */
+  background: transparent; /* mantém o fundo */
+}
+
+
+/* Botão verde personalizado para "Adicionar lista" */
+.btn-add-lista {
+  background: linear-gradient(135deg, #d68203 0%, #e45e04 100%);
+  color: #ffffff;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 10px 14px;
+  cursor: pointer;
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.12);
+  transition: all 0.2s ease;
+}
+
+
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 24px; /* mais espaço lateral */
+  position: relative;
+  background: #1f2937;
+  border-radius: 10px;
+  color: white;
+}
+
+
+
+.menu-topo {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  justify-content: flex-end; /* ficam à direita */
+  flex-wrap: wrap; /* quebra linha no mobile */
+}
+
+.menu-btn {
+  flex-shrink: 0; /* não encolhe */
+  white-space: nowrap; /* texto não quebra */
+  padding: 8px 14px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+/* Título ao lado da logo */
+.sistema-nome {
+  position: static;       /* não mais absoluto */
+  left: auto;
+  transform: none;
+  font-weight: bold;
+  font-size: 22px;
+  white-space: nowrap;
+  max-width: none;
+  text-align: left;       /* alinhamento natural ao lado da logo */
+}
+
+/* Container da logo */
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;              /* distância entre logo e título */
+}
+
+/* Mobile */
+@media (max-width: 720px) {
+  .logo-area {
+    justify-content: flex-start; /* não centraliza no mobile */
+  }
+}
+
+/* Topbar geral */
+.topbar {
+  display: flex;
+  align-items: center;       /* centraliza verticalmente todos os itens */
+  justify-content: space-between; /* logo à esquerda, menu central, ações à direita */
+  padding: 10px 24px;
+  background: #1f2937;
+  border-radius: 10px;
+  gap: 12px;
+  flex-wrap: wrap;           /* permite quebra no mobile */
+}
+
+/* Logo + título à esquerda */
+.logo-area {
+  display: flex;
+  align-items: center;       /* centraliza logo + título verticalmente */
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+/* Mantém o título ao lado da logo */
+.sistema-nome {
+  font-weight: bold;
+  font-size: 22px;
+  white-space: nowrap;
+  text-align: left;
+  display: flex;
+  align-items: center;       /* centraliza vertical com a logo */
+}
+
+/* Menu de abas centralizado */
+.menu-topo {
+  display: flex;
+  gap: 8px;
+  flex: 1 1 auto;            /* ocupa o espaço central */
+  justify-content: center;    /* centraliza horizontalmente */
+  align-items: center;        /* centraliza verticalmente com a logo e título */
+  flex-wrap: wrap;            /* quebra linha no mobile se necessário */
+  min-width: 0;               /* evita overflow */
+}
+
+/* Botões do menu */
+.menu-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 8px 14px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.menu-btn:hover {
+  background: #374151;
+}
+
+/* Área da direita (Firebase, Sair, Administração) */
+.top-actions {
+  display: flex;
+  align-items: center;        /* centraliza verticalmente */
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+/* =========================
+   RESPONSIVO MOBILE
+========================= */
+@media (max-width: 720px) {
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .menu-topo {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .menu-btn {
+    width: auto;
+    min-width: 80px;
+  }
+}
+
+
+
+
+
+.menu-topo {
+  margin-left: auto;
+  margin-right: auto;
+}
