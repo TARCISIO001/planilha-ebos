@@ -521,11 +521,11 @@ function resetarQuantidadePessoasPara1() {
 }
 
 
-function getGeradorEstado() {
-  const eboNome = ($("eboNome")?.value || "").trim();
-  const pratos = parseInt($("numPratos")?.value || "0", 10);
-  return { eboNome, pratos: Number.isFinite(pratos) ? pratos : 0 };
-}
+//function getGeradorEstado() {
+  //const eboNome = ($("eboNome")?.value || "").trim();
+  //const pratos = parseInt($("numPratos")?.value || "0", 10);
+  //return { eboNome, pratos: Number.isFinite(pratos) ? pratos : 0 };//
+//}
 
 // Busca lista salva pelo nome (match exato em nome_norm ou nome2_norm; senão pega o primeiro resultado)
 async function buscarListaPorNomeOuNome2(eboNome) {
@@ -971,6 +971,7 @@ window.procurarListas = async function procurarListas(silent = false) {
               <div class="saved-meta">Itens: ${n} • Criada: ${created} • Atualizada: ${updated}</div>
             </div>
             <div class="saved-actions-row">
+              <button class="btn-mini btn-add-lista" onclick="adicionarListaAcumulada('${item.id}')">Adicionar lista</button>
               <button class="btn-mini btn-mini-open" onclick="editarLista('${item.id}')">Editar</button>
               <button class="btn-mini btn-mini-del" onclick="excluirLista('${item.id}')">Excluir</button>
               <button class="btn-mini btn-print" onclick="imprimirListaCadastrada('${item.id}')">Imprimir</button>
@@ -1327,6 +1328,9 @@ if (btnEntrar) btnEntrar.addEventListener("click", () => window.entrar());
 const btnCriar = document.getElementById("btnCriarConta");
 if (btnCriar) btnCriar.addEventListener("click", () => window.criarConta());
 
+  // === AQUI ADICIONAMOS O BOTÃO ALEATÓRIO ===
+const btnAleatorio = document.getElementById('btn-aleatorio');
+if (btnAleatorio) btnAleatorio.addEventListener('click', abrirTelaAleatorio);
 
 const { auth, onAuthStateChanged } = fb();
 
@@ -2299,31 +2303,38 @@ tdPratos.textContent = montarTextoPratosLista(item);
 // =======================================================
 // 🔹 LISTAS ACUMULADAS (APENAS ADIÇÃO – NÃO QUEBRA NADA)
 // =======================================================
+window.adicionarListaAcumulada = async function(docId = null) {
+  let eboNome, lista = null;
 
-window.adicionarListaAcumulada = async function () {
-  const eboNome = ($("eboNome")?.value || "").trim();
-  const pratos = parseInt($("numPratos")?.value || "0", 10);
-
-  if (!eboNome) {
-    alert("Informe o nome do ebó.");
-    return;
-  }
-  if (!pratos || pratos < 1) {
-    alert("Informe a quantidade de pratos.");
-    return;
-  }
-
-  let lista = null;
-  try {
-    lista = await buscarListaPorNomeOuNome2(eboNome);
-  } catch (e) {
-    console.error(e);
+  if (docId) {
+    // busca lista pelo id no cache
+    lista = obterCacheImpressaoLista('listas', docId);
+    if (!lista) {
+      alert("Lista não encontrada no cache.");
+      return;
+    }
+    eboNome = lista.nome;
+  } else {
+    eboNome = ($("eboNome")?.value || "").trim();
   }
 
+  if (!eboNome) { alert("Informe o nome do ebó."); return; }
+
+  // Prompt para quantidade de pessoas
+  let pratos = parseInt(prompt(`Informe a quantidade de pessoas para "${eboNome}"`, "1"), 10);
+  if (!Number.isFinite(pratos) || pratos < 1) {
+    alert("Quantidade inválida. Será considerado 1 pessoa.");
+    pratos = 1;
+  }
+
+  // Se lista não veio pelo docId, busca ela
   if (!lista) {
-    alert("Lista não encontrada.");
-    return;
+    try {
+      lista = await buscarListaPorNomeOuNome2(eboNome);
+    } catch(e) { console.error(e); }
   }
+
+  if (!lista) { alert("Lista não encontrada."); return; }
 
   const itens1 = Array.isArray(lista.itens) ? lista.itens : [];
   const itens2 = Array.isArray(lista.itens2) ? lista.itens2 : [];
@@ -2331,7 +2342,7 @@ window.adicionarListaAcumulada = async function () {
 
   const chaveNova = `${normalizarTexto(eboNome)}|${pratos}`;
   const jaExiste = window.__listasAcumuladas.some(l => `${normalizarTexto(l.nome)}|${l.pratos}` === chaveNova);
-  
+
   if (!jaExiste) {
     window.__listasAcumuladas.push({
       nome: eboNome,
@@ -2340,56 +2351,56 @@ window.adicionarListaAcumulada = async function () {
     });
   }
 
+  // Atualiza UI
   renderizarListasAcumuladas();
-  
-  // 🔄 RESETA OS CAMPOS APÓS ADICIONAR
-  if ($("eboNome")) $("eboNome").value = "";
-  if ($("numPratos")) $("numPratos").value = "1";
-  
-  // Foca no campo do nome do ebó para facilitar a próxima entrada
-  if ($("eboNome")) $("eboNome").focus();
-
-  // 🔹 NOVO: gera a lista final automaticamente
   window.gerarListaFinalAcumulada();
 
-// Novo código (copie e cole isto)
-const feedback = document.createElement('div');
-feedback.textContent = '✅ Lista adicionada com sucesso!';
-feedback.style.position = 'fixed';
-feedback.style.top = '20px';
-feedback.style.left = '50%';
-feedback.style.transform = 'translateX(-50%)';
-feedback.style.background = '#4CAF50';
-feedback.style.color = 'white';
-feedback.style.padding = '12px 24px';
-feedback.style.borderRadius = '4px';
-feedback.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
-feedback.style.zIndex = '1000';
-feedback.style.fontFamily = 'Arial, sans-serif';
-feedback.style.fontSize = '14px';
-feedback.style.animation = 'fadeIn 0.3s ease-out';
-
-document.body.appendChild(feedback);
-
-// Adiciona animações CSS dinamicamente
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translate(-50%, -20px); }
-    to { opacity: 1; transform: translate(-50%, 0); }
+  // Limpa campos se não veio do docId
+  if (!docId) {
+    if ($("eboNome")) $("eboNome").value = "";
+    if ($("numPratos")) $("numPratos").value = "1";
+    if ($("eboNome")) $("eboNome").focus();
   }
-  @keyframes fadeOut {
-    from { opacity: 1; transform: translate(-50%, 0); }
-    to { opacity: 0; transform: translate(-50%, -20px); }
-  }
-`;
-document.head.appendChild(style);
 
-setTimeout(() => {
-  feedback.style.animation = 'fadeOut 0.3s ease-out';
-  setTimeout(() => feedback.remove(), 300);
-}, 2000);
-}
+  // 🔹 Mostra animação de feedback
+  const feedback = document.createElement('div');
+  feedback.textContent = '✅ Lista adicionada com sucesso!';
+  feedback.style.position = 'fixed';
+  feedback.style.top = '20px';
+  feedback.style.left = '50%';
+  feedback.style.transform = 'translateX(-50%)';
+  feedback.style.background = '#4CAF50';
+  feedback.style.color = 'white';
+  feedback.style.padding = '12px 24px';
+  feedback.style.borderRadius = '4px';
+  feedback.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+  feedback.style.zIndex = '1000';
+  feedback.style.fontFamily = 'Arial, sans-serif';
+  feedback.style.fontSize = '14px';
+  feedback.style.animation = 'fadeIn 0.3s ease-out';
+
+  document.body.appendChild(feedback);
+
+  // Adiciona animações CSS dinamicamente
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translate(-50%, -20px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
+    }
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translate(-50%, 0); }
+      to { opacity: 0; transform: translate(-50%, -20px); }
+    }
+  `;
+  document.head.appendChild(style);
+
+  setTimeout(() => {
+    feedback.style.animation = 'fadeOut 0.3s ease-out';
+    setTimeout(() => feedback.remove(), 300);
+  }, 2000);
+};
+
 // Força fundo branco no formulário "Gerar lista de ebó"
 document.addEventListener("DOMContentLoaded", () => {
   const inputEbo = document.getElementById("eboNome");
@@ -2546,12 +2557,23 @@ window.abrirTelaOferendas = function () {
 };
 
 window.voltarTelaPrincipal = function () {
-  esconderTodasAsTelas(); // 🔹 esconde tudo
+  esconderTodasAsTelas();
 
-  const app = document.getElementById("postLogin");
-  if (app) app.style.display = "block";
+  const postLogin = document.getElementById("postLogin");
+  if (postLogin) postLogin.style.display = "block";
 
+  // reset scroll
   window.scrollTo({ top: 0, behavior: "instant" });
+  const container = document.querySelector(".app-container");
+  if (container) container.scrollTop = 0;
+
+  // garante que a aba Aleatório fique escondida e fora do fluxo
+  const aleatorio = document.getElementById("aleatorioScreen");
+  if (aleatorio) {
+    aleatorio.style.display = "none";
+    aleatorio.style.position = "absolute";
+    aleatorio.scrollTop = 0;
+  }
 };
 window.abrirModalPositivos = function () {
   limparCamposModalPositivos();
@@ -3613,10 +3635,10 @@ const FOTOS_MODAL_AREAS = {
   listas: { stateKey: "__listasFotos", inputPrefix: "modalFotosLista_", previewPrefix: "previewFotosLista_" },
   positivos: { stateKey: "__positivosFotos", inputPrefix: "modalFotosPositivos_", previewPrefix: "previewFotosPositivos_" },
   oferendas: { stateKey: "__oferendasFotos", inputPrefix: "modalFotosOferenda_", previewPrefix: "previewFotosOferenda_" },
-  oferendas_ebo: { stateKey: "__oferendasEboFotos", inputPrefix: "modalFotosOferendaEbo_", previewPrefix: "previewFotosOferendaEbo_" },
   banhos: { stateKey: "__banhosFotos", inputPrefix: "modalFotosBanho_", previewPrefix: "previewFotosBanho_" },
   obrigacoes: { stateKey: "__obrigacoesFotos", inputPrefix: "modalFotosObrigacao_", previewPrefix: "previewFotosObrigacao_" },
   iba_orixa: { stateKey: "__ibaOrixaFotos", inputPrefix: "modalFotosIbaOrixa_", previewPrefix: "previewFotosIbaOrixa_" },
+  aleatorio: { stateKey: "__aleatorioFotos", inputPrefix: "modalFotosAleatorio_", previewPrefix: "previewFotosAleatorio_" } // ✅ corrigido
 };
 
 function getConfigFotosArea(area) {
@@ -4442,6 +4464,7 @@ document.getElementById('voltar-lista').addEventListener('click', () => {
 document.getElementById('voltar-lista').addEventListener('click', () => {
   document.getElementById('listaScreen').style.display = 'none';
   document.getElementById('postLogin').style.display = 'block';
+  
 });
 
 // para funcionar modal lista iba orixa//
@@ -4768,3 +4791,302 @@ window.onafterprint = function () {
     //document.body.innerHTML = "<h1 style='color:red;text-align:center'>Acesso bloqueado</h1>";
   //}
 //}, 1000);
+
+// ============================
+// ABA ALEATÓRIO
+// ============================
+
+// Abrir e fechar modal
+window.abrirModalAleatorio = function() {
+  document.getElementById("modalBackdropAleatorio").style.display = "flex";
+};
+window.fecharModalAleatorio = function() {
+  document.getElementById("modalBackdropAleatorio").style.display = "none";
+};
+
+// Limpar linhas do modal
+function modalLimparLinhasAleatorio(listId) {
+  const tbody = document.getElementById(`modalBodyLinhasAleatorio_${listId}`);
+  if (tbody) tbody.innerHTML = "";
+}
+
+// Criar linha editável
+function modalCriarLinhaAleatorio(listId = "1", nome = "", quantidade = "") {
+  const tbody = document.getElementById(`modalBodyLinhasAleatorio_${listId}`);
+  if (!tbody) return;
+
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td><input class="modalIng" type="text" placeholder="Ex: Item" value="${nome}" /></td>
+    <td><input class="modalQtd" type="text" placeholder="Ex: 7" value="${quantidade}" /></td>
+    <td><button class="btn-danger btn-mini" type="button">Remover</button></td>
+  `;
+  tr.querySelector("button").onclick = () => tr.remove();
+  tbody.appendChild(tr);
+}
+
+// Adicionar linha
+window.modalAdicionarLinhaAleatorio = function(listId) {
+  modalCriarLinhaAleatorio(listId, "", "");
+};
+
+// Obter linhas do modal
+function getLinhasAleatorio(listId) {
+  const linhas = [];
+  document.querySelectorAll(`#modalBodyLinhasAleatorio_${listId} tr`).forEach(tr => {
+    const ing = (tr.querySelector(".modalIng")?.value || "").trim();
+    const qtd = (tr.querySelector(".modalQtd")?.value || "").trim();
+    if (ing || qtd) linhas.push({ ingrediente: ing, quantidade: qtd });
+  });
+  return linhas;
+}
+
+// Enviar para Firebase
+window.enviarParaBancoAleatorio = async function() {
+  try {
+    const lista1 = getLinhasAleatorio("1");
+    if (!lista1.length) return alert("Adicione ao menos 1 item.");
+
+    const nome = document.getElementById("modalNomeAleatorio_1")?.value || "Sem nome";
+
+    const { db, collection, addDoc, serverTimestamp } = fb();
+    const docRef = await addDoc(collection(db, "aleatorio"), {
+      nome,
+      itens: lista1,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    // 🔹 Atualizar a lista em tempo real
+    const box = document.getElementById("aleatorioSalvosBox");
+    if (box) {
+      const itemHTML = `
+        <div class="saved-item" id="aleatorio_${docRef.id}">
+          <div>
+            <div class="saved-title">${nome}</div>
+            <div class="saved-meta">${lista1.map(it => it.ingrediente + " • " + it.quantidade).join(", ")}</div>
+          </div>
+          <div class="saved-actions-row">
+            <button class="btn-mini btn-mini-open" onclick="editarAleatorio('${docRef.id}')">Editar</button>
+            <button class="btn-mini btn-mini-del" onclick="excluirAleatorio('${docRef.id}')">Excluir</button>
+            <button class="btn-mini btn-print" onclick="imprimirAleatorio('${docRef.id}')">Imprimir</button>
+          </div>
+        </div>
+      `;
+      box.insertAdjacentHTML("afterbegin", itemHTML);
+    }
+
+    fecharModalAleatorio();
+    alert("✅ Aleatório cadastrado com sucesso!");
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao salvar Aleatório.");
+  }
+};
+window.abrirTelaAleatorio = function() {
+  esconderTodasAsTelas();
+
+  const tela = document.getElementById("aleatorioScreen");
+  if (tela) {
+    tela.style.display = "block";       // mostra a aba
+    tela.style.position = "absolute";   // garante que está fora do fluxo
+    tela.scrollTop = 0;                 // scroll interno
+  }
+
+  window.scrollTo({ top: 0, behavior: "instant" }); // scroll da página
+  if (typeof window.renderizarAleatorio === "function") {
+    window.renderizarAleatorio();
+  }
+};
+// Renderizar itens (simplificado)
+window.renderizarAleatorio = async function() {
+  const box = document.getElementById("aleatorioSalvosBox");
+  if (!box) return;
+
+  const { db, collection, getDocs, query, orderBy, limit } = fb();
+
+  box.innerHTML = `<div class="saved-item"><div><div class="saved-title">Carregando...</div></div></div>`;
+  try {
+    const q = query(collection(db, "aleatorio"), orderBy("updatedAt", "desc"), limit(100));
+    const snaps = await getDocs(q);
+    const items = [];
+    snaps.forEach(s => items.push({ id: s.id, ...s.data() }));
+
+    box.innerHTML = items.map(item => {
+      const nItens = Array.isArray(item.itens) ? item.itens.length : 0;
+      return `
+        <div class="saved-item">
+          <div>
+            <div class="saved-title">${item.nome || "(sem nome)"}</div>
+            <div class="saved-meta">Itens: ${nItens}</div>
+          </div>
+          <div class="saved-actions-row">
+            <button class="btn-mini btn-mini-open" onclick="editarAleatorio('${item.id}')">Editar</button>
+            <button class="btn-mini btn-mini-del" onclick="excluirAleatorio('${item.id}')">Excluir</button>
+            <button class="btn-mini btn-print" onclick="imprimirAleatorio('${item.id}')">Imprimir</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  } catch (e) {
+    console.error(e);
+    box.innerHTML = `<div class="saved-item"><div><div class="saved-title">Erro ao carregar</div></div></div>`;
+  }
+};
+
+
+// Abrir e fechar modal
+window.abrirModalAleatorio = function() {
+  prepararModalFotosArea("aleatorio");
+  const modal = document.getElementById("modalBackdropAleatorio");
+  if (modal) modal.style.display = "flex";
+};
+
+window.fecharModalAleatorio = function() {
+  document.getElementById("modalBackdropAleatorio").style.display = "none";
+};
+
+// Limpar linhas e inputs
+function limparFormularioAleatorio() {
+  $("modalNomeAleatorio_1").value = "";
+  $("modalSubtituloAleatorio_1").value = "";
+  $("modalSubtituloAleatorio_2").value = "";
+  $("modalModoFazerAleatorio_1").value = "";
+  $("modalModoFazerAleatorio_2").value = "";
+  modalLimparLinhasAleatorio("1");
+  modalLimparLinhasAleatorio("2");
+  modalCriarLinhaAleatorio("1", "", "");
+  modalCriarLinhaAleatorio("2", "", "");
+  resetarFotosArea("aleatorio");
+}
+
+// Obter payload
+
+function modalGetPayloadAleatorio() {
+  const lista1 = {
+    nome: $("modalNomeAleatorio_1")?.value || "",
+    subtitulo: $("modalSubtituloAleatorio_1")?.value || "",
+    modo: $("modalModoFazerAleatorio_1")?.value || "",
+    itens: getLinhasAleatorio("1")
+  };
+  const lista2 = {
+    subtitulo: $("modalSubtituloAleatorio_2")?.value || "",
+    modo: $("modalModoFazerAleatorio_2")?.value || "",
+    itens: getLinhasAleatorio("2")
+  };
+  return {
+    lista1,
+    lista2,
+    fotosModo1: montarFotosComLegenda("aleatorio", "1", getFotosAreaState("aleatorio")["1"]),
+    fotosModo2: montarFotosComLegenda("aleatorio", "2", getFotosAreaState("aleatorio")["2"]),
+  };
+}
+
+async function renderizarAleatorio() {
+  const box = $("aleatorioSalvosBox");
+  if (!box) return;
+  const { db, collection, getDocs, query, orderBy, limit } = fb();
+  box.innerHTML = `<div class="saved-item"><div><div class="saved-title">Carregando...</div></div></div>`;
+  try {
+    const q = query(collection(db, "aleatorio"), orderBy("updatedAt", "desc"), limit(100));
+    const snaps = await getDocs(q);
+    const items = [];
+    snaps.forEach(s => items.push({ id: s.id, ...s.data() }));
+    box.innerHTML = items.map(item => `
+      <div class="saved-item">
+        <div>
+          <div class="saved-title">${item.nome || "(sem nome)"}</div>
+          <div class="saved-meta">Itens: ${item.itens.length}</div>
+        </div>
+        <div class="saved-actions-row">
+          <button class="btn-mini btn-mini-open" onclick="editarAleatorio('${item.id}')">Editar</button>
+          <button class="btn-mini btn-mini-del" onclick="excluirAleatorio('${item.id}')">Excluir</button>
+          <button class="btn-mini btn-print" onclick="imprimirAleatorio('${item.id}')">Imprimir</button>
+        </div>
+      </div>
+    `).join("");
+  } catch(e) { console.error(e); box.innerHTML = `<div class="saved-item"><div><div class="saved-title">Erro</div></div></div>`; }
+}
+
+window.editarAleatorio = async function(docId) {
+  const { db, doc, getDoc } = fb();
+  try {
+    const snap = await getDoc(doc(db, "aleatorio", docId));
+    if (!snap.exists()) return alert("Item Aleatório não encontrado.");
+    const data = snap.data();
+
+    abrirModalAleatorio();
+
+    $("modalNomeAleatorio_1").value = data.nome || "";
+    modalLimparLinhasAleatorio("1");
+    (data.itens || []).forEach(it => modalCriarLinhaAleatorio("1", it.ingrediente || "", it.quantidade || ""));
+
+    window.editingDocIdAleatorio = docId;
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao editar Aleatório.");
+  }
+};
+
+window.excluirAleatorio = async function(docId) {
+  const ok = confirm("Tem certeza que deseja excluir este Aleatório?");
+  if (!ok) return;
+  const { db, doc, deleteDoc } = fb();
+  try {
+    await deleteDoc(doc(db, "aleatorio", docId));
+    alert("Aleatório excluído!");
+    renderizarAleatorio();
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao excluir Aleatório.");
+  }
+};
+
+window.imprimirAleatorio = function(docId) {
+  return abrirModalImpressaoListaCadastrada({
+    collectionName: "aleatorio",
+    docId,
+    tituloModal: "Imprimir Aleatório",
+    mensagens: {
+      idNaoInformado: "ID do Aleatório não informado.",
+      naoEncontrado: "Item não encontrado.",
+      erro: "Erro ao imprimir Aleatório. Veja o console (F12).",
+    },
+  });
+};
+
+// Enviar para Firestore
+window.enviarParaBancoAleatorio = async function () {
+  await aguardarProcessamentoFotos();
+  try {
+    const payloadModal = modalGetPayloadAleatorio();
+    const { db, collection, addDoc, serverTimestamp } = fb();
+
+    if (!payloadModal.lista1.nome) return alert("Digite o nome da Lista 1.");
+    if (!payloadModal.lista1.itens.length) return alert("Adicione ao menos 1 item na Lista 1.");
+
+    const docPayload = {
+      nome: payloadModal.lista1.nome,
+      nome_norm: normalizarTexto(payloadModal.lista1.nome),
+      subtitulo: payloadModal.lista1.subtitulo,
+      modo: payloadModal.lista1.modo,
+      fotosModo1: payloadModal.fotosModo1,
+      itens: payloadModal.lista1.itens,
+      subtitulo2: payloadModal.lista2.subtitulo,
+      modo2: payloadModal.lista2.modo,
+      fotosModo2: payloadModal.fotosModo2,
+      itens2: payloadModal.lista2.itens || [],
+      updatedAt: serverTimestamp(),
+      createdAt: serverTimestamp()
+    };
+
+    await addDoc(collection(db, "aleatorio"), docPayload);
+    alert("✅ Aleatório cadastrado com sucesso!");
+    fecharModalAleatorio();
+
+    renderizarAleatorio();
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao enviar Aleatório.");
+  }
+};
