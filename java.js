@@ -1343,10 +1343,10 @@ onAuthStateChanged(auth, (user) => {
     showAdminPanel(MASTERS.includes(username));
 
     const btnAdmin = document.getElementById("btnAdmin");
-    if (btnAdmin) {
-      btnAdmin.style.display = MASTERS.includes(username) ? "inline-block" : "none";
-    }
-
+if (btnAdmin) {
+  btnAdmin.style.display = MASTERS.includes(username) ? "inline-block" : "none";
+  btnAdmin.addEventListener("click", abrirTelaAdmin);
+}
     setAuthMsg(`Logado como: ${username}`);
     setUserBadge(`Logado como: ${username}`);
     setFirebaseStatus(true, "Firebase: conectado");
