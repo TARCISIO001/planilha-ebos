@@ -3502,3 +3502,90 @@ z-index: -1;
   margin-left: auto;
   margin-right: auto;
 }
+
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 24px;
+  background: #1f2937;
+  border-radius: 10px;
+  position: relative; /* necessário para posicionamento absoluto do menu */
+}
+
+.menu-topo {
+  position: absolute;
+  left: 50%;             /* centraliza horizontalmente */
+  top: 50%;              /* centraliza verticalmente */
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;      /* mantém todos na mesma linha */
+}
+
+.menu-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 8px 14px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.top-actions {
+  display: flex;
+  flex-direction: column; /* empilha "Conectado" e botões */
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.top-actions .firebase-pill {
+  font-size: 12px;
+}
+
+
+
+
+
+.top-actions {
+  display: flex;             /* linha horizontal */
+  align-items: center;       /* centraliza verticalmente */
+  gap: 8px;                  /* espaço entre “Conectado” e botão */
+}
+
+.top-actions .firebase-pill {
+  font-size: 12px;
+  padding: 4px 10px;
+  white-space: nowrap;       /* evita quebra de linha */
+}
+
+.top-actions button {
+  height: auto;              /* deixa o botão do tamanho natural */
+  padding: 6px 12px;
+  flex-shrink: 0;            /* não encolhe */
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
