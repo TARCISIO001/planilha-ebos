@@ -63,7 +63,7 @@ function normalizarTexto(s) {
 // Palavras que não contam para diferenciar ingrediente (ruído)
 const STOPWORDS_ING = new Set([
   "de", "do", "da", "dos", "das",
-  "bola", "bolas",
+  "bola", "",
   "po", "pó",
   "porta", "portas" // (se aparecerem nos seus dados)
 ]);
@@ -456,17 +456,20 @@ function montarLinhaEditavelListaGerada(item = {}, manual = false) {
 
   return `
     <tr${manual ? ' data-manual="1"' : ""}>
-      <td class="print-total" data-label="Total">
-        <input class="editQtd" type="text" placeholder="Qtd" value="${escaparValorInput(total)}">
+      <!-- Coluna Quantidades -->
+      <td class="print-total" data-label="Quantidades">
+        <input class="editQtd" type="text" placeholder="Quantidades" value="${escaparValorInput(total)}">
       </td>
 
-      <td class="print-ing" data-label="Ingrediente">
-        <input class="editIng" type="text" placeholder="Ingrediente" value="${escaparValorInput(ingrediente)}">
+      <!-- Coluna Ingredientes -->
+      <td class="print-ing" data-label="Ingredientes">
+        <input class="editIng" type="text" placeholder="Ingredientes" value="${escaparValorInput(ingrediente)}">
       </td>
 
+      <!-- Coluna Pratos (agora quebra linha automaticamente) -->
       <td class="print-pratos" data-label="Pratos">
-        <div class="preview-pratos-cell">
-          <input class="editPratos" type="text" placeholder="Pratos" value="${escaparValorInput(pratos)}">
+        <div class="preview-pratos-cell" style="white-space: normal; word-break: break-word; max-width: 250px;">
+          ${escaparValorInput(pratos)}
           ${manual ? `
             <button class="btn-danger btn-mini" type="button" onclick="this.closest('tr').remove()">
               Remover
@@ -651,140 +654,50 @@ function detectarQualidadesPade(nome) {
 
 window.gerarLista = async function gerarLista() {
   const { eboNome, pratos } = getGeradorEstado();
-
   if (!eboNome) { alert("Informe o nome do ebó."); return; }
   if (!pratos || pratos < 1) { alert("Informe a quantidade de pratos."); return; }
 
-  let docLista = __listaCache;
- 
-  // ✅ CORREÇÃO PRINCIPAL: declarar itens1 e itens2
+  const tbody = $("printIngredientes");
+  if (!tbody) return;
+  tbody.innerHTML = ""; // limpa tabela
+
+  const docLista = __listaCache;
+  if (!docLista) return;
+
   const itens1 = Array.isArray(docLista.itens) ? docLista.itens : [];
   const itens2 = Array.isArray(docLista.itens2) ? docLista.itens2 : [];
-
-  // Junta lista 1 + lista 2
   const itensBrutos = [...itens1, ...itens2];
 
-// 🔥 Detecta número de qualidades de padê
-const multiplicadorPade = detectarQualidadesPade(docLista.nome);
+  const multiplicadorPade = detectarQualidadesPade(docLista.nome);
 
-// Ajusta quantidades automaticamente
-const itensAjustados = itensBrutos.map(it => {
-  let qtd = (it.quantidade || "").toString().trim();
+  // Renderiza linhas imediatamente
+  itensBrutos.forEach(item => {
+    const tr = document.createElement("tr");
 
-  // se não tiver quantidade escrita
-  if (!qtd) {
-    return {
-      ...it,
-      quantidade: String(multiplicadorPade)
-    };
-  }
+    const tdQtd = document.createElement("td");
+    tdQtd.className = "print-total";
+    let qtd = item.quantidade || String(multiplicadorPade);
+    const num = parseFloat(qtd.replace(",", "."));
+    tdQtd.textContent = !isNaN(num) ? String(num * pratos) : qtd;
 
-  const num = parseFloat(qtd.replace(",", "."));
+    const tdIng = document.createElement("td");
+    tdIng.className = "print-ing";
+    tdIng.textContent = item.ingrediente || "";
 
-  if (!isNaN(num)) {
-    return {
-      ...it,
-      quantidade: String(num * multiplicadorPade)
-    };
-  }
+    const tdPratos = document.createElement("td");
+    tdPratos.className = "print-pratos";
+    tdPratos.textContent = pratos;
 
-  return it;
-});
-  const itensConsolidados = consolidarIngredientes(itensBrutos);
+    tr.appendChild(tdQtd);
+    tr.appendChild(tdIng);
+    tr.appendChild(tdPratos);
 
-if (!itensConsolidados.length) {
-  alert("Essa lista não possui ingredientes cadastrados.");
-  throw new Error("Lista sem ingredientes");
-}
-
-  // Geração da impressão
-  //if ($("saidaPrint")) $("saidaPrint").style.display = "block";//
-  if ($("printEboNome")) $("printEboNome").textContent = eboNome;
-  if ($("printTotalPratos")) {
-    $("printTotalPratos").textContent = `${pratos} prato${pratos > 1 ? "s" : ""}`;
-  }
-const tbody = $("printIngredientes");
-if (!tbody) return;
-tbody.innerHTML = "";
-itensConsolidados.forEach((item) => {
-  let totalTxt = "";
-  if (item.valores.length) {
-    const unidadeBase = item.unidades[0];
-    const unidadesIguais = item.unidades.every(u => u === unidadeBase);
-    if (unidadesIguais) {
-      const soma = item.valores.reduce((a, b) => a + b, 0);
-      const total = soma * pratos;
-      totalTxt = `${formatNumero(total)}${unidadeBase ? " " + unidadeBase : ""}`;
-    }
-  }
-
-  if (!totalTxt) {
-    totalTxt = item.texto.length
-      ? item.texto.join(" + ") + ` x ${pratos}`
-      : `x ${pratos}`;
-  }
-
-const tr = document.createElement("tr");
-
-// TOTAL primeiro
-const tdQtd = document.createElement("td");
-tdQtd.className = "print-total";
-
-// INGREDIENTE no meio
-const tdIng = document.createElement("td");
-tdIng.className = "print-ing";
-tdIng.textContent = item.ingrediente;
-
-// 3ª coluna (pratos)
-const tdPratos = document.createElement("td");
-tdPratos.className = "print-pratos";
-tdPratos.textContent = "";
-
-const pratosBase =
-  window.__listasAcumuladas &&
-  window.__listasAcumuladas[0]
-    ? window.__listasAcumuladas[0].pratos
-    : null;
-
-let exibiuDetalhe = false;
-
-if (pratosBase && typeof totalTxt === "string") {
-  const partes = totalTxt.split(" ");
-  const num = parseFloat(partes[0].replace(",", "."));
-  const unidade = partes.slice(1).join(" ");
-
-  if (!isNaN(num) && num % pratosBase === 0) {
-    const porPrato = num / pratosBase;
-    tdQtd.textContent =
-      formatNumero(num) +
-      (unidade ? " " + unidade : "") +
-      "  |  " +
-      pratosBase +
-      " pratos × " +
-      formatNumero(porPrato);
-    exibiuDetalhe = true;
-  }
-}
-
-if (!exibiuDetalhe) {
-  tdQtd.textContent = totalTxt;
-}
-
-tr.appendChild(tdQtd);
-tr.appendChild(tdIng);
-tr.appendChild(tdPratos);
-tbody.appendChild(tr);
-
-
+    tbody.appendChild(tr);
   });
 
-  $("saidaPrint")?.scrollIntoView?.({ behavior: "smooth" });
-
-  // 🔄 sempre voltar Quantidade de Pessoas para 1
-  //resetarQuantidadePessoasPara1();
-
+  // Mostra lista imediatamente
+  $("saidaPrint")?.scrollIntoView?.({ behavior: "auto" });
 };
-
 
 // =======================================================
 // 2) MODAL (compatível)
@@ -1406,12 +1319,7 @@ function adicionarLinhaManual(){
 }
 
 window.adicionarLinhaManual = adicionarLinhaManual;
-// =======================================================
-// 🔹 IMPRESSÃO DAS LISTAS CADASTRADAS
-// - abre um aviso com checkbox antes de imprimir
-// - mantém o layout atual da folha
-// - segue a ordem do modal: ingredientes → modo / ingredientes → modo
-// =======================================================
+
 
 // =======================================================
 // 🔹 IMPRESSÃO DAS LISTAS CADASTRADAS
@@ -1991,43 +1899,439 @@ function formatarDetalhesQualidadesPade(agregado) {
   return partes.length ? partes.join(", ") : "—";
 }
 
-// Função para padronizar qualquer variação de tiras de morim branco
-function padronizarTirasMorimBranco(ingrediente) {
-  if (!ingrediente) return null;
+// Regra especial: tiras de morim branco sempre devem mostrar a quantidade CADA na coluna Pratos.
+// Ex.: mesmo que o total esteja multiplicado pelas pessoas, a coluna Pratos deve ficar:
+// "9 tiras de morim branco cada" ou "tiras de morim branco (9 cada)".
+const TIRAS_MORIM_BRANCO_CADA_PADRAO = "9";
 
-  // normaliza: remove acentos, minúsculas, espaços extras
-  const normalizado = ingrediente
+function normalizarTextoMorim(value) {
+  return String(value || "")
     .toLowerCase()
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-z0-9,.]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-
-  // verifica se contém "tiras morim branco" ou "tiras de morim branco"
-  if (normalizado.includes("tiras morim branco") || normalizado.includes("tiras de morim branco")) {
-    return "Tiras de morim branco"; // pode mudar para "morim branco" se quiser
-  }
-
-  return null;
 }
 
-// Função atualizada de montar texto em pratos
+function ehTirasMorimBranco(ingrediente) {
+  const normalizado = normalizarTextoMorim(ingrediente);
+
+  // Aceita: "tira de morim branco", "tiras de morim branco", "9 tiras de morim branco",
+  // "tiras morim branco" e "tiras de morim branco (9 cada)".
+  return /\btiras?\s+(?:de\s+)?morim\s+branco\b/.test(normalizado);
+}
+
+function adicionarQuantidadeUnica(lista, vistos, valor) {
+  const numero = parseFloat(String(valor || "").replace(",", "."));
+  if (!Number.isFinite(numero)) return;
+
+  const formatado = formatNumero(numero);
+  if (vistos.has(formatado)) return;
+
+  vistos.add(formatado);
+  lista.push(formatado);
+}
+
+function extrairQuantidadesTirasMorimBranco(item) {
+  const quantidades = [];
+  const vistos = new Set();
+  const ingrediente = String(item?.ingrediente || "");
+  const pratosTxt = String(item?.pratosTxt || "");
+  const textos = [ingrediente, pratosTxt];
+
+  textos.forEach((textoOriginal) => {
+    const texto = normalizarTextoMorim(textoOriginal);
+    let match;
+
+    // "9 tiras de morim branco"
+    const reAntes = /\b(\d+(?:[,.]\d+)?)\s+tiras?\s+(?:de\s+)?morim\s+branco\b/g;
+    while ((match = reAntes.exec(texto)) !== null) {
+      adicionarQuantidadeUnica(quantidades, vistos, match[1]);
+    }
+
+    // "tiras de morim branco 9 cada" ou "tiras de morim branco (9 cada)"
+    const reDepois = /\btiras?\s+(?:de\s+)?morim\s+branco\s*(?:\(|-|–|—|:)?\s*(\d+(?:[,.]\d+)?)\s*(?:cada|por\s+pessoa|por\s+prato)?\b/g;
+    while ((match = reDepois.exec(texto)) !== null) {
+      adicionarQuantidadeUnica(quantidades, vistos, match[1]);
+    }
+
+    // "um prato de 9", "três pratos de 9", etc.
+    const rePratos = /\bde\s+(\d+(?:[,.]\d+)?)\b/g;
+    while ((match = rePratos.exec(texto)) !== null) {
+      adicionarQuantidadeUnica(quantidades, vistos, match[1]);
+    }
+
+    // "(9 cada)", "9 cada", "9 por pessoa"
+    const reCada = /\b(\d+(?:[,.]\d+)?)\s*(?:cada|por\s+pessoa|por\s+prato)\b/g;
+    while ((match = reCada.exec(texto)) !== null) {
+      adicionarQuantidadeUnica(quantidades, vistos, match[1]);
+    }
+  });
+
+  // Se o sistema achou apenas "1", isso normalmente vem de "um prato de 1".
+  // Para este item específico, o correto pedido é 9 cada, então ignoramos o 1 e usamos 9.
+  const semUm = quantidades.filter((qtd) => parseFloat(String(qtd).replace(",", ".")) !== 1);
+  return semUm.length ? semUm : [];
+}
+
+function montarTextoTirasMorimBranco(item) {
+  const quantidades = extrairQuantidadesTirasMorimBranco(item);
+  const qtds = quantidades.length ? quantidades : [TIRAS_MORIM_BRANCO_CADA_PADRAO];
+
+  const partes = qtds.map((qtd) => `${qtd} tiras de morim branco cada`);
+
+  if (partes.length === 1) return partes[0];
+  if (partes.length === 2) return `${partes[0]} e ${partes[1]}`;
+  return `${partes.slice(0, -1).join(", ")} e ${partes[partes.length - 1]}`;
+}
+
+// =======================================================
+// APRIMORAMENTO: coluna "Pratos" didática e automática
+// - Mantém a lógica de cálculo/consolidação existente.
+// - Só troca o texto exibido na coluna Pratos.
+// - Não mexe em bolas: qualquer ingrediente com "bola/bolas" continua igual.
+// - Primeiro respeita tratamentos já existentes (morim, tiras, casal de bruxo,
+//   mingau). Depois classifica automaticamente por tipo de ingrediente.
+// - Se não reconhecer o tipo, usa "porção" para ficar didático sem precisar
+//   criar tratamento item por item.
+// =======================================================
+const NUMEROS_PRATOS_PT = {
+  "um": 1,
+  "uma": 1,
+  "dois": 2,
+  "duas": 2,
+  "tres": 3,
+  "três": 3,
+  "quatro": 4,
+  "cinco": 5,
+  "seis": 6,
+  "sete": 7,
+  "oito": 8,
+  "nove": 9,
+  "dez": 10,
+  "onze": 11,
+  "doze": 12,
+  "treze": 13,
+  "quatorze": 14,
+  "catorze": 14,
+  "quinze": 15,
+  "dezesseis": 16,
+  "dezessete": 17,
+  "dezoito": 18,
+  "dezenove": 19,
+  "vinte": 20
+};
+
+const NUMERO_PRATOS_PATTERN = "\\d+|um|uma|dois|duas|tr[eê]s|quatro|cinco|seis|sete|oito|nove|dez|onze|doze|treze|quatorze|catorze|quinze|dezesseis|dezessete|dezoito|dezenove|vinte";
+
+const CLASSIFICADOR_PRATOS_AUTOMATICO = [
+  // 1) Recipientes/objetos citados no próprio ingrediente
+  { tipo: "recipiente", singular: "cesto de vime", plural: "cestos de vime", genero: "m", padroes: [/\bcestos?(?:\s+de)?\s+vime\b/] },
+  { tipo: "recipiente", singular: "bacia", plural: "bacias", genero: "f", padroes: [/\bbacias?\b/] },
+  { tipo: "recipiente", singular: "alguidar", plural: "alguidares", genero: "m", padroes: [/\balguidar(?:es)?\b/] },
+  { tipo: "recipiente", singular: "pote", plural: "potes", genero: "m", padroes: [/\bpotes?\b/] },
+  { tipo: "recipiente", singular: "quartinha", plural: "quartinhas", genero: "f", padroes: [/\bquartinhas?\b/] },
+  { tipo: "recipiente", singular: "moringa", plural: "moringas", genero: "f", padroes: [/\bmoringas?\b/] },
+  { tipo: "recipiente", singular: "garrafa", plural: "garrafas", genero: "f", padroes: [/\bgarrafas?\b/] },
+  { tipo: "recipiente", singular: "copo", plural: "copos", genero: "m", padroes: [/\bcopos?\b/] },
+  { tipo: "recipiente", singular: "taça", plural: "taças", genero: "f", padroes: [/\btacas?\b/] },
+  { tipo: "recipiente", singular: "jarra", plural: "jarras", genero: "f", padroes: [/\bjarras?\b/] },
+  { tipo: "recipiente", singular: "cumbuca", plural: "cumbucas", genero: "f", padroes: [/\bcumbucas?\b/] },
+  { tipo: "recipiente", singular: "cuia", plural: "cuias", genero: "f", padroes: [/\bcuias?\b/] },
+  { tipo: "recipiente", singular: "gamela", plural: "gamelas", genero: "f", padroes: [/\bgamelas?\b/] },
+  { tipo: "recipiente", singular: "travessa", plural: "travessas", genero: "f", padroes: [/\btravessas?\b/] },
+  { tipo: "recipiente", singular: "tigela", plural: "tigelas", genero: "f", padroes: [/\btigelas?\b/] },
+  { tipo: "recipiente", singular: "panela", plural: "panelas", genero: "f", padroes: [/\bpanelas?\b/] },
+  { tipo: "recipiente", singular: "balaio", plural: "balaios", genero: "m", padroes: [/\bbalaios?\b/] },
+  { tipo: "recipiente", singular: "cesta", plural: "cestas", genero: "f", padroes: [/\bcestas?\b/] },
+  { tipo: "recipiente", singular: "vaso", plural: "vasos", genero: "m", padroes: [/\bvasos?\b/] },
+  { tipo: "recipiente", singular: "saco", plural: "sacos", genero: "m", padroes: [/\bsacos?\b/] },
+  { tipo: "recipiente", singular: "sacola", plural: "sacolas", genero: "f", padroes: [/\bsacolas?\b/] },
+  { tipo: "recipiente", singular: "pacote", plural: "pacotes", genero: "m", padroes: [/\bpacotes?\b/] },
+  { tipo: "recipiente", singular: "caixa", plural: "caixas", genero: "f", padroes: [/\bcaixas?\b/] },
+
+  // 2) Comidas secas/grãos/farinhas: normalmente ficam melhor em bacia
+  {
+    tipo: "alimento_volume",
+    singular: "bacia",
+    plural: "bacias",
+    genero: "f",
+    padroes: [
+      /\bpipocas?\b/, /\barroz\b/, /\bfeij(?:ao|oes)\b/, /\bmilho\b/,
+      /\bcanjicas?\b/, /\bamendoins?\b/, /\bfubas?\b/, /\bfarinhas?\b/,
+      /\bfarofas?\b/, /\blentilhas?\b/, /\bgraos?\b/, /\bsementes?\b/,
+      /\balpistes?\b/, /\bacucares?\b/, /\bsais?\b/, /\bcafes?\b/,
+      /\bpade\b/, /\bpad[eê]s\b/
+    ]
+  },
+
+  // 3) Líquidos e bebidas
+  {
+    tipo: "bebida",
+    singular: "garrafa",
+    plural: "garrafas",
+    genero: "f",
+    padroes: [
+      /\baguas?\b/, /\bvinhos?\b/, /\bcachacas?\b/, /\bmarafo\b/,
+      /\bmarafa\b/, /\bcervejas?\b/, /\brefrigerantes?\b/, /\bsucos?\b/,
+      /\blicores?\b/, /\bchampanhes?\b/, /\bchampagnes?\b/
+    ]
+  },
+  {
+    tipo: "liquido_oleoso",
+    singular: "frasco",
+    plural: "frascos",
+    genero: "m",
+    padroes: [
+      /\bazeites?\b/, /\boleos?\b/, /\bdende\b/, /\bmel\b/,
+      /\bmelado\b/, /\bperfumes?\b/, /\bessencias?\b/, /\blavandas?\b/
+    ]
+  },
+
+  // 4) Folhas, ervas e flores
+  {
+    tipo: "folhas_ervas",
+    singular: "maço",
+    plural: "maços",
+    genero: "m",
+    padroes: [
+      /\bfolhas?\b/, /\bervas?\b/, /\barruda\b/, /\bguine\b/,
+      /\balecrim\b/, /\bmanjericao\b/, /\blouro\b/, /\beucalipto\b/,
+      /\bespada\s+de\s+sao\s+jorge\b/, /\babre\s+caminho\b/,
+      /\bflores?\b/, /\brosas?\b/, /\bpalmas?\b/, /\bgirassois?\b/
+    ]
+  },
+
+  // 5) Tecidos e amarrações, exceto morim, que já tem tratamento próprio
+  {
+    tipo: "tecido",
+    singular: "pedaço",
+    plural: "pedaços",
+    genero: "m",
+    padroes: [/\bpanos?\b/, /\btecidos?\b/, /\bfitas?\b/, /\blacos?\b/]
+  },
+
+  // 6) Itens contáveis comuns
+  { tipo: "vela", singular: "vela", plural: "velas", genero: "f", padroes: [/\bvelas?\b/] },
+  { tipo: "charuto", singular: "charuto", plural: "charutos", genero: "m", padroes: [/\bcharutos?\b/] },
+  { tipo: "cigarro", singular: "cigarro", plural: "cigarros", genero: "m", padroes: [/\bcigarros?\b/] },
+  { tipo: "fosforo", singular: "caixa de fósforo", plural: "caixas de fósforo", genero: "f", padroes: [/\bfosforos?\b/] },
+  { tipo: "pemba", singular: "pemba", plural: "pembas", genero: "f", padroes: [/\bpembas?\b/] },
+  { tipo: "moeda", singular: "moeda", plural: "moedas", genero: "f", padroes: [/\bmoedas?\b/] },
+  { tipo: "buzio", singular: "búzio", plural: "búzios", genero: "m", padroes: [/\bbuzios?\b/] },
+  { tipo: "pedra", singular: "pedra", plural: "pedras", genero: "f", padroes: [/\bpedras?\b/] },
+  { tipo: "ovo", singular: "ovo", plural: "ovos", genero: "m", padroes: [/\bovos?\b/] },
+  { tipo: "coco", singular: "coco", plural: "cocos", genero: "m", padroes: [/\bcocos?\b/] },
+
+  // 7) Frutas pelo nome ou pela palavra "fruta"
+  {
+    tipo: "fruta",
+    singular: "fruta",
+    plural: "frutas",
+    genero: "f",
+    padroes: [
+      /\bfrutas?\b/, /\bbananas?\b/, /\bmacas?\b/, /\blaranjas?\b/,
+      /\blimoes?\b/, /\bperas?\b/, /\buvas?\b/, /\bmangas?\b/,
+      /\bmamoes?\b/, /\bmelancias?\b/, /\babacaxis?\b/, /\babacates?\b/,
+      /\bgoiabas?\b/, /\bpessegos?\b/
+    ]
+  },
+
+  // 8) Comidas/itens rituais contáveis
+  {
+    tipo: "unidade",
+    singular: "unidade",
+    plural: "unidades",
+    genero: "f",
+    padroes: [
+      /\bobis?\b/, /\borogbos?\b/, /\bacacas?\b/, /\bacarajes?\b/,
+      /\bpaes?\b/, /\bpeixes?\b/, /\bfrangos?\b/, /\bgalinhas?\b/,
+      /\bgalos?\b/, /\bpatos?\b/, /\bpombos?\b/
+    ]
+  }
+];
+
+function numeroTextoPratosParaNumero(valor) {
+  const texto = normalizarTexto(valor || "");
+  if (!texto) return null;
+
+  const numero = parseInt(texto, 10);
+  if (Number.isFinite(numero)) return numero;
+
+  return NUMEROS_PRATOS_PT[texto] || null;
+}
+
+function numeroExtensoComGenero(numero, genero = "m") {
+  const base = extenso(numero);
+
+  if (genero === "f") {
+    if (base === "um") return "uma";
+    if (base === "dois") return "duas";
+  }
+
+  return base;
+}
+
+function textoPessoaPratos(numero) {
+  const n = Number(numero) || 1;
+  return `${n} ${n === 1 ? "pessoa" : "pessoas"}`;
+}
+
+function juntarTextosComE(partes) {
+  const itens = (Array.isArray(partes) ? partes : [])
+    .map((p) => String(p || "").trim())
+    .filter(Boolean);
+
+  if (!itens.length) return "";
+  if (itens.length === 1) return itens[0];
+  if (itens.length === 2) return `${itens[0]} e ${itens[1]}`;
+  return `${itens.slice(0, -1).join(", ")} e ${itens[itens.length - 1]}`;
+}
+
+function extrairGruposTextoPratos(textoPratos) {
+  const texto = String(textoPratos || "").trim();
+  if (!texto || texto === "—") return [];
+
+  const grupos = [];
+  const re = new RegExp(`\\b(${NUMERO_PRATOS_PATTERN})\\s+pratos?\\s+de\\s+([0-9]+(?:[,.][0-9]+)?)\\b`, "gi");
+
+  let match;
+  while ((match = re.exec(texto)) !== null) {
+    const pessoas = numeroTextoPratosParaNumero(match[1]);
+    const quantidadeBase = parseFloat(String(match[2] || "").replace(",", "."));
+
+    if (Number.isFinite(pessoas) && pessoas > 0) {
+      grupos.push({
+        pessoas,
+        quantidadeBase: Number.isFinite(quantidadeBase) ? quantidadeBase : null
+      });
+    }
+  }
+
+  return grupos;
+}
+
+function ingredienteTemBola(ingrediente) {
+  return /\bbolas?\b/.test(normalizarTexto(ingrediente || ""));
+}
+
+function classificarIngredienteParaPratos(ingrediente) {
+  const ing = normalizarTexto(ingrediente || "");
+
+  if (!ing || ingredienteTemBola(ing)) return null;
+
+  return CLASSIFICADOR_PRATOS_AUTOMATICO.find((regra) => {
+    return (regra.padroes || []).some((padrao) => padrao.test(ing));
+  }) || {
+    tipo: "generico",
+    singular: "porção",
+    plural: "porções",
+    genero: "f"
+  };
+}
+
+function regraEhItemContavel(regra) {
+  const tiposContaveis = new Set([
+    "vela", "charuto", "cigarro", "fosforo", "pemba", "moeda",
+    "buzio", "pedra", "ovo", "coco", "fruta", "unidade"
+  ]);
+
+  return tiposContaveis.has(String(regra?.tipo || ""));
+}
+
+function nomePorQuantidade(regra, quantidade) {
+  const n = Number(quantidade);
+  return Number.isFinite(n) && n === 1 ? regra.singular : regra.plural;
+}
+
+function montarTextoDidaticoPratos(textoPratos, ingrediente, regra) {
+  const grupos = extrairGruposTextoPratos(textoPratos);
+  if (!grupos.length || !regra) return "";
+
+  const partes = grupos.map((grupo) => {
+    const pessoas = Number(grupo.pessoas) || 1;
+    const qtdBase = Number(grupo.quantidadeBase);
+    const temQtdBase = Number.isFinite(qtdBase);
+    const qtdBaseTxt = temQtdBase ? formatNumero(qtdBase) : "";
+
+    // Itens contáveis mantêm a lógica antiga do "de X" como quantidade por pessoa.
+    // Ex.: "um prato de 7" vira "7 velas para 1 pessoa".
+    // Ex.: "dois pratos de 7" vira "7 velas para cada uma das 2 pessoas".
+    if (regraEhItemContavel(regra) && temQtdBase) {
+      const nomeItem = nomePorQuantidade(regra, qtdBase);
+      if (pessoas === 1) {
+        return `${qtdBaseTxt} ${nomeItem} para 1 pessoa`;
+      }
+      return `${qtdBaseTxt} ${nomeItem} para cada uma das ${pessoas} pessoas`;
+    }
+
+    // Recipientes/porções preservam a lógica antiga: quantidade de pessoas
+    // define quantos recipientes; o "de X" continua quando X é diferente de 1.
+    // Ex.: "um prato de 7" vira "uma bacia de 7 para 1 pessoa".
+    // Ex.: "dois pratos de 7" vira "duas bacias de 7 para 2 pessoas".
+    const nomeItem = pessoas === 1 ? regra.singular : regra.plural;
+    const quantidadeItem = numeroExtensoComGenero(pessoas, regra.genero);
+    const detalheQuantidade = temQtdBase && qtdBase !== 1 ? ` de ${qtdBaseTxt}` : "";
+
+    return `${quantidadeItem} ${nomeItem}${detalheQuantidade} para ${textoPessoaPratos(pessoas)}`;
+  });
+
+  const partesUnicas = [];
+  const vistos = new Set();
+
+  partes.forEach((parte) => {
+    const chave = normalizarTexto(parte);
+    if (vistos.has(chave)) return;
+    vistos.add(chave);
+    partesUnicas.push(parte);
+  });
+
+  return juntarTextosComE(partesUnicas);
+}
+
 function montarTextoPratosLista(item) {
   let textoPratos = item?.pratosTxt || "—";
   const ingrediente = item?.ingrediente || "";
-  const qtd = parseInt(item?.totalTxt, 10) || 1;
+  const ingLower = ingrediente
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
 
-  // 1️⃣ Verifica se é tiras de morim branco
-  const tirasPadronizado = padronizarTirasMorimBranco(ingrediente);
-  if (tirasPadronizado) {
-    return `${qtd} ${tirasPadronizado}`;
+  // Pedido: bolas já estão certas, então não mexe nelas.
+  if (ingredienteTemBola(ingrediente)) {
+    return textoPratos || "—";
   }
 
-  // 2️⃣ Lógica existente para outros morims e casal de bruxo
-  const ingLower = ingrediente.toLowerCase();
+  // Regra já existente para tiras de morim branco
+  if (ehTirasMorimBranco(ingrediente)) {
+    return montarTextoTirasMorimBranco(item);
+  }
+
+  const qtd = parseInt(item?.totalTxt, 10) || 1;
+
+  // ==============================
+  // TRATAMENTOS EXISTENTES
+  // ==============================
+
+  // Mingau / mingaus:
+  // Exemplo: "um prato de 4" vira "um pote com 4"
+  if (/\bmingaus?\b/.test(ingLower)) {
+    return textoPratos
+      .replace(/\bpratos?\s+de\b/gi, (match) => {
+        return match.toLowerCase().includes("pratos") ? "potes com" : "pote com";
+      })
+      .replace(/\bprato\b/gi, "pote")
+      .replace(/\bpratos\b/gi, "potes");
+  }
+
+  // Morim
   if (ingLower.includes("morim")) {
     textoPratos = `${qtd} morim preto, vermelho e branco`;
-  } else if (ingLower.includes("casal de bruxo")) {
+  }
+
+  // Casal de bruxo
+  else if (ingLower.includes("casal de bruxo")) {
     textoPratos = `${qtd} casal de bruxo`;
   }
 
@@ -2037,8 +2341,178 @@ function montarTextoPratosLista(item) {
       .replace(/prato/g, "morim");
   }
 
-  // 3️⃣ Retorna o texto final
+  // ==============================
+  // CLASSIFICAÇÃO AUTOMÁTICA
+  // ==============================
+  const regraAutomatica = classificarIngredienteParaPratos(ingrediente);
+  const textoAutomatico = montarTextoDidaticoPratos(textoPratos, ingrediente, regraAutomatica);
+
+  if (textoAutomatico) return textoAutomatico;
+
   return textoPratos || "—";
+}
+
+// =======================================================
+// ORDEM PERSONALIZADA DOS INGREDIENTES NA LISTA GERADA
+// =======================================================
+// O arquivo ainda não tinha uma ordem fixa de prioridade.
+// A ordem original vinha de "ordemAtual" e depois:
+//   sort((a, b) => a.ordem - b.ordem)
+//
+// Para escolher quais ingredientes aparecem no começo, preencha a lista abaixo.
+// A ordem escrita aqui será a ordem do começo da lista.
+//
+// Exemplos:
+// const INGREDIENTES_PRIORIDADE_INICIO = [
+//   "cesto de vime",
+//   "pipoca",
+//   "vela branca",
+//   "morim",
+//   "padezinhos"
+// ];
+//
+// Se deixar vazio, a lista continua exatamente na ordem antiga.
+const INGREDIENTES_PRIORIDADE_INICIO = [
+  // Coloque aqui os ingredientes que você quer puxar para o começo.
+  // Exemplo:
+   "bolas de acaças",
+   "acaças no formato da bananeira",
+   "bolas de farinha",
+   "bolas de arroz",
+    "bolas de fubá",
+   "bolas de sagu",
+   "bolas de inhame",
+    "bolas de feijão preto",
+    "bolas de feijão fradinho",
+    "bolas de feijão branco",
+    "Bolas de canjica",
+    "bolas de farinha com mel",
+    "bolas de farinha com efum ralado",
+    "bolas de algodão",
+    "tapiocas",
+    "acarajés",
+    "acarajés no azeite doce",
+    "ekurus",
+    "ekurus de feijão branco ",
+    "7 qualidades de cereais torrados",
+    "9 qualidades de cereais torrados",
+    "feijão fradinho torrados",
+    "canjica torrada (prato)",
+    "arroz torrado (prato)",
+    "amendoim torrado (prato)",
+    "7 qualidades de feijões torrados",
+     "9 qualidades de feijões torrados",
+     "7 qualidades de feijões aferventado",
+    "9 qualidades de feijões aferventado",
+    "feijão branco aferventado (Prato)",
+     "feijão fradinho aferventado (Prato)",
+     "amendoim aferventado (prato)",
+     "arroz lavado (prato)",
+     "feijão fradinho cozido",
+    "mingaus",
+     "Padezinhos",
+     "Padê de dendê",
+     "Padê de mel",
+     "Padê de água",
+     "7 qualidades de legumes picados",
+    "9 qualidades de legumes picados",
+    "11 qualidades de legumes picados",
+    "canjica (prato)",
+      "punhado canjica cozida",
+       "prato de girassol",
+      "Repolho Picado",
+      "7 qualidades de miúdos bovinos",
+      "sardinha ( 9 cada prato)",
+      "pedaços de carne de porco ( 9 cada prato)",
+      "pedaços de carne de segunda ( 9 cada prato)",
+      "Tuia",
+      "cabeça de farinha ( com olhos,boca,nariz,e orelhas)",
+      "charuto tipo batuta",
+      "velas brancas",
+       "velas brancas de 7 horas",
+        "Moedas Atuais",
+        "quiabos",
+        "cocos secos",
+        "Cebola roxa",
+        "Cebola Fêmeas ( redondas)",
+        "obis brancos",
+        "bolas de gude branca",
+        "búzios",
+        "cocadas brancas",
+         "ovos",
+       "ovos de galinha",
+       "ovos de codorna",
+       "ovos de pombo",
+       "Ovos de pata",
+        "cesto de vime",  
+        "abanos de palha",
+        "Casal de bruxo",
+        "Linhas coloridas",
+        "Linha branca",
+        "3 linhas ( branca, preta, vermelha)",
+        "colheres de pau",
+        "vara de amora",
+        "varas de goiabeira ou Amora",
+        "folhas de oxibatá",
+        "ervas para ''bater'' na pessoa EBÓ CAMINHO: para-raio,amora e peregum",
+        "pemba branca",
+        "Facas de madeira",
+        "cadarço",
+        "pano de saco branco",
+        "pregos",
+        "caixa de fosforo",
+        "Moringa de barro (Homem) ou Panelçinhas de barro (Mulher)",
+        "Folhas de peregum",
+        "Folhas de couve",
+        "folhas de saião",
+        "favas de trigo",
+        "morim preto,vermelho e branco",
+        "Tiras morim branco (9 tiras para cada)",
+        "Tiras de morim branco (10 tiras para cada)",
+        "Morim Branco",
+        "9 Palmos morim branco, preto e vermelho ",
+        "pães dormidos",
+        "Alguida de barro N5 Pintado de Efum",
+        "alguidar de barro N4",
+        "pipoca",
+        "Pipoca no EPÓ doce ",
+        "Pêras ou Maçã Verdes",
+
+
+
+];  
+
+function indicePrioridadeIngredienteLista(ingrediente) {
+  const chave = chaveIngrediente(ingrediente || "");
+  if (!chave) return -1;
+
+  return INGREDIENTES_PRIORIDADE_INICIO.findIndex((nomePrioridade) => {
+    const prioridade = chaveIngrediente(nomePrioridade || "");
+    if (!prioridade) return false;
+
+    // Aceita igual ou parecido.
+    // Ex.: "cesto vime" encontra "cesto de vime".
+    return chave === prioridade || chave.includes(prioridade) || prioridade.includes(chave);
+  });
+}
+
+function ordenarLinhasGeradasComPrioridade(linhas) {
+  return (Array.isArray(linhas) ? linhas : []).slice().sort((a, b) => {
+    const prioridadeA = indicePrioridadeIngredienteLista(a?.ingrediente || "");
+    const prioridadeB = indicePrioridadeIngredienteLista(b?.ingrediente || "");
+
+    const aTemPrioridade = prioridadeA >= 0;
+    const bTemPrioridade = prioridadeB >= 0;
+
+    if (aTemPrioridade || bTemPrioridade) {
+      if (!aTemPrioridade) return 1;
+      if (!bTemPrioridade) return -1;
+      if (prioridadeA !== prioridadeB) return prioridadeA - prioridadeB;
+    }
+
+    // Mantém a lógica antiga para todo o resto.
+    return (Number(a?.ordem) || 0) - (Number(b?.ordem) || 0);
+  });
 }
 
 window.gerarListaFinalAcumulada = function () {
@@ -2212,7 +2686,7 @@ window.gerarListaFinalAcumulada = function () {
       pratosTxt: formatarDetalhesQualidadesPade(item),
     }));
 
-    const linhas = [...linhasNormais, ...linhasPade].sort((a, b) => a.ordem - b.ordem);
+    const linhas = ordenarLinhasGeradasComPrioridade([...linhasNormais, ...linhasPade]);
 
     // 🔹 MOSTRAR LISTA NO CARD "Lista gerada" no mesmo visual da tabela final
     const container = document.getElementById("listaGeradaContainer");
@@ -2225,8 +2699,8 @@ window.gerarListaFinalAcumulada = function () {
         })).join("")
       : `
           <tr>
-            <td class="print-total" data-label="Total">—</td>
-            <td class="print-ing" data-label="Ingrediente">Nenhum item gerado.</td>
+            <td class="print-total" data-label="Quantidades">—</td>
+            <td class="print-ing" data-label="Ingredientes">Nenhum item gerado.</td>
             <td class="print-pratos" data-label="Pratos">—</td>
           </tr>
         `;
@@ -2242,8 +2716,8 @@ window.gerarListaFinalAcumulada = function () {
           <table class="print-table">
             <thead>
               <tr>
-                <th class="print-total">Total</th>
-                <th class="print-ing">Ingrediente</th>
+                <th class="print-total">Quantidades</th>
+                <th class="print-ing">Ingredientes</th>
                 <th class="print-pratos">Pratos</th>
               </tr>
             </thead>
