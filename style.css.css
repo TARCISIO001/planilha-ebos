@@ -3601,17 +3601,163 @@ z-index: -1;
 
 
 
+/* ===================================================
+   CORREÇÃO: COLUNA PRATOS COM MESMA FORMATAÇÃO
+   DAS COLUNAS QUANTIDADES E INGREDIENTES
+=================================================== */
+#listaGeradaContainer .preview-print-area .print-table input,
+#listaGeradaContainer .preview-print-area .print-table textarea.editPratos {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 46px;
+  padding: 12px 14px;
+  border: 2px solid #cbd5e1;
+  border-radius: 12px;
+  font-size: 16px;
+  font-family: inherit;
+  background: #ffffff;
+  color: #0f172a;
+  text-align: center;
+  outline: none;
+}
+
+#listaGeradaContainer .preview-print-area .print-table textarea.editPratos {
+  resize: vertical;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+#listaGeradaContainer .preview-print-area .print-table input:focus,
+#listaGeradaContainer .preview-print-area .print-table textarea.editPratos:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+#listaGeradaContainer .preview-print-area .print-table .btn-remover-linha {
+  margin-top: 8px;
+  width: 100%;
+}
 
 
+/* ===================================================
+   CONFERÊNCIA DE MESA — SOMENTE IMPRESSÃO
+   - Não aparece na tela principal
+   - Na impressão sai depois da lista geral
+   - Quantidade não é multiplicada por pessoas
+   - Pessoas/pratos viram quantidade de caixinhas OK
+=================================================== */
+#printConferenciaMesas {
+  display: none;
+}
 
+@media print {
+  #printConferenciaMesas {
+    display: block !important;
+    visibility: visible !important;
+    margin-top: 28px !important;
+    padding-top: 18px !important;
+    page-break-before: always;
+    color: #000 !important;
+  }
 
+  #printConferenciaMesas * {
+    visibility: visible !important;
+    color: #000 !important;
+  }
 
+  .conf-capa {
+    margin-bottom: 18px;
+    border-bottom: 2px solid #000;
+    padding-bottom: 10px;
+  }
 
+  .conf-capa h1 {
+    font-size: 22pt;
+    font-weight: 900;
+    text-align: center;
+    margin: 0 0 6px 0;
+  }
 
+  .conf-capa p {
+    font-size: 10pt;
+    text-align: center;
+    margin: 0;
+  }
 
+  .conf-mesa-bloco {
+    page-break-inside: avoid;
+    margin-bottom: 22px;
+    padding-top: 4px;
+  }
 
+  .conf-mesa-bloco h2 {
+    font-size: 14pt;
+    font-weight: 900;
+    margin: 0 0 4px 0;
+  }
 
+  .conf-mesa-meta {
+    font-size: 10pt;
+    margin-bottom: 8px;
+  }
 
+  .conf-mesa-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 6px;
+    font-size: 10pt;
+  }
 
+  .conf-mesa-table th,
+  .conf-mesa-table td {
+    border: 1px solid #000 !important;
+    padding: 6px !important;
+    vertical-align: middle;
+  }
 
+  .conf-mesa-table th {
+    font-weight: 900;
+    text-align: left;
+    letter-spacing: .04em;
+  }
 
+  .conf-ok {
+    width: 80px;
+    text-align: center !important;
+    white-space: normal !important;
+  }
+
+  .conf-qtd {
+    width: 120px;
+    text-align: center !important;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .conf-ing {
+    text-align: left !important;
+  }
+
+  .check-conferencia {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border: 1.5px solid #000;
+    margin: 2px 3px;
+    vertical-align: middle;
+  }
+
+  .conf-assinatura-linhas {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    margin-top: 10px;
+    font-size: 9pt;
+  }
+
+  .conf-observacao {
+    margin-top: 8px;
+    font-size: 9pt;
+  }
+}
