@@ -466,16 +466,14 @@ function montarLinhaEditavelListaGerada(item = {}, manual = false) {
         <input class="editIng" type="text" placeholder="Ingredientes" value="${escaparValorInput(ingrediente)}">
       </td>
 
-      <!-- Coluna Pratos (agora quebra linha automaticamente) -->
+      <!-- Coluna Pratos -->
       <td class="print-pratos" data-label="Pratos">
-        <div class="preview-pratos-cell" style="white-space: normal; word-break: break-word; max-width: 250px;">
-          ${escaparValorInput(pratos)}
-          ${manual ? `
-            <button class="btn-danger btn-mini" type="button" onclick="this.closest('tr').remove()">
-              Remover
-            </button>
-          ` : ""}
-        </div>
+        <textarea class="editPratos" placeholder="Pratos">${escaparHTML(pratos)}</textarea>
+        ${manual ? `
+          <button class="btn-danger btn-mini btn-remover-linha" type="button" onclick="this.closest('tr').remove()">
+            Remover
+          </button>
+        ` : ""}
       </td>
     </tr>
   `;
@@ -654,50 +652,165 @@ function detectarQualidadesPade(nome) {
 
 window.gerarLista = async function gerarLista() {
   const { eboNome, pratos } = getGeradorEstado();
+
   if (!eboNome) { alert("Informe o nome do ebó."); return; }
   if (!pratos || pratos < 1) { alert("Informe a quantidade de pratos."); return; }
 
-  const tbody = $("printIngredientes");
-  if (!tbody) return;
-  tbody.innerHTML = ""; // limpa tabela
-
-  const docLista = __listaCache;
-  if (!docLista) return;
-
+  let docLista = __listaCache;
+ 
+  // ✅ CORREÇÃO PRINCIPAL: declarar itens1 e itens2
   const itens1 = Array.isArray(docLista.itens) ? docLista.itens : [];
   const itens2 = Array.isArray(docLista.itens2) ? docLista.itens2 : [];
+
+  // Junta lista 1 + lista 2
   const itensBrutos = [...itens1, ...itens2];
 
-  const multiplicadorPade = detectarQualidadesPade(docLista.nome);
+// 🔥 Detecta número de qualidades de padê
+const multiplicadorPade = detectarQualidadesPade(docLista.nome);
 
-  // Renderiza linhas imediatamente
-  itensBrutos.forEach(item => {
-    const tr = document.createElement("tr");
+// Ajusta quantidades automaticamente
+const itensAjustados = itensBrutos.map(it => {
+  let qtd = (it.quantidade || "").toString().trim();
 
-    const tdQtd = document.createElement("td");
-    tdQtd.className = "print-total";
-    let qtd = item.quantidade || String(multiplicadorPade);
-    const num = parseFloat(qtd.replace(",", "."));
-    tdQtd.textContent = !isNaN(num) ? String(num * pratos) : qtd;
+  // se não tiver quantidade escrita
+  if (!qtd) {
+    return {
+      ...it,
+      quantidade: String(multiplicadorPade)
+    };
+  }
 
-    const tdIng = document.createElement("td");
-    tdIng.className = "print-ing";
-    tdIng.textContent = item.ingrediente || "";
+  const num = parseFloat(qtd.replace(",", "."));
 
-    const tdPratos = document.createElement("td");
-    tdPratos.className = "print-pratos";
-    tdPratos.textContent = pratos;
+  if (!isNaN(num)) {
+    return {
+      ...it,
+      quantidade: String(num * multiplicadorPade)
+    };
+  }
 
-    tr.appendChild(tdQtd);
-    tr.appendChild(tdIng);
-    tr.appendChild(tdPratos);
+  return it;
+});
+const itensConsolidados = consolidarIngredientes(itensBrutos);
 
-    tbody.appendChild(tr);
+// 🔹 Prioridade customizada (respeita a ordem da lista)
+const prioridadeMap = new Map(
+  INGREDIENTES_PRIORIDADE_INICIO.map((nome, idx) => [nome.toLowerCase(), idx])
+);
+
+itensConsolidados.sort((a, b) => {
+  const ingA = (a.ingrediente || "").toLowerCase();
+  const ingB = (b.ingrediente || "").toLowerCase();
+
+  const idxA = prioridadeMap.has(ingA) ? prioridadeMap.get(ingA) : Infinity;
+  const idxB = prioridadeMap.has(ingB) ? prioridadeMap.get(ingB) : Infinity;
+
+  if (idxA !== idxB) return idxA - idxB;
+  return ingA.localeCompare(ingB, undefined, { sensitivity: "base" });
+});
+
+if (!itensConsolidados.length) {
+  alert("Essa lista não possui ingredientes cadastrados.");
+  throw new Error("Lista sem ingredientes");
+}
+
+  // Geração da impressão
+  //if ($("saidaPrint")) $("saidaPrint").style.display = "block";//
+if ($("printEboNome")) {
+  const nomeTemplo = "ILÊ D'OGUM";
+  $("printEboNome").innerHTML = `<div style="font-size:28px; font-weight:800;">${nomeTemplo}</div>`;
+
+  (window.__listasAcumuladas || []).forEach(lista => {
+    const numPessoas = lista.pratos || 1;
+    const divEbo = document.createElement("div");
+    divEbo.style.fontSize = "20px";
+    divEbo.style.marginTop = "4px";
+    divEbo.textContent = `${lista.nome} (${numPessoas} pessoa${numPessoas > 1 ? "s" : ""})`;
+    $("printEboNome").appendChild(divEbo);
+  });
+}
+const tbody = $("printIngredientes");
+if (!tbody) return;
+tbody.innerHTML = "";
+itensConsolidados.forEach((item) => {
+  let totalTxt = "";
+  if (item.valores.length) {
+    const unidadeBase = item.unidades[0];
+    const unidadesIguais = item.unidades.every(u => u === unidadeBase);
+    if (unidadesIguais) {
+      const soma = item.valores.reduce((a, b) => a + b, 0);
+      const total = soma * pratos;
+      totalTxt = `${formatNumero(total)}${unidadeBase ? " " + unidadeBase : ""}`;
+    }
+  }
+
+  if (!totalTxt) {
+    totalTxt = item.texto.length
+      ? item.texto.join(" + ") + ` x ${pratos}`
+      : `x ${pratos}`;
+  }
+
+const tr = document.createElement("tr");
+
+// TOTAL primeiro
+const tdQtd = document.createElement("td");
+tdQtd.className = "print-total";
+
+// INGREDIENTE no meio
+const tdIng = document.createElement("td");
+tdIng.className = "print-ing";
+tdIng.textContent = item.ingrediente;
+
+// 3ª coluna (pratos)
+const tdPratos = document.createElement("td");
+tdPratos.className = "print-pratos";
+tdPratos.textContent = "";
+
+const pratosBase =
+  window.__listasAcumuladas &&
+  window.__listasAcumuladas[0]
+    ? window.__listasAcumuladas[0].pratos
+    : null;
+
+let exibiuDetalhe = false;
+
+if (pratosBase && typeof totalTxt === "string") {
+  const partes = totalTxt.split(" ");
+  const num = parseFloat(partes[0].replace(",", "."));
+  const unidade = partes.slice(1).join(" ");
+
+  if (!isNaN(num) && num % pratosBase === 0) {
+    const porPrato = num / pratosBase;
+    tdQtd.textContent =
+      formatNumero(num) +
+      (unidade ? " " + unidade : "") +
+      "  |  " +
+      pratosBase +
+      " pratos × " +
+      formatNumero(porPrato);
+    exibiuDetalhe = true;
+  }
+}
+
+if (!exibiuDetalhe) {
+  tdQtd.textContent = totalTxt;
+}
+
+tr.appendChild(tdQtd);
+tr.appendChild(tdIng);
+tr.appendChild(tdPratos);
+tbody.appendChild(tr);
+
+
   });
 
-  // Mostra lista imediatamente
-  $("saidaPrint")?.scrollIntoView?.({ behavior: "auto" });
+  $("saidaPrint")?.scrollIntoView?.({ behavior: "smooth" });
+
+  // 🔄 sempre voltar Quantidade de Pessoas para 1
+  //resetarQuantidadePessoasPara1();
+
 };
+
 
 // =======================================================
 // 2) MODAL (compatível)
@@ -1159,7 +1272,10 @@ window.limparListasAcumuladas = function limparListasAcumuladas() {
 function limparSaidaPrint() {
   const saida = document.getElementById("saidaPrint");
   const tbody = document.getElementById("printIngredientes");
+  const conferencia = document.getElementById("printConferenciaMesas");
+
   if (tbody) tbody.innerHTML = "";
+  if (conferencia) conferencia.innerHTML = "";
   if (saida) saida.style.display = "none";
 }
 
@@ -1284,6 +1400,9 @@ if (btnAdmin) {
 window.imprimirListaGerada = function () {
 
   const area = document.getElementById("saidaPrint");
+  if (!area) return;
+
+  gerarConferenciaMesasParaImpressao();
 
   area.style.left = "0";
   area.style.zIndex = "9999";
@@ -2515,6 +2634,113 @@ function ordenarLinhasGeradasComPrioridade(linhas) {
   });
 }
 
+
+// =======================================================
+// 🔹 CONFERÊNCIA DE MESA NA IMPRESSÃO
+// - NÃO aparece na tela principal
+// - Sai no final da impressão da lista gerada
+// - Quantidade fica como foi cadastrada na lista do ebó
+// - A quantidade de pessoas vira quantidade de caixas OK
+// =======================================================
+function montarCaixasConferenciaMesa(qtdPessoas) {
+  const total = Math.max(1, Number(qtdPessoas) || 1);
+  let html = "";
+
+  for (let i = 1; i <= total; i++) {
+    html += `<span class="check-conferencia" title="Pessoa ${i}"></span>`;
+  }
+
+  return html;
+}
+
+function montarQuantidadeConferenciaMesa(item) {
+  const qtd = (item?.quantidade ?? "").toString().trim();
+  return qtd || "—";
+}
+
+function montarItensConferenciaMesa(lista) {
+  const itens = Array.isArray(lista?.itens) ? lista.itens : [];
+
+  if (!itens.length) {
+    return `
+      <tr>
+        <td class="conf-ok">${montarCaixasConferenciaMesa(lista?.pratos || 1)}</td>
+        <td class="conf-qtd">—</td>
+        <td class="conf-ing">Nenhum ingrediente encontrado nesta lista.</td>
+      </tr>
+    `;
+  }
+
+  return itens.map((item) => `
+    <tr>
+      <td class="conf-ok">${montarCaixasConferenciaMesa(lista?.pratos || 1)}</td>
+      <td class="conf-qtd">${escaparHTML(montarQuantidadeConferenciaMesa(item))}</td>
+      <td class="conf-ing">${escaparHTML(item?.ingrediente || "")}</td>
+    </tr>
+  `).join("");
+}
+
+function gerarConferenciaMesasParaImpressao() {
+  let container = document.getElementById("printConferenciaMesas");
+
+  // Segurança: se o HTML antigo ainda não tiver o container, cria automaticamente.
+  if (!container) {
+    const saida = document.getElementById("saidaPrint");
+    if (!saida) return;
+    container = document.createElement("div");
+    container.id = "printConferenciaMesas";
+    container.className = "print-conferencia-mesas";
+    saida.appendChild(container);
+  }
+
+  const listas = Array.isArray(window.__listasAcumuladas) ? window.__listasAcumuladas : [];
+
+  if (!listas.length) {
+    container.innerHTML = "";
+    return;
+  }
+
+  const mesasHtml = listas.map((lista, idx) => {
+    const numeroMesa = String(idx + 1).padStart(2, "0");
+    const qtdPessoas = Math.max(1, Number(lista?.pratos) || 1);
+    const rotuloPessoas = qtdPessoas === 1 ? "pessoa / prato" : "pessoas / pratos";
+
+    return `
+      <section class="conf-mesa-bloco">
+        <h2>Mesa ${numeroMesa} — ${escaparHTML(lista?.nome || "Ebó")}</h2>
+        <div class="conf-mesa-meta"><strong>Quantidade:</strong> ${qtdPessoas} ${rotuloPessoas}</div>
+
+        <table class="conf-mesa-table">
+          <thead>
+            <tr>
+              <th class="conf-ok">OK</th>
+              <th class="conf-qtd">QUANTIDADE</th>
+              <th class="conf-ing">INGREDIENTE</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${montarItensConferenciaMesa(lista)}
+          </tbody>
+        </table>
+
+        <div class="conf-assinatura-linhas">
+          <div>Responsável: ____________________________</div>
+          <div>Conferido em: ____ / ____ / ______</div>
+        </div>
+        <div class="conf-observacao">Observação: ________________________________________________________________</div>
+      </section>
+    `;
+  }).join("");
+
+  container.innerHTML = `
+    <section class="conf-capa">
+      <h1>Conferência de Mesa</h1>
+      <p>Use esta parte para conferir os ingredientes separados por mesa, sem alterar a lista geral da cozinha.</p>
+    </section>
+    ${mesasHtml}
+  `;
+}
+
 window.gerarListaFinalAcumulada = function () {
   try {
     if (!window.__listasAcumuladas || !window.__listasAcumuladas.length) {
@@ -2763,6 +2989,8 @@ tdPratos.textContent = montarTextoPratosLista(item);
       tr.appendChild(tdPratos);
       tbody.appendChild(tr);
     });
+
+    gerarConferenciaMesasParaImpressao();
 
     resetarQuantidadePessoasPara1();
     container?.scrollIntoView?.({ behavior: "smooth" });
