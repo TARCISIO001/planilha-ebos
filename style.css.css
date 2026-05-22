@@ -920,7 +920,7 @@ td.print-pratos { text-align: center; vertical-align: middle; }
   }
 
   body.print-lista-cadastrada h1 {
-    font-size: 18pt !important;
+    font-size: 20pt !important;
     margin: 0 0 6px 0 !important;
   }
 }
@@ -3639,13 +3639,11 @@ z-index: -1;
   width: 100%;
 }
 
-
 /* ===================================================
    CONFERÊNCIA DE MESA — SOMENTE IMPRESSÃO
-   - Não aparece na tela principal
-   - Na impressão sai depois da lista geral
-   - Quantidade não é multiplicada por pessoas
-   - Pessoas/pratos viram quantidade de caixinhas OK
+   - Começa em folha nova depois da lista geral
+   - Título visível, bonito e moderado
+   - Mesas organizadas, sem ficar pequeno demais
 =================================================== */
 #printConferenciaMesas {
   display: none;
@@ -3655,109 +3653,1229 @@ z-index: -1;
   #printConferenciaMesas {
     display: block !important;
     visibility: visible !important;
-    margin-top: 28px !important;
-    padding-top: 18px !important;
-    page-break-before: always;
+    page-break-before: always !important;
+    break-before: page !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
     color: #000 !important;
   }
 
   #printConferenciaMesas * {
     visibility: visible !important;
     color: #000 !important;
+    box-sizing: border-box !important;
   }
 
   .conf-capa {
-    margin-bottom: 18px;
-    border-bottom: 2px solid #000;
-    padding-bottom: 10px;
+    display: block !important;
+    margin: 0 0 16px 0 !important;
+    padding: 12px 14px 10px 14px !important;
+    border: 2px solid #000 !important;
+    background: #f3f4f6 !important;
+    text-align: center !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 
   .conf-capa h1 {
-    font-size: 22pt;
-    font-weight: 900;
-    text-align: center;
-    margin: 0 0 6px 0;
+    display: block !important;
+    margin: 0 !important;
+    font-size: 20pt !important;
+    line-height: 1.15 !important;
+    font-weight: 900 !important;
+    letter-spacing: .03em !important;
+    text-transform: uppercase !important;
   }
 
   .conf-capa p {
-    font-size: 10pt;
-    text-align: center;
-    margin: 0;
+    display: block !important;
+    margin: 4px 0 0 0 !important;
+    font-size: 10.5pt !important;
+    line-height: 1.3 !important;
+    font-weight: 700 !important;
   }
 
   .conf-mesa-bloco {
-    page-break-inside: avoid;
-    margin-bottom: 22px;
-    padding-top: 4px;
+    margin: 0 0 16px 0 !important;
+    padding: 0 !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
   }
 
-  .conf-mesa-bloco h2 {
-    font-size: 14pt;
-    font-weight: 900;
-    margin: 0 0 4px 0;
+  .conf-mesa-topo {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 10px !important;
+    margin: 0 !important;
+    padding: 8px 10px !important;
+    border: 1.5px solid #000 !important;
+    border-bottom: 0 !important;
+    background: #e5e7eb !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 
-  .conf-mesa-meta {
-    font-size: 10pt;
-    margin-bottom: 8px;
+  .conf-mesa-topo h2 {
+    font-size: 13pt !important;
+    line-height: 1.15 !important;
+    font-weight: 900 !important;
+    margin: 0 !important;
+    text-transform: uppercase !important;
+  }
+
+  .conf-mesa-topo p {
+    margin: 2px 0 0 0 !important;
+    font-size: 10.5pt !important;
+    line-height: 1.25 !important;
+    font-weight: 700 !important;
+    word-break: break-word !important;
+  }
+
+  .conf-mesa-topo span {
+    display: inline-block !important;
+    flex: 0 0 auto !important;
+    padding: 4px 8px !important;
+    border: 1px solid #000 !important;
+    border-radius: 999px !important;
+    background: #fff !important;
+    font-size: 10pt !important;
+    line-height: 1.2 !important;
+    font-weight: 900 !important;
+    white-space: nowrap !important;
   }
 
   .conf-mesa-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 6px;
-    font-size: 10pt;
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 0 !important;
+    font-size: 10.5pt !important;
+    line-height: 1.28 !important;
+    table-layout: fixed !important;
+  }
+
+  .conf-mesa-table thead {
+    display: table-header-group !important;
   }
 
   .conf-mesa-table th,
   .conf-mesa-table td {
     border: 1px solid #000 !important;
-    padding: 6px !important;
-    vertical-align: middle;
+    padding: 5px 6px !important;
+    vertical-align: middle !important;
   }
 
   .conf-mesa-table th {
-    font-weight: 900;
-    text-align: left;
-    letter-spacing: .04em;
+    font-size: 10pt !important;
+    font-weight: 900 !important;
+    text-align: center !important;
+    letter-spacing: .03em !important;
+    text-transform: uppercase !important;
+    background: #f1f1f1 !important;
+  }
+
+  .conf-mesa-table tbody tr:nth-child(even) td {
+    background: #fafafa !important;
   }
 
   .conf-ok {
-    width: 80px;
+    width: 105px !important;
     text-align: center !important;
     white-space: normal !important;
+    line-height: 1 !important;
   }
 
   .conf-qtd {
-    width: 120px;
+    width: 130px !important;
     text-align: center !important;
-    font-weight: 800;
-    white-space: nowrap;
+    font-weight: 900 !important;
+    white-space: nowrap !important;
   }
 
   .conf-ing {
     text-align: left !important;
+    font-weight: 700 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+    hyphens: auto !important;
+  }
+
+  /* Força nomes grandes a quebrarem dentro da célula, sem estourar a tabela */
+  .conf-mesa-table th.conf-ing,
+  .conf-mesa-table td.conf-ing {
+    width: auto !important;
+    max-width: 0 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+    hyphens: auto !important;
   }
 
   .check-conferencia {
-    display: inline-block;
-    width: 9px;
-    height: 9px;
-    border: 1.5px solid #000;
-    margin: 2px 3px;
-    vertical-align: middle;
+    display: inline-block !important;
+    width: 11px !important;
+    height: 11px !important;
+    border: 1.6px solid #000 !important;
+    margin: 2px 3px !important;
+    vertical-align: middle !important;
   }
 
-  .conf-assinatura-linhas {
-    display: flex;
-    justify-content: space-between;
-    gap: 18px;
-    margin-top: 10px;
-    font-size: 9pt;
+  .conf-observacao-linha {
+    display: grid !important;
+    grid-template-columns: auto 1fr !important;
+    align-items: end !important;
+    gap: 8px !important;
+    margin-top: 8px !important;
+    padding: 0 2px 2px 2px !important;
+    font-size: 10.5pt !important;
+    line-height: 1.25 !important;
+    font-weight: 800 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
+  .conf-observacao-linha span {
+    white-space: nowrap !important;
+  }
+
+  .conf-observacao-linha strong {
+    display: block !important;
+    height: 16px !important;
+    border-bottom: 1.4px solid #000 !important;
+  }
+
+  .conf-assinatura-linhas,
   .conf-observacao {
-    margin-top: 8px;
-    font-size: 9pt;
+    display: none !important;
+  }
+}
+
+
+/* ===================================================
+   CONFERÊNCIA DE MESA — LAYOUT ELEGANTE FINAL
+   - Mantém folha nova
+   - Título visível
+   - Fonte média e legível
+   - Blocos de mesa mais bonitos e organizados
+   - Ingredientes longos quebram linha corretamente
+=================================================== */
+@media print {
+  #printConferenciaMesas {
+    page-break-before: always !important;
+    break-before: page !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .conf-capa {
+    margin: 0 0 18px 0 !important;
+    padding: 14px 18px 13px 18px !important;
+    border: 1.8px solid #111827 !important;
+    border-radius: 10px !important;
+    background: #f8fafc !important;
+    text-align: center !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  .conf-capa h1 {
+    margin: 0 !important;
+    font-size: 22pt !important;
+    line-height: 1.12 !important;
+    font-weight: 900 !important;
+    letter-spacing: .04em !important;
+    text-transform: uppercase !important;
+    color: #111827 !important;
+  }
+
+  .conf-capa p {
+    display: inline-block !important;
+    margin: 8px 0 0 0 !important;
+    padding: 4px 12px !important;
+    border: 1px solid #94a3b8 !important;
+    border-radius: 999px !important;
+    background: #ffffff !important;
+    font-size: 11pt !important;
+    line-height: 1.25 !important;
+    font-weight: 800 !important;
+    color: #111827 !important;
+  }
+
+  .conf-mesa-bloco {
+    margin: 0 0 18px 0 !important;
+    padding: 0 !important;
+    border: 1.5px solid #111827 !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  .conf-mesa-topo {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    margin: 0 !important;
+    padding: 10px 12px !important;
+    border: 0 !important;
+    border-bottom: 1.5px solid #111827 !important;
+    background: #e5e7eb !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  .conf-mesa-topo h2 {
+    margin: 0 !important;
+    font-size: 15pt !important;
+    line-height: 1.1 !important;
+    font-weight: 900 !important;
+    letter-spacing: .04em !important;
+    text-transform: uppercase !important;
+    color: #111827 !important;
+  }
+
+  .conf-mesa-topo p {
+    margin: 4px 0 0 0 !important;
+    font-size: 12pt !important;
+    line-height: 1.3 !important;
+    font-weight: 800 !important;
+    color: #111827 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .conf-mesa-topo span {
+    display: inline-block !important;
+    flex: 0 0 auto !important;
+    padding: 5px 11px !important;
+    border: 1.2px solid #111827 !important;
+    border-radius: 999px !important;
+    background: #ffffff !important;
+    font-size: 11pt !important;
+    line-height: 1.2 !important;
+    font-weight: 900 !important;
+    color: #111827 !important;
+    white-space: nowrap !important;
+  }
+
+  .conf-mesa-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+    margin: 0 !important;
+    font-size: 11.5pt !important;
+    line-height: 1.35 !important;
+    color: #111827 !important;
+  }
+
+  .conf-mesa-table th,
+  .conf-mesa-table td {
+    border: 1px solid #475569 !important;
+    padding: 7px 8px !important;
+    vertical-align: middle !important;
+  }
+
+  .conf-mesa-table th {
+    background: #f1f5f9 !important;
+    font-size: 10.5pt !important;
+    line-height: 1.2 !important;
+    font-weight: 900 !important;
+    text-align: center !important;
+    letter-spacing: .035em !important;
+    text-transform: uppercase !important;
+    color: #111827 !important;
+  }
+
+  .conf-mesa-table tbody tr:nth-child(even) td {
+    background: #fafafa !important;
+  }
+
+  .conf-ok {
+    width: 112px !important;
+    text-align: center !important;
+    white-space: normal !important;
+    line-height: 1 !important;
+  }
+
+  .conf-qtd {
+    width: 138px !important;
+    text-align: center !important;
+    font-weight: 900 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .conf-ing,
+  .conf-mesa-table th.conf-ing,
+  .conf-mesa-table td.conf-ing {
+    width: auto !important;
+    max-width: 0 !important;
+    text-align: left !important;
+    font-weight: 800 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+    hyphens: auto !important;
+  }
+
+  .check-conferencia {
+    display: inline-block !important;
+    width: 12px !important;
+    height: 12px !important;
+    border: 1.8px solid #111827 !important;
+    border-radius: 2px !important;
+    margin: 2px 3px !important;
+    vertical-align: middle !important;
+    background: #ffffff !important;
+  }
+
+  .conf-observacao-linha {
+    display: grid !important;
+    grid-template-columns: auto 1fr !important;
+    align-items: end !important;
+    gap: 10px !important;
+    margin: 11px 12px 13px 12px !important;
+    padding: 0 !important;
+    font-size: 11.5pt !important;
+    line-height: 1.25 !important;
+    font-weight: 900 !important;
+    color: #111827 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .conf-observacao-linha span {
+    white-space: nowrap !important;
+  }
+
+  .conf-observacao-linha strong {
+    display: block !important;
+    height: 24px !important;
+    border-bottom: 1.7px solid #111827 !important;
+  }
+
+  .conf-assinatura-linhas,
+  .conf-observacao {
+    display: none !important;
+  }
+}
+
+/* ===================================================
+   CONFERÊNCIA DE MESA — PREMIUM ORGANIZADO + OBS 4 LINHAS
+   - Começa em folha nova
+   - Visual mais elegante
+   - Fonte mais confortável
+   - Ingredientes longos quebram linha
+   - Observação com 4 linhas
+=================================================== */
+@media print {
+  #printConferenciaMesas {
+    page-break-before: always !important;
+    break-before: page !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color: #111827 !important;
+  }
+
+  .conf-capa {
+    position: relative !important;
+    margin: 0 0 18px 0 !important;
+    padding: 16px 18px 14px 18px !important;
+    border: 2px solid #111827 !important;
+    border-radius: 13px !important;
+    background: #ffffff !important;
+    text-align: center !important;
+    overflow: hidden !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  .conf-capa::before {
+    content: "" !important;
+    display: block !important;
+    height: 7px !important;
+    margin: -16px -18px 12px -18px !important;
+    background: #111827 !important;
+  }
+
+  .conf-capa h1 {
+    margin: 0 !important;
+    font-size: 23pt !important;
+    line-height: 1.08 !important;
+    font-weight: 950 !important;
+    letter-spacing: .055em !important;
+    text-transform: uppercase !important;
+    color: #111827 !important;
+  }
+
+  .conf-capa p {
+    display: inline-block !important;
+    margin: 9px 0 0 0 !important;
+    padding: 5px 14px !important;
+    border: 1.3px solid #111827 !important;
+    border-radius: 999px !important;
+    background: #f8fafc !important;
+    font-size: 11.5pt !important;
+    line-height: 1.2 !important;
+    font-weight: 900 !important;
+    color: #111827 !important;
+  }
+
+  .conf-mesa-bloco {
+    margin: 0 0 20px 0 !important;
+    padding: 0 !important;
+    border: 1.7px solid #111827 !important;
+    border-radius: 13px !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  .conf-mesa-topo {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 14px !important;
+    margin: 0 !important;
+    padding: 12px 14px !important;
+    border: 0 !important;
+    border-bottom: 1.6px solid #111827 !important;
+    background: #111827 !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  .conf-mesa-topo h2 {
+    margin: 0 !important;
+    font-size: 16.5pt !important;
+    line-height: 1.05 !important;
+    font-weight: 950 !important;
+    letter-spacing: .055em !important;
+    text-transform: uppercase !important;
+    color: #ffffff !important;
+  }
+
+  .conf-mesa-topo p {
+    margin: 4px 0 0 0 !important;
+    font-size: 13pt !important;
+    line-height: 1.28 !important;
+    font-weight: 850 !important;
+    color: #ffffff !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .conf-mesa-topo span {
+    display: inline-block !important;
+    flex: 0 0 auto !important;
+    padding: 6px 12px !important;
+    border: 1px solid #ffffff !important;
+    border-radius: 999px !important;
+    background: #ffffff !important;
+    font-size: 11.5pt !important;
+    line-height: 1.2 !important;
+    font-weight: 950 !important;
+    color: #111827 !important;
+    white-space: nowrap !important;
+  }
+
+  .conf-mesa-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+    margin: 0 !important;
+    font-size: 12.4pt !important;
+    line-height: 1.38 !important;
+    color: #111827 !important;
+  }
+
+  .conf-mesa-table thead {
+    display: table-header-group !important;
+  }
+
+  .conf-mesa-table tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .conf-mesa-table th,
+  .conf-mesa-table td {
+    border: 1px solid #334155 !important;
+    padding: 8px 9px !important;
+    vertical-align: middle !important;
+  }
+
+  .conf-mesa-table th {
+    background: #e5e7eb !important;
+    font-size: 11.1pt !important;
+    line-height: 1.18 !important;
+    font-weight: 950 !important;
+    text-align: center !important;
+    letter-spacing: .04em !important;
+    text-transform: uppercase !important;
+    color: #111827 !important;
+  }
+
+  .conf-mesa-table tbody tr:nth-child(even) td {
+    background: #f8fafc !important;
+  }
+
+  .conf-ok {
+    width: 118px !important;
+    text-align: center !important;
+    white-space: normal !important;
+    line-height: 1 !important;
+  }
+
+  .conf-qtd {
+    width: 148px !important;
+    text-align: center !important;
+    font-weight: 950 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .conf-ing,
+  .conf-mesa-table th.conf-ing,
+  .conf-mesa-table td.conf-ing {
+    width: auto !important;
+    max-width: 0 !important;
+    text-align: left !important;
+    font-weight: 850 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+    hyphens: auto !important;
+  }
+
+  .check-conferencia {
+    display: inline-block !important;
+    width: 13px !important;
+    height: 13px !important;
+    border: 1.9px solid #111827 !important;
+    border-radius: 3px !important;
+    margin: 2px 3px !important;
+    vertical-align: middle !important;
+    background: #ffffff !important;
+  }
+
+  .conf-observacao-linha {
+    display: none !important;
+  }
+
+  .conf-observacao-box {
+    margin: 13px 14px 15px 14px !important;
+    padding: 10px 12px 12px 12px !important;
+    border: 1.3px solid #94a3b8 !important;
+    border-radius: 10px !important;
+    background: #fbfdff !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .conf-observacao-titulo {
+    margin: 0 0 5px 0 !important;
+    font-size: 12pt !important;
+    line-height: 1.2 !important;
+    font-weight: 950 !important;
+    letter-spacing: .045em !important;
+    text-transform: uppercase !important;
+    color: #111827 !important;
+  }
+
+  .conf-observacao-linhas {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .conf-observacao-linhas span {
+    display: block !important;
+    height: 21px !important;
+    border-bottom: 1.45px solid #111827 !important;
+  }
+
+  .conf-observacao-linhas span + span {
+    margin-top: 2px !important;
+  }
+
+  .conf-assinatura-linhas,
+  .conf-observacao {
+    display: none !important;
+  }
+}
+
+
+
+/* ===================================================
+   CONFERÊNCIA DE MESA — SOFISTICADO MÁXIMO
+   - Começa em folha nova
+   - Cabeçalho profissional com resumo
+   - Cards de mesa mais elegantes
+   - Fonte legível, sem exagero
+   - Ingredientes longos quebram linha corretamente
+   - Observações com 4 linhas amplas
+=================================================== */
+@media print {
+  #printConferenciaMesas {
+    display: block !important;
+    visibility: visible !important;
+    page-break-before: always !important;
+    break-before: page !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #printConferenciaMesas * {
+    visibility: visible !important;
+    box-sizing: border-box !important;
+  }
+
+  .conf-capa {
+    position: relative !important;
+    margin: 0 0 18px 0 !important;
+    padding: 18px 20px 16px 20px !important;
+    border: 1.8px solid #0f172a !important;
+    border-radius: 16px !important;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+    text-align: center !important;
+    overflow: hidden !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  .conf-capa::before {
+    content: "" !important;
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    height: 8px !important;
+    margin: 0 !important;
+    background: linear-gradient(90deg, #0f172a 0%, #334155 50%, #0f172a 100%) !important;
+  }
+
+  .conf-capa-label {
+    display: inline-block !important;
+    margin-top: 6px !important;
+    padding: 4px 12px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 999px !important;
+    background: #ffffff !important;
+    font-size: 9.8pt !important;
+    line-height: 1.2 !important;
+    font-weight: 900 !important;
+    letter-spacing: .12em !important;
+    text-transform: uppercase !important;
+    color: #334155 !important;
+  }
+
+  .conf-capa h1 {
+    margin: 9px 0 0 0 !important;
+    font-size: 25pt !important;
+    line-height: 1.05 !important;
+    font-weight: 950 !important;
+    letter-spacing: .045em !important;
+    text-transform: uppercase !important;
+    color: #0f172a !important;
+  }
+
+  .conf-capa-subtitle {
+    max-width: 175mm !important;
+    margin: 7px auto 0 auto !important;
+    font-size: 11.7pt !important;
+    line-height: 1.35 !important;
+    font-weight: 650 !important;
+    color: #475569 !important;
+  }
+
+  .conf-capa p {
+    display: none !important;
+  }
+
+  .conf-resumo-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    margin-top: 13px !important;
+  }
+
+  .conf-resumo-card {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    min-height: 34px !important;
+    padding: 6px 10px !important;
+    border: 1.2px solid #cbd5e1 !important;
+    border-radius: 11px !important;
+    background: #ffffff !important;
+  }
+
+  .conf-resumo-card strong {
+    font-size: 17pt !important;
+    line-height: 1 !important;
+    font-weight: 950 !important;
+    color: #0f172a !important;
+  }
+
+  .conf-resumo-card span {
+    font-size: 10.4pt !important;
+    line-height: 1.15 !important;
+    font-weight: 850 !important;
+    letter-spacing: .04em !important;
+    text-transform: uppercase !important;
+    color: #334155 !important;
+  }
+
+  .conf-mesa-bloco {
+    position: relative !important;
+    margin: 0 0 18px 0 !important;
+    padding: 0 !important;
+    border: 1.6px solid #0f172a !important;
+    border-radius: 15px !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  .conf-mesa-bloco::before {
+    content: "" !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    width: 5px !important;
+    background: #0f172a !important;
+    z-index: 1 !important;
+  }
+
+  .conf-mesa-topo {
+    position: relative !important;
+    z-index: 2 !important;
+    display: flex !important;
+    align-items: stretch !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    margin: 0 !important;
+    padding: 12px 14px 12px 18px !important;
+    border: 0 !important;
+    border-bottom: 1.4px solid #cbd5e1 !important;
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  .conf-mesa-titulo-wrap {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+  }
+
+  .conf-mesa-badge {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 0 0 auto !important;
+    min-width: 29mm !important;
+    min-height: 14mm !important;
+    padding: 6px 10px !important;
+    border-radius: 10px !important;
+    background: #0f172a !important;
+    color: #ffffff !important;
+    font-size: 13pt !important;
+    line-height: 1.05 !important;
+    font-weight: 950 !important;
+    letter-spacing: .07em !important;
+    text-transform: uppercase !important;
+    text-align: center !important;
+  }
+
+  .conf-mesa-titulos {
+    min-width: 0 !important;
+  }
+
+  .conf-mesa-topo h2 {
+    margin: 0 !important;
+    font-size: 17pt !important;
+    line-height: 1.12 !important;
+    font-weight: 950 !important;
+    letter-spacing: .015em !important;
+    text-transform: none !important;
+    color: #0f172a !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+  }
+
+  .conf-mesa-topo p {
+    margin: 3px 0 0 0 !important;
+    font-size: 10.4pt !important;
+    line-height: 1.25 !important;
+    font-weight: 750 !important;
+    letter-spacing: .045em !important;
+    text-transform: uppercase !important;
+    color: #64748b !important;
+  }
+
+  .conf-mesa-topo > span {
+    display: none !important;
+  }
+
+  .conf-mesa-pessoas {
+    flex: 0 0 34mm !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 2px !important;
+    padding: 7px 8px !important;
+    border: 1.2px solid #cbd5e1 !important;
+    border-radius: 11px !important;
+    background: #ffffff !important;
+    text-align: center !important;
+  }
+
+  .conf-mesa-pessoas strong {
+    display: block !important;
+    font-size: 19pt !important;
+    line-height: 1 !important;
+    font-weight: 950 !important;
+    color: #0f172a !important;
+  }
+
+  .conf-mesa-pessoas span {
+    display: block !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    font-size: 9pt !important;
+    line-height: 1.08 !important;
+    font-weight: 850 !important;
+    letter-spacing: .035em !important;
+    text-transform: uppercase !important;
+    color: #475569 !important;
+    white-space: normal !important;
+  }
+
+  .conf-mesa-table {
+    position: relative !important;
+    z-index: 2 !important;
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+    margin: 0 !important;
+    font-size: 13pt !important;
+    line-height: 1.38 !important;
+    color: #0f172a !important;
+  }
+
+  .conf-mesa-table thead {
+    display: table-header-group !important;
+  }
+
+  .conf-mesa-table tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .conf-mesa-table th,
+  .conf-mesa-table td {
+    border: 1px solid #cbd5e1 !important;
+    padding: 8px 10px !important;
+    vertical-align: middle !important;
+    color: #0f172a !important;
+  }
+
+  .conf-mesa-table th {
+    background: #111827 !important;
+    color: #ffffff !important;
+    font-size: 10.6pt !important;
+    line-height: 1.18 !important;
+    font-weight: 950 !important;
+    text-align: center !important;
+    letter-spacing: .08em !important;
+    text-transform: uppercase !important;
+  }
+
+  .conf-mesa-table tbody tr:nth-child(odd) td {
+    background: #ffffff !important;
+  }
+
+  .conf-mesa-table tbody tr:nth-child(even) td {
+    background: #f8fafc !important;
+  }
+
+  .conf-ok {
+    width: 112px !important;
+    text-align: center !important;
+    white-space: normal !important;
+    line-height: 1 !important;
+  }
+
+  .conf-qtd {
+    width: 142px !important;
+    text-align: center !important;
+    font-size: 13pt !important;
+    font-weight: 950 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .conf-ing,
+  .conf-mesa-table th.conf-ing,
+  .conf-mesa-table td.conf-ing {
+    width: auto !important;
+    max-width: none !important;
+    text-align: left !important;
+    font-size: 13pt !important;
+    font-weight: 850 !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+    hyphens: auto !important;
+  }
+
+  .check-conferencia {
+    display: inline-block !important;
+    width: 14px !important;
+    height: 14px !important;
+    border: 2px solid #0f172a !important;
+    border-radius: 4px !important;
+    margin: 2.5px 3px !important;
+    vertical-align: middle !important;
+    background: #ffffff !important;
+  }
+
+  .conf-observacao-linha {
+    display: none !important;
+  }
+
+  .conf-observacao-box {
+    position: relative !important;
+    z-index: 2 !important;
+    margin: 13px 14px 15px 19px !important;
+    padding: 11px 13px 13px 13px !important;
+    border: 1.2px solid #cbd5e1 !important;
+    border-radius: 12px !important;
+    background: #ffffff !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .conf-observacao-titulo {
+    display: inline-block !important;
+    margin: 0 0 7px 0 !important;
+    padding: 3px 9px !important;
+    border-radius: 999px !important;
+    background: #f1f5f9 !important;
+    font-size: 10.6pt !important;
+    line-height: 1.15 !important;
+    font-weight: 950 !important;
+    letter-spacing: .085em !important;
+    text-transform: uppercase !important;
+    color: #334155 !important;
+  }
+
+  .conf-observacao-linhas {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .conf-observacao-linhas span {
+    display: block !important;
+    height: 25px !important;
+    border-bottom: 1.45px solid #334155 !important;
+  }
+
+  .conf-observacao-linhas span + span {
+    margin-top: 3px !important;
+  }
+
+  .conf-assinatura-linhas,
+  .conf-observacao {
+    display: none !important;
+  }
+}
+
+
+/* ===================================================
+   CONFERÊNCIA DE MESA — CLARA SOFISTICADA
+   - Mantém layout premium, sem fundos escuros
+   - Cabeçalhos claros e elegantes
+   - Observações com 4 linhas
+=================================================== */
+@media print {
+  #printConferenciaMesas {
+    color: #111827 !important;
+  }
+
+  .conf-capa {
+    border: 1.6px solid #94a3b8 !important;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+    box-shadow: none !important;
+  }
+
+  .conf-capa::before {
+    height: 7px !important;
+    background: linear-gradient(90deg, #e2e8f0 0%, #f8fafc 45%, #e2e8f0 100%) !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+  }
+
+  .conf-capa-label {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #475569 !important;
+  }
+
+  .conf-capa h1 {
+    color: #111827 !important;
+  }
+
+  .conf-capa-subtitle {
+    color: #475569 !important;
+  }
+
+  .conf-resumo-card {
+    border: 1.1px solid #cbd5e1 !important;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+  }
+
+  .conf-resumo-card strong {
+    color: #111827 !important;
+  }
+
+  .conf-resumo-card span {
+    color: #475569 !important;
+  }
+
+  .conf-mesa-bloco {
+    border: 1.5px solid #94a3b8 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+  }
+
+  .conf-mesa-bloco::before {
+    width: 6px !important;
+    background: linear-gradient(180deg, #dbeafe 0%, #e0f2fe 45%, #f1f5f9 100%) !important;
+    border-right: 1px solid #bfdbfe !important;
+  }
+
+  .conf-mesa-topo {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+    border-bottom: 1.3px solid #cbd5e1 !important;
+    color: #111827 !important;
+  }
+
+  .conf-mesa-badge {
+    background: #ffffff !important;
+    color: #111827 !important;
+    border: 1.4px solid #94a3b8 !important;
+    box-shadow: inset 0 0 0 2px #f1f5f9 !important;
+  }
+
+  .conf-mesa-topo h2 {
+    color: #111827 !important;
+  }
+
+  .conf-mesa-topo p {
+    color: #64748b !important;
+  }
+
+  .conf-mesa-pessoas {
+    border: 1.2px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    box-shadow: inset 0 0 0 2px #f8fafc !important;
+  }
+
+  .conf-mesa-pessoas strong {
+    color: #111827 !important;
+  }
+
+  .conf-mesa-pessoas span {
+    color: #475569 !important;
+  }
+
+  .conf-mesa-table {
+    color: #111827 !important;
+  }
+
+  .conf-mesa-table th,
+  .conf-mesa-table td {
+    border: 1px solid #cbd5e1 !important;
+    color: #111827 !important;
+  }
+
+  .conf-mesa-table th {
+    background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%) !important;
+    color: #111827 !important;
+    border-bottom: 1.4px solid #94a3b8 !important;
+  }
+
+  .conf-mesa-table tbody tr:nth-child(odd) td {
+    background: #ffffff !important;
+  }
+
+  .conf-mesa-table tbody tr:nth-child(even) td {
+    background: #f8fafc !important;
+  }
+
+  .conf-qtd {
+    color: #111827 !important;
+  }
+
+  .conf-ing,
+  .conf-mesa-table th.conf-ing,
+  .conf-mesa-table td.conf-ing {
+    color: #111827 !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+    hyphens: auto !important;
+  }
+
+  .check-conferencia {
+    border: 2px solid #475569 !important;
+    background: #ffffff !important;
+  }
+
+  .conf-observacao-box {
+    border: 1.2px solid #cbd5e1 !important;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+  }
+
+  .conf-observacao-titulo {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #475569 !important;
+  }
+
+  .conf-observacao-linhas span {
+    height: 26px !important;
+    border-bottom: 1.35px solid #64748b !important;
   }
 }
