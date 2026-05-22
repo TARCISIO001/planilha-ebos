@@ -2700,6 +2700,10 @@ function gerarConferenciaMesasParaImpressao() {
     return;
   }
 
+  const totalMesas = listas.length;
+  const totalPessoas = listas.reduce((acc, lista) => acc + Math.max(1, Number(lista?.pratos) || 1), 0);
+  const totalItens = listas.reduce((acc, lista) => acc + (Array.isArray(lista?.itens) ? lista.itens.length : 0), 0);
+
   const mesasHtml = listas.map((lista, idx) => {
     const numeroMesa = String(idx + 1).padStart(2, "0");
     const qtdPessoas = Math.max(1, Number(lista?.pratos) || 1);
@@ -2707,15 +2711,27 @@ function gerarConferenciaMesasParaImpressao() {
 
     return `
       <section class="conf-mesa-bloco">
-        <h2>Mesa ${numeroMesa} — ${escaparHTML(lista?.nome || "Ebó")}</h2>
-        <div class="conf-mesa-meta"><strong>Quantidade:</strong> ${qtdPessoas} ${rotuloPessoas}</div>
+        <div class="conf-mesa-topo">
+          <div class="conf-mesa-titulo-wrap">
+            <div class="conf-mesa-badge">Mesa ${numeroMesa}</div>
+            <div class="conf-mesa-titulos">
+              <h2>${escaparHTML(lista?.nome || "Ebó")}</h2>
+              <p>Checklist de separação e conferência individual</p>
+            </div>
+          </div>
+
+          <div class="conf-mesa-pessoas">
+            <strong>${qtdPessoas}</strong>
+            <span>${rotuloPessoas}</span>
+          </div>
+        </div>
 
         <table class="conf-mesa-table">
           <thead>
             <tr>
               <th class="conf-ok">OK</th>
-              <th class="conf-qtd">QUANTIDADE</th>
-              <th class="conf-ing">INGREDIENTE</th>
+              <th class="conf-qtd">Quantidade</th>
+              <th class="conf-ing">Ingrediente</th>
             </tr>
           </thead>
           <tbody>
@@ -2723,19 +2739,39 @@ function gerarConferenciaMesasParaImpressao() {
           </tbody>
         </table>
 
-        <div class="conf-assinatura-linhas">
-          <div>Responsável: ____________________________</div>
-          <div>Conferido em: ____ / ____ / ______</div>
+        <div class="conf-observacao-box">
+          <div class="conf-observacao-titulo">Observações</div>
+          <div class="conf-observacao-linhas" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
         </div>
-        <div class="conf-observacao">Observação: ________________________________________________________________</div>
       </section>
     `;
   }).join("");
 
   container.innerHTML = `
     <section class="conf-capa">
+      <div class="conf-capa-label">Controle de Separação e Conferência</div>
       <h1>Conferência de Mesa</h1>
-      <p>Use esta parte para conferir os ingredientes separados por mesa, sem alterar a lista geral da cozinha.</p>
+      <div class="conf-capa-subtitle">Organização dos ingredientes por mesa, com marcação de conferência e campo de observações.</div>
+
+      <div class="conf-resumo-grid">
+        <div class="conf-resumo-card">
+          <strong>${totalMesas}</strong>
+          <span>${totalMesas === 1 ? "Mesa" : "Mesas"}</span>
+        </div>
+        <div class="conf-resumo-card">
+          <strong>${totalPessoas}</strong>
+          <span>${totalPessoas === 1 ? "Pessoa / Prato" : "Pessoas / Pratos"}</span>
+        </div>
+        <div class="conf-resumo-card">
+          <strong>${totalItens}</strong>
+          <span>${totalItens === 1 ? "Item" : "Itens"}</span>
+        </div>
+      </div>
     </section>
     ${mesasHtml}
   `;
