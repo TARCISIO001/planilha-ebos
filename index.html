@@ -82,8 +82,12 @@
     <label class="label" style="margin-top:12px;">Quantidade de Pessoas</label>
    <!-- <input id="numPratos" type="number" min="1" value="1" /> -->
 
+    <label class="label" style="margin-top:12px;">Dia da função</label>
+    <input id="dataFuncao" type="date" onchange="atualizarDataFuncaoNaLista()" />
+
     <div class="actions-row">
       <button class="btn-secondary" onclick="adicionarListaAcumulada()">Adicionar lista</button> 
+      <button class="btn-pdf" onclick="salvarListaGeradaPdf()">PDF</button>
       <button class="btn-print" onclick="imprimirListaGerada()">Imprimir</button>
     </div>
 
@@ -151,6 +155,7 @@
     <img src="./imagem.png" alt="Ilê D’Ogum" class="print-logo">
 
     <h1 id="printEboNome"></h1>
+    <div id="printFuncaoData" class="print-funcao-data"></div>
   </div>
 
   <table class="print-table">
@@ -158,7 +163,8 @@
       <tr>
         <th class="print-total">Quantidades</th>
         <th class="print-ing">Ingredientes</th>
-        <th class="print-pratos">Pratos</th>
+        <th class="print-pratos print-origens">Origens</th>
+        <th class="print-observacoes">Observações</th>
       </tr>
     </thead>
     <tbody id="printIngredientes"></tbody>
