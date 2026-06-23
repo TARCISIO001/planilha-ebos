@@ -5201,3 +5201,170 @@ z-index: -1;
     margin-top: 0 !important;
   }
 }
+
+/* ===================================================
+   V11 - CORREÇÃO MOBILE DA LISTA GERADA
+   Mantém a lista pré-criada em tabela real no celular.
+   Evita títulos e campos espremidos/empilhados.
+=================================================== */
+@media (max-width: 720px) {
+  #cardListaGerada {
+    overflow: visible !important;
+  }
+
+  #cardListaGerada .saved-list,
+  #listaGeradaContainer {
+    display: block !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 0 !important;
+    padding-bottom: 10px !important;
+  }
+
+  #listaGeradaContainer .preview-print-area {
+    width: 760px !important;
+    min-width: 760px !important;
+    max-width: none !important;
+    overflow: visible !important;
+    border: 2px solid #94a3b8 !important;
+    border-radius: 18px !important;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-header {
+    padding: 14px 12px 10px !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+  }
+
+  #listaGeradaContainer .preview-print-title {
+    font-size: 20px !important;
+    line-height: 1.2 !important;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-logo {
+    width: 90px !important;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table {
+    display: table !important;
+    width: 100% !important;
+    min-width: 760px !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+    border-spacing: 0 !important;
+    font-size: 13px !important;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table thead {
+    display: table-header-group !important;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table tbody {
+    display: table-row-group !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    background: transparent !important;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table tr {
+    display: table-row !important;
+    width: auto !important;
+    min-width: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    overflow: visible !important;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table th,
+  #listaGeradaContainer .preview-print-area .print-table td {
+    display: table-cell !important;
+    border: 1px solid #000 !important;
+    padding: 7px 6px !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+    background: #ffffff !important;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table thead th {
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+    font-size: 13px !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.01em !important;
+    line-height: 1.15 !important;
+    text-transform: uppercase !important;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table td::before {
+    content: none !important;
+    display: none !important;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table th.print-total,
+  #listaGeradaContainer .preview-print-area .print-table td.print-total {
+    width: 21% !important;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table th.print-ing,
+  #listaGeradaContainer .preview-print-area .print-table td.print-ing {
+    width: 29% !important;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table th.print-pratos,
+  #listaGeradaContainer .preview-print-area .print-table td.print-pratos {
+    width: 20% !important;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table th.print-observacoes,
+  #listaGeradaContainer .preview-print-area .print-table td.print-observacoes {
+    width: 30% !important;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table tbody tr:nth-child(even) td {
+    background: #f8fafc !important;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table input,
+  #listaGeradaContainer .preview-print-area .print-table textarea.editOrigens,
+  #listaGeradaContainer .preview-print-area .print-table textarea.editObservacoes,
+  #listaGeradaContainer .preview-print-area .print-table textarea.editPratos {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    min-height: 42px !important;
+    padding: 9px 8px !important;
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 10px !important;
+    font-size: 14px !important;
+    line-height: 1.25 !important;
+    text-align: center !important;
+    background: #ffffff !important;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table textarea.editOrigens,
+  #listaGeradaContainer .preview-print-area .print-table textarea.editObservacoes,
+  #listaGeradaContainer .preview-print-area .print-table textarea.editPratos {
+    min-height: 72px !important;
+    resize: vertical !important;
+  }
+}
+
+@media (max-width: 420px) {
+  #listaGeradaContainer .preview-print-area,
+  #listaGeradaContainer .preview-print-area .print-table {
+    width: 720px !important;
+    min-width: 720px !important;
+  }
+
+  #listaGeradaContainer .preview-print-area .print-table thead th {
+    font-size: 12.5px !important;
+  }
+}
