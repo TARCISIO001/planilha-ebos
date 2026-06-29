@@ -908,6 +908,637 @@ function modalGetPayloadCompat() {
   return { tipo: "antigo", nome, itens };
 }
 
+// =======================================================
+// CONFERÊNCIA AUTOMÁTICA DE INGREDIENTES — PALAVRA/FRÁSE INTEIRA
+// - Não altera a lógica de cálculo, PDF ou impressão.
+// - Não substitui ingrediente automaticamente.
+// - Maiúsculas/minúsculas e espaços duplicados não contam como erro.
+// - A comparação é feita no NOME INTEIRO do ingrediente.
+// - Só avisa quando a frase inteira parece ser o mesmo ingrediente:
+//   acento/pontuação diferente ou erro pequeno de digitação.
+// - Não usa regra específica para feijão; vale para todos os ingredientes.
+// =======================================================
+let __timerConferenciaIngredientes = null;
+let __timerConferenciaGlobalIngredientes = null;
+window.__ingredientesConferenciaUltimaSuspeitas = [];
+
+function limparEspacosIngrediente(s) {
+  return (s || "")
+    .toString()
+    .replace(/\u00a0/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizarIngredienteSemCaixa(s) {
+  // Igualdade permitida: Pipoca, pipoca e PIPOCA são o mesmo texto.
+  return limparEspacosIngrediente(s).toLocaleLowerCase("pt-BR");
+}
+
+function normalizarIngredienteFraseInteira(s) {
+  // Assinatura da frase inteira: mantém TODAS as palavras importantes.
+  // Não remove palavras como branco, fradinho, prato, vela, etc.
+  return normalizarIngredienteSemCaixa(s)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function tokensIngredienteFraseInteira(s) {
+  const assinatura = normalizarIngredienteFraseInteira(s);
+  return assinatura ? assinatura.split(" ").filter(Boolean) : [];
+}
+
+function temAcentoIngrediente(s) {
+  return /[áàâãéèêíìîóòôõúùûçÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÇ]/.test(String(s || ""));
+}
+
+function distanciaLevenshteinIngrediente(a, b) {
+  a = String(a || "");
+  b = String(b || "");
+  if (a === b) return 0;
+  if (!a) return b.length;
+  if (!b) return a.length;
+
+  const prev = new Array(b.length + 1);
+  const curr = new Array(b.length + 1);
+
+  for (let j = 0; j <= b.length; j++) prev[j] = j;
+
+  for (let i = 1; i <= a.length; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const custo = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(
+        curr[j - 1] + 1,
+        prev[j] + 1,
+        prev[j - 1] + custo
+      );
+    }
+    for (let j = 0; j <= b.length; j++) prev[j] = curr[j];
+  }
+
+  return prev[b.length];
+}
+
+function erroPequenoNaPalavra(tokenA, tokenB) {
+  if (!tokenA || !tokenB || tokenA === tokenB) return false;
+
+  const maior = Math.max(tokenA.length, tokenB.length);
+  const menor = Math.min(tokenA.length, tokenB.length);
+  if (menor < 4) return false;
+
+  const dist = distanciaLevenshteinIngrediente(tokenA, tokenB);
+
+  // Evita trocar palavras realmente diferentes: branco x fradinho, milho x feijão, etc.
+  // Para erro de digitação, normalmente o começo da palavra continua parecido.
+  if (tokenA[0] !== tokenB[0]) return false;
+  if (maior >= 7 && tokenA.slice(0, 2) !== tokenB.slice(0, 2)) return false;
+
+  if (maior <= 6) return dist <= 1;
+  return dist <= 2;
+}
+
+function parecemMesmoIngredientePorErroPequeno(nomeA, nomeB) {
+  const tokensA = tokensIngredienteFraseInteira(nomeA);
+  const tokensB = tokensIngredienteFraseInteira(nomeB);
+
+  if (!tokensA.length || !tokensB.length) return false;
+
+  // Regra principal: tem que ser a frase inteira.
+  // Se a quantidade de palavras mudou, não sugere troca.
+  if (tokensA.length !== tokensB.length) return false;
+
+  let diferencas = 0;
+
+  for (let i = 0; i < tokensA.length; i++) {
+    if (tokensA[i] === tokensB[i]) continue;
+
+    diferencas += 1;
+    if (diferencas > 1) return false;
+
+    if (!erroPequenoNaPalavra(tokensA[i], tokensB[i])) return false;
+  }
+
+  return diferencas === 1;
+}
+
+function eNomeSuspeitoIngrediente(nomeAtual, nomePadrao) {
+  const atualSemCaixa = normalizarIngredienteSemCaixa(nomeAtual);
+  const padraoSemCaixa = normalizarIngredienteSemCaixa(nomePadrao);
+
+  // Só mudou maiúscula/minúscula ou espaço duplicado: não é erro.
+  if (!atualSemCaixa || !padraoSemCaixa || atualSemCaixa === padraoSemCaixa) return false;
+
+  const atualFrase = normalizarIngredienteFraseInteira(nomeAtual);
+  const padraoFrase = normalizarIngredienteFraseInteira(nomePadrao);
+
+  if (!atualFrase || !padraoFrase) return false;
+
+  // Mesmas palavras na frase inteira, mas com acento/pontuação diferente.
+  // Ex.: Acaca x Acaçá, Feijao branco x Feijão branco.
+  if (atualFrase === padraoFrase) return true;
+
+  // Erro pequeno de digitação em UMA palavra, mantendo a frase inteira.
+  // Ex.: milho vemelho x milho vermelho; algidar x alguidar.
+  return parecemMesmoIngredientePorErroPequeno(nomeAtual, nomePadrao);
+}
+
+function pontuarNomePadraoIngrediente(nome, quantidade) {
+  const n = limparEspacosIngrediente(nome);
+  let score = Number(quantidade || 0) * 1000;
+  if (temAcentoIngrediente(n)) score += 80;
+  if (/^[A-ZÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÇ]/.test(n)) score += 10;
+  score += Math.min(n.length, 80) / 100;
+  return score;
+}
+
+function escolherNomePadraoIngrediente(ocorrencias) {
+  const mapa = new Map();
+
+  (ocorrencias || []).forEach((oc) => {
+    const nome = limparEspacosIngrediente(oc?.nome || oc?.ingrediente || "");
+    const key = normalizarIngredienteSemCaixa(nome);
+    if (!nome || !key) return;
+
+    if (!mapa.has(key)) {
+      mapa.set(key, { nome, quantidade: 0, ocorrencias: [] });
+    }
+
+    const item = mapa.get(key);
+    item.quantidade += 1;
+    item.ocorrencias.push(oc);
+
+    if (pontuarNomePadraoIngrediente(nome, 1) > pontuarNomePadraoIngrediente(item.nome, 1)) {
+      item.nome = nome;
+    }
+  });
+
+  let melhor = null;
+  mapa.forEach((item) => {
+    const score = pontuarNomePadraoIngrediente(item.nome, item.quantidade);
+    if (!melhor || score > melhor.score) melhor = { ...item, score };
+  });
+
+  return melhor?.nome || limparEspacosIngrediente(ocorrencias?.[0]?.nome || ocorrencias?.[0]?.ingrediente || "");
+}
+
+function coletarIngredientesModalAtual() {
+  const itens = [];
+  const rows = Array.from(document.querySelectorAll("#modalBackdrop tbody tr"));
+
+  rows.forEach((tr, index) => {
+    const input = tr.querySelector(".modalIng");
+    if (!input) return;
+
+    const nome = limparEspacosIngrediente(input.value || "");
+    if (!nome) return;
+
+    const tbodyId = tr.closest("tbody")?.id || "";
+    const listId = tbodyId.includes("_2") ? "2" : tbodyId.includes("_1") ? "1" : "old";
+
+    itens.push({
+      nome,
+      input,
+      rowIndex: index,
+      listId,
+      lista: listId === "2" ? "Lista 2" : "Lista 1",
+      origem: "lista_atual"
+    });
+  });
+
+  return itens;
+}
+
+async function buscarCatalogoIngredientesCadastrados(excluirDocId = null) {
+  const { db, collection, getDocs } = fb();
+  const snap = await getDocs(collection(db, COLLECTION));
+  const catalogo = [];
+
+  snap.forEach((s) => {
+    if (excluirDocId && s.id === excluirDocId) return;
+
+    const data = s.data() || {};
+    const listaNome = limparEspacosIngrediente(data.nome || "(lista sem nome)");
+
+    ["itens", "itens2"].forEach((campo, blocoIndex) => {
+      const itens = Array.isArray(data[campo]) ? data[campo] : [];
+      itens.forEach((it, itemIndex) => {
+        const nome = limparEspacosIngrediente(it?.ingrediente || "");
+        if (!nome) return;
+
+        catalogo.push({
+          nome,
+          lista: listaNome,
+          docId: s.id,
+          campo,
+          itemIndex,
+          origem: "banco",
+          bloco: blocoIndex === 0 ? "Lista 1" : "Lista 2"
+        });
+      });
+    });
+  });
+
+  return catalogo;
+}
+
+function agruparOcorrenciasPorFraseInteira(ocorrencias) {
+  const grupos = new Map();
+
+  (ocorrencias || []).forEach((oc) => {
+    const frase = normalizarIngredienteFraseInteira(oc.nome || oc.ingrediente || "");
+    if (!frase) return;
+    if (!grupos.has(frase)) grupos.set(frase, []);
+    grupos.get(frase).push(oc);
+  });
+
+  return grupos;
+}
+
+function adicionarSuspeitaIngrediente(suspeitas, vistos, atual, sugestao, ocorrencias, motivo) {
+  const nomeAtual = limparEspacosIngrediente(atual.nome);
+  const nomeSugestao = limparEspacosIngrediente(sugestao);
+  if (!nomeAtual || !nomeSugestao) return;
+  if (!eNomeSuspeitoIngrediente(nomeAtual, nomeSugestao)) return;
+
+  const key = `${atual.listId || "global"}|${atual.rowIndex ?? "-"}|${normalizarIngredienteSemCaixa(nomeAtual)}|${normalizarIngredienteSemCaixa(nomeSugestao)}`;
+  if (vistos.has(key)) return;
+  vistos.add(key);
+
+  suspeitas.push({
+    atual,
+    nomeAtual,
+    sugestao: nomeSugestao,
+    ocorrencias: (ocorrencias || []).slice(0, 6),
+    motivo
+  });
+}
+
+function encontrarSugestoesIngredientes(itensAtuais, catalogo) {
+  const suspeitas = [];
+  const vistos = new Set();
+  const gruposBanco = agruparOcorrenciasPorFraseInteira(catalogo);
+
+  // 1) Mesma frase inteira, mas acento/pontuação diferente.
+  itensAtuais.forEach((atual) => {
+    const frase = normalizarIngredienteFraseInteira(atual.nome);
+    const grupo = gruposBanco.get(frase) || [];
+    if (!grupo.length) return;
+
+    const sugestao = escolherNomePadraoIngrediente([...grupo, atual]);
+    adicionarSuspeitaIngrediente(suspeitas, vistos, atual, sugestao, grupo, "Mesma frase com escrita diferente");
+  });
+
+  // 2) Pequeno erro de digitação, sempre respeitando a frase inteira.
+  itensAtuais.forEach((atual) => {
+    const atualFrase = normalizarIngredienteFraseInteira(atual.nome);
+    if (!atualFrase || atualFrase.length < 4) return;
+
+    let melhor = null;
+
+    catalogo.forEach((oc) => {
+      const nomeBanco = limparEspacosIngrediente(oc.nome);
+      const bancoFrase = normalizarIngredienteFraseInteira(nomeBanco);
+      if (!bancoFrase || atualFrase === bancoFrase) return;
+      if (!parecemMesmoIngredientePorErroPequeno(atual.nome, nomeBanco)) return;
+
+      const grupo = gruposBanco.get(bancoFrase) || [oc];
+      const dist = distanciaLevenshteinIngrediente(atualFrase, bancoFrase);
+      if (!melhor || dist < melhor.dist) {
+        melhor = {
+          sugestao: escolherNomePadraoIngrediente(grupo),
+          ocorrencias: grupo,
+          dist
+        };
+      }
+    });
+
+    if (melhor) {
+      adicionarSuspeitaIngrediente(suspeitas, vistos, atual, melhor.sugestao, melhor.ocorrencias, "Possível erro pequeno de digitação");
+    }
+  });
+
+  // 3) Diferenças dentro da própria lista atual.
+  const gruposAtual = agruparOcorrenciasPorFraseInteira(itensAtuais);
+  gruposAtual.forEach((grupo) => {
+    if (grupo.length < 2) return;
+    const sugestao = escolherNomePadraoIngrediente(groupToOcorrenciasComListaAtual(grupo));
+    grupo.forEach((atual) => {
+      adicionarSuspeitaIngrediente(suspeitas, vistos, atual, sugestao, grupo, "Mesmo ingrediente repetido com escrita diferente na lista atual");
+    });
+  });
+
+  return suspeitas;
+}
+
+function groupToOcorrenciasComListaAtual(grupo) {
+  return (grupo || []).map((g) => ({ ...g, lista: g.lista || "Lista atual" }));
+}
+
+async function conferirIngredientesModalContraCatalogo() {
+  const itensAtuais = coletarIngredientesModalAtual();
+  if (!itensAtuais.length) return { suspeitas: [], catalogo: [] };
+
+  const catalogo = await buscarCatalogoIngredientesCadastrados(editingDocId || null);
+  const suspeitas = encontrarSugestoesIngredientes(itensAtuais, catalogo);
+  return { suspeitas, catalogo };
+}
+
+function montarTextoSuspeitaIngrediente(s, idx) {
+  const linhas = [];
+  linhas.push(`${idx + 1}. Na ${s.atual?.lista || "lista"}: "${s.nomeAtual}"`);
+  linhas.push(`   Nome já encontrado parecido: "${s.sugestao}"`);
+  linhas.push(`   Motivo: ${s.motivo || "escrita diferente"}`);
+
+  const listas = Array.from(new Set((s.ocorrencias || [])
+    .map(oc => limparEspacosIngrediente(oc.lista || oc.bloco || ""))
+    .filter(Boolean)))
+    .slice(0, 3);
+
+  if (listas.length) linhas.push(`   Encontrado em: ${listas.join(", ")}`);
+  return linhas.join("\n");
+}
+
+function montarMensagemConferenciaIngredientes(suspeitas) {
+  return [
+    "⚠️ Conferência automática de ingredientes",
+    "",
+    "Encontrei ingredientes com escrita parecida em outras listas.",
+    "A conferência usa o nome inteiro do ingrediente, não apenas uma palavra.",
+    "Maiúsculas e minúsculas foram ignoradas.",
+    "Nada será trocado automaticamente.",
+    "",
+    ...suspeitas.slice(0, 8).map(montarTextoSuspeitaIngrediente),
+    suspeitas.length > 8 ? `\n... e mais ${suspeitas.length - 8} suspeita(s).` : ""
+  ].filter(Boolean).join("\n");
+}
+
+function garantirBoxConferenciaIngredientesModal() {
+  const backdrop = $("modalBackdrop");
+  const card = backdrop?.querySelector(".modal-card");
+  const head = card?.querySelector(".section-head");
+  if (!backdrop || !card || !head) return null;
+
+  let box = $("ingredientesConferenciaBox");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "ingredientesConferenciaBox";
+    box.className = "hint";
+    box.style.cssText = [
+      "display:none",
+      "margin:10px 0 14px",
+      "padding:10px 12px",
+      "border-radius:12px",
+      "border:1px solid #fde68a",
+      "background:#fffbeb",
+      "color:#92400e",
+      "line-height:1.45"
+    ].join(";");
+    head.insertAdjacentElement("afterend", box);
+  }
+
+  return box;
+}
+
+function renderizarConferenciaIngredientesModal(suspeitas) {
+  const box = garantirBoxConferenciaIngredientesModal();
+  if (!box) return;
+
+  window.__ingredientesConferenciaUltimaSuspeitas = suspeitas || [];
+
+  if (!suspeitas || !suspeitas.length) {
+    box.style.display = "none";
+    box.innerHTML = "";
+    return;
+  }
+
+  const itensHtml = suspeitas.slice(0, 8).map((s) => {
+    const listas = Array.from(new Set((s.ocorrencias || [])
+      .map(oc => limparEspacosIngrediente(oc.lista || oc.bloco || ""))
+      .filter(Boolean)))
+      .slice(0, 3);
+
+    return `
+      <div style="margin-top:8px;">
+        <strong>${escaparHTML(s.nomeAtual)}</strong>
+        <span> parecido com </span>
+        <strong>${escaparHTML(s.sugestao)}</strong>
+        <div style="font-size:12px; opacity:.9;">${escaparHTML(s.motivo || "Confira o nome inteiro antes de salvar.")}</div>
+        ${listas.length ? `<div style="font-size:12px; opacity:.9;">Encontrado em: ${escaparHTML(listas.join(", "))}</div>` : ""}
+      </div>
+    `;
+  }).join("");
+
+  box.innerHTML = `
+    <div style="font-weight:800; margin-bottom:4px;">⚠️ Conferência automática de ingredientes</div>
+    <div>Revise os nomes abaixo. A conferência usa a frase inteira e não troca nada automaticamente.</div>
+    ${itensHtml}
+    <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+      <button type="button" class="btn-tertiary btn-mini" onclick="document.getElementById('ingredientesConferenciaBox').style.display='none'">Ocultar aviso</button>
+    </div>
+  `;
+  box.style.display = "block";
+}
+
+window.aplicarSugestoesConferenciaIngredientes = function aplicarSugestoesConferenciaIngredientes() {
+  alert("Por segurança, esta versão não troca ingredientes automaticamente. Revise e ajuste manualmente o campo destacado no aviso.");
+};
+
+function prepararConferenciaIngredientesModal() {
+  const backdrop = $("modalBackdrop");
+  if (!backdrop) return;
+
+  garantirBoxConferenciaIngredientesModal();
+
+  if (!backdrop.__conferenciaIngredientesListener) {
+    backdrop.addEventListener("input", (event) => {
+      if (event.target?.classList?.contains("modalIng")) {
+        agendarConferenciaIngredientesModal(700);
+      }
+    });
+    backdrop.__conferenciaIngredientesListener = true;
+  }
+}
+
+function agendarConferenciaIngredientesModal(ms = 700) {
+  clearTimeout(__timerConferenciaIngredientes);
+  __timerConferenciaIngredientes = setTimeout(async () => {
+    try {
+      const resultado = await conferirIngredientesModalContraCatalogo();
+      renderizarConferenciaIngredientesModal(resultado.suspeitas);
+    } catch (e) {
+      console.warn("Conferência de ingredientes falhou:", e);
+    }
+  }, ms);
+}
+
+async function verificarIngredientesAntesSalvarLista() {
+  try {
+    const resultado = await conferirIngredientesModalContraCatalogo();
+    const suspeitas = resultado.suspeitas || [];
+    renderizarConferenciaIngredientesModal(suspeitas);
+
+    if (!suspeitas.length) return true;
+
+    return confirm(
+      montarMensagemConferenciaIngredientes(suspeitas) +
+      "\n\nClique em OK para salvar mesmo assim." +
+      "\nClique em Cancelar para voltar e revisar os nomes."
+    );
+  } catch (e) {
+    console.warn("Não foi possível conferir ingredientes antes de salvar:", e);
+    return true;
+  }
+}
+
+function encontrarSuspeitasGlobaisIngredientes(catalogo) {
+  const suspeitas = [];
+  const vistos = new Set();
+  const grupos = agruparOcorrenciasPorFraseInteira(catalogo);
+
+  // Mesma frase inteira, escrita visual diferente.
+  grupos.forEach((ocorrencias) => {
+    const variantes = new Map();
+    ocorrencias.forEach((oc) => {
+      const key = normalizarIngredienteSemCaixa(oc.nome);
+      if (!key) return;
+      if (!variantes.has(key)) variantes.set(key, []);
+      variantes.get(key).push(oc);
+    });
+
+    if (variantes.size <= 1) return;
+
+    const padrao = escolherNomePadraoIngrediente(ocorrencias);
+    variantes.forEach((ocs, key) => {
+      if (key === normalizarIngredienteSemCaixa(padrao)) return;
+      adicionarSuspeitaIngrediente(suspeitas, vistos, {
+        nome: ocs[0].nome,
+        lista: ocs[0].lista,
+        listId: "global",
+        rowIndex: `${ocs[0].docId || ""}-${ocs[0].itemIndex || 0}`
+      }, padrao, ocorrencias, "Mesma frase com escrita diferente");
+    });
+  });
+
+  // Pequenos erros de digitação, respeitando frase inteira.
+  const unicos = [];
+  const unicosVistos = new Set();
+  catalogo.forEach((oc) => {
+    const frase = normalizarIngredienteFraseInteira(oc.nome);
+    const semCaixa = normalizarIngredienteSemCaixa(oc.nome);
+    if (!frase || unicosVistos.has(semCaixa)) return;
+    unicosVistos.add(semCaixa);
+    unicos.push({ ...oc, frase });
+  });
+
+  const buckets = new Map();
+  unicos.slice(0, 1200).forEach((oc) => {
+    const tokens = tokensIngredienteFraseInteira(oc.nome);
+    const chave = `${tokens.length}|${tokens[0] || ""}|${tokens[tokens.length - 1] || ""}`;
+    if (!buckets.has(chave)) buckets.set(chave, []);
+    buckets.get(chave).push(oc);
+  });
+
+  buckets.forEach((arr) => {
+    for (let i = 0; i < arr.length; i++) {
+      for (let j = i + 1; j < arr.length; j++) {
+        if (suspeitas.length >= 25) return;
+        const a = arr[i];
+        const b = arr[j];
+        if (normalizarIngredienteFraseInteira(a.nome) === normalizarIngredienteFraseInteira(b.nome)) continue;
+        if (!parecemMesmoIngredientePorErroPequeno(a.nome, b.nome)) continue;
+
+        const padrao = escolherNomePadraoIngrediente([a, b]);
+        const outro = normalizarIngredienteSemCaixa(a.nome) === normalizarIngredienteSemCaixa(padrao) ? b : a;
+        adicionarSuspeitaIngrediente(suspeitas, vistos, {
+          nome: outro.nome,
+          lista: outro.lista,
+          listId: "global",
+          rowIndex: `${outro.docId || ""}-${outro.itemIndex || 0}`
+        }, padrao, [a, b], "Possível erro pequeno de digitação");
+      }
+    }
+  });
+
+  return suspeitas.slice(0, 25);
+}
+
+function garantirBoxConferenciaGlobalIngredientes() {
+  const listasBox = $("listasSalvasBox");
+  if (!listasBox?.parentElement) return null;
+
+  let box = $("ingredientesConferenciaGlobalBox");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "ingredientesConferenciaGlobalBox";
+    box.className = "hint";
+    box.style.cssText = [
+      "display:none",
+      "margin:10px 0 14px",
+      "padding:10px 12px",
+      "border-radius:12px",
+      "border:1px solid #fde68a",
+      "background:#fffbeb",
+      "color:#92400e",
+      "line-height:1.45"
+    ].join(";");
+    listasBox.parentElement.insertBefore(box, listasBox);
+  }
+
+  return box;
+}
+
+async function atualizarConferenciaGlobalIngredientes() {
+  try {
+    const box = garantirBoxConferenciaGlobalIngredientes();
+    if (!box) return;
+
+    const catalogo = await buscarCatalogoIngredientesCadastrados(null);
+    const suspeitas = encontrarSuspeitasGlobaisIngredientes(catalogo);
+
+    if (!suspeitas.length) {
+      box.style.display = "none";
+      box.innerHTML = "";
+      return;
+    }
+
+    const html = suspeitas.slice(0, 8).map((s) => {
+      const listas = Array.from(new Set((s.ocorrencias || [])
+        .map(oc => limparEspacosIngrediente(oc.lista || ""))
+        .filter(Boolean)))
+        .slice(0, 4);
+
+      return `
+        <div style="margin-top:8px;">
+          <strong>${escaparHTML(s.nomeAtual)}</strong>
+          <span> parecido com </span>
+          <strong>${escaparHTML(s.sugestao)}</strong>
+          <div style="font-size:12px; opacity:.9;">${escaparHTML(s.motivo || "Confira o nome inteiro.")}</div>
+          ${listas.length ? `<div style="font-size:12px; opacity:.9;">Listas: ${escaparHTML(listas.join(", "))}</div>` : ""}
+        </div>
+      `;
+    }).join("");
+
+    box.innerHTML = `
+      <div style="font-weight:800; margin-bottom:4px;">⚠️ Conferência automática das listas cadastradas</div>
+      <div>Encontrei possíveis ingredientes repetidos com nomes diferentes. A conferência usa o nome inteiro e não troca nada automaticamente.</div>
+      ${html}
+    `;
+    box.style.display = "block";
+  } catch (e) {
+    console.warn("Conferência global de ingredientes falhou:", e);
+  }
+}
+
+function agendarConferenciaGlobalIngredientes(ms = 900) {
+  clearTimeout(__timerConferenciaGlobalIngredientes);
+  __timerConferenciaGlobalIngredientes = setTimeout(() => {
+    atualizarConferenciaGlobalIngredientes();
+  }, ms);
+}
 
 window.fecharModal = function fecharModal() {
   $("modalBackdrop") && ($("modalBackdrop").style.display = "none");
@@ -915,7 +1546,9 @@ window.fecharModal = function fecharModal() {
 
 function abrirModal() {
   prepararModalFotosArea("listas");
+  prepararConferenciaIngredientesModal();
   $("modalBackdrop") && ($("modalBackdrop").style.display = "flex");
+  agendarConferenciaIngredientesModal(350);
 }
 
 window.cadastrarLista = function cadastrarLista() {
@@ -1021,6 +1654,7 @@ window.procurarListas = async function procurarListas(silent = false) {
       .join("");
 
     setFirebaseStatus(true, "Firebase: conectado");
+    agendarConferenciaGlobalIngredientes();
   } catch (e) {
     console.error(e);
     setFirebaseStatus(false, "Firebase: erro");
@@ -1115,6 +1749,9 @@ window.__enviarBancoComAlerta = async function () {
   await aguardarProcessamentoFotos();
   try {
     const payloadModal = modalGetPayloadCompat();
+
+    const podeContinuarConferencia = await verificarIngredientesAntesSalvarLista();
+    if (!podeContinuarConferencia) return;
 
     const { db, collection, addDoc, doc, setDoc, serverTimestamp } = fb();
 
