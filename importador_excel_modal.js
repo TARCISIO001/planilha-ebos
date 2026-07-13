@@ -159,9 +159,11 @@
 
       const inputIng = tr.querySelector('.modalIng');
       const inputQtd = tr.querySelector('.modalQtd');
+      const inputObs = tr.querySelector('.modalObs');
 
       if (inputIng) inputIng.value = cleanText(item.ingrediente);
       if (inputQtd) inputQtd.value = cleanText(item.quantidade);
+      if (inputObs) inputObs.value = cleanText(item.obs);
     });
   }
 
@@ -202,7 +204,8 @@
       if (valores.length >= 2) {
         linhas.push({
           ingrediente: valores[0],
-          quantidade: valores.slice(1).join(' | ')
+          quantidade: valores[1] || '',
+          obs: valores.slice(2).join(' | ')
         });
       } else if (valores.length === 1) {
         linhas.push(splitLinha(valores[0]));
