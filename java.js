@@ -7688,7 +7688,7 @@ function formatarObsImpressaoComNegrito(texto) {
     th, td { border: 1px solid #111827; text-align: center; vertical-align: middle; }
     th { padding: 2.8mm 2mm; font-size: 12pt; line-height: 1.15; font-weight: 900; color: #111827; background: #e5e7eb; white-space: normal; text-align: center; vertical-align: middle; }
     td { padding: 2.2mm 2mm; font-size: 12pt; line-height: 1.3; white-space: normal; overflow-wrap: anywhere; text-align: center; vertical-align: middle; }
-    .print-total { width: 10%; font-weight: 900; text-align: center; vertical-align: middle; }
+    .print-total { width: 15%; font-weight: 900; text-align: center; vertical-align: middle; }
     .print-ing { width: 30%; font-weight: 900; text-align: center; vertical-align: middle; }
     .print-origens { width: 15%; color: #111827; text-align: center; vertical-align: middle; }
     .print-ebos { width: 20%; color: #111827; text-align: center; vertical-align: middle; white-space: pre-line; }
