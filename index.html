@@ -8,6 +8,7 @@
   <link rel="icon" href="favcon.png" type="image/x-icon">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
   <link rel="stylesheet" href="./style.css.css">
+  <link rel="stylesheet" href="./relacoes/relacoes.css?v=19">
 </head>
 
 <body>
@@ -59,6 +60,7 @@
     <button class="menu-btn" onclick="abrirTelaPositivos()">✨ Positivos</button>
     <button class="menu-btn" onclick="abrirTelaBanhos()">🌿 Banhos</button>
     <button class="menu-btn" onclick="abrirTelaObrigacoes()">📝 Listas</button>
+    <button class="menu-btn" onclick="abrirTelaRelacoes()">🔗 Relações</button>
     <button class="menu-btn" onclick="abrirTelaAleatorio()">🎲 Aleatório</button>
     <button class="menu-btn" id="btnAdmin">⚙ Administração</button>
   </div>
@@ -542,6 +544,271 @@
 </section>
 
 
+<!-- =========================
+     RELAÇÕES
+========================= -->
+<section id="relacoesScreen" style="display:none; min-height:100vh;">
+  <div class="app-container relacoes-app-container">
+
+    <section class="card oferendas-hero-card" id="relacoesEscolha">
+      <div class="oferendas-hero-badge">Projeto Relações</div>
+
+      <div class="oferendas-hero-header">
+        <div>
+          <h2 class="oferendas-hero-title">Escolha o tipo de relação</h2>
+          <p class="oferendas-hero-text">
+            Organize as relações de ebó e de oferenda por evento ou função.
+          </p>
+        </div>
+
+        <button class="btn-tertiary" id="voltar-relacoes" type="button">Voltar</button>
+      </div>
+
+      <div class="oferendas-type-grid">
+        <button class="oferenda-type-card orixa" id="btn-relacao-ebo" type="button">
+          <span class="oferenda-type-icon">📿</span>
+          <span class="oferenda-type-title">Relação Ebó</span>
+          <span class="relacoes-card-description">Pessoas, tipos de ebó, Obi, Bori e Oferta.</span>
+        </button>
+
+        <button class="oferenda-type-card ebo" id="btn-relacao-oferenda" type="button">
+          <span class="oferenda-type-icon">🪔</span>
+          <span class="oferenda-type-title">Relação Oferenda/Oferta</span>
+          <span class="relacoes-card-description">Área reservada para a próxima etapa.</span>
+        </button>
+      </div>
+    </section>
+
+    <section id="container-relacao-ebo" style="display:none;">
+      <section class="card relacoes-toolbar-card no-print">
+        <div class="section-head relacoes-section-head">
+          <div>
+            <div class="relacoes-eyebrow">Relações</div>
+            <h2>Relação de Ebó</h2>
+            <div class="hint" id="relacaoEboStatusEdicao">Nova relação</div>
+          </div>
+          <button class="btn-tertiary" id="voltar-relacao-ebo" type="button">Voltar</button>
+        </div>
+      </section>
+
+      <section class="card relacao-ebo-editor no-print" id="relacaoEboEditor">
+        <div class="relacao-cabecalho-form">
+          <div class="relacao-campo relacao-campo-titulo">
+            <label class="label" for="relacaoEboTitulo">Nome do evento ou função</label>
+            <input id="relacaoEboTitulo" type="text" value=" Programação Ritualística" placeholder="Ex: Programação Ritualística" maxlength="120" />
+          </div>
+
+          <div class="relacao-campo relacao-campo-data">
+            <label class="label" for="relacaoEboData">Data da função</label>
+            <input id="relacaoEboData" type="date" />
+          </div>
+        </div>
+
+        <div class="relacao-resumo-grid" aria-live="polite">
+          <article class="relacao-resumo-card">
+            <span>Ebós</span>
+            <strong id="relacaoTotalEbos">0</strong>
+          </article>
+          <article class="relacao-resumo-card">
+            <span>Obi</span>
+            <strong id="relacaoTotalObi">0</strong>
+          </article>
+          <article class="relacao-resumo-card">
+            <span>Bori</span>
+            <strong id="relacaoTotalBori">0</strong>
+          </article>
+          <article class="relacao-resumo-card">
+            <span>Oferta</span>
+            <strong id="relacaoTotalOferta">0</strong>
+          </article>
+        </div>
+
+        <section class="relacao-tipos-resumo" id="relacaoTiposResumo">
+          <div class="relacao-tipos-resumo-titulo">Quantidade por tipo de ebó</div>
+          <div class="relacao-tipos-vazio">Adicione pessoas para gerar o resumo automaticamente.</div>
+        </section>
+
+        <div class="relacao-table-head">
+          <div>
+            <h3>Pessoas da relação</h3>
+            <div class="hint">O tipo de ebó é carregado das listas já cadastradas no sistema.</div>
+          </div>
+          <div class="relacao-table-actions">
+            <button class="btn-tertiary btn-mini" id="btnRecarregarTiposEbo" type="button">↻ Atualizar tipos</button>
+            <button class="btn-secondary btn-mini" id="btnAdicionarPessoaRelacao" type="button">+ Adicionar pessoa</button>
+          </div>
+        </div>
+
+        <div class="relacao-tabela-wrap">
+          <table class="relacao-tabela" id="relacaoEboTabela">
+            <thead>
+              <tr>
+                <th>Pessoa ou referência</th>
+                <th>Tipo de ebó</th>
+                <th>Obi / Bori / Oferta</th>
+                <th>Observação</th>
+                <th class="relacao-coluna-acao">Ação</th>
+              </tr>
+            </thead>
+            <tbody id="relacaoEboLinhas"></tbody>
+          </table>
+        </div>
+
+        <div class="relacao-editor-footer">
+          <div class="relacao-feedback" id="relacaoEboFeedback" role="status"></div>
+          <div class="actions-row relacao-actions-row">
+            <button type="button" id="btnNovaRelacaoEbo">Nova relação</button>
+            <button class="btn-print" type="button" id="btnImprimirRelacaoEbo">Imprimir</button>
+            <button class="btn-pdf" type="button" id="btnPdfRelacaoEbo">PDF</button>
+            <button class="btn-secondary" type="button" id="btnSalvarRelacaoEbo">Salvar relação</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card relacoes-salvas-card no-print">
+        <div class="section-head relacoes-section-head relacoes-salvas-head">
+          <div>
+            <h2>Relações salvas</h2>
+            <div class="hint">Abra uma relação para editar, imprimir ou gerar PDF.</div>
+          </div>
+          <button class="btn-tertiary btn-mini" id="btnAtualizarRelacoesSalvas" type="button">Atualizar</button>
+        </div>
+
+        <div class="relacoes-pesquisa-row">
+          <input id="pesquisaRelacoesEbo" type="search" placeholder="Pesquisar por evento, pessoa ou tipo de ebó..." />
+        </div>
+
+        <div id="relacoesEboSalvasBox" class="relacoes-salvas-lista">
+          <div class="relacoes-vazio">Nenhuma relação carregada.</div>
+        </div>
+      </section>
+    </section>
+
+<section id="container-relacao-oferenda" style="display:none;">
+      <section class="card relacoes-toolbar-card no-print">
+        <div class="section-head relacoes-section-head">
+          <div>
+            <div class="relacoes-eyebrow">Relações</div>
+            <h2>Relação de Oferenda/Oferta</h2>
+            <div class="hint" id="relacaoOferendaStatusEdicao">Nova relação</div>
+          </div>
+          <button class="btn-tertiary" id="voltar-relacao-oferenda" type="button">Voltar</button>
+        </div>
+      </section>
+
+      <section class="card relacao-oferenda-editor no-print" id="relacaoOferendaEditor">
+        <div class="relacao-cabecalho-form">
+          <div class="relacao-campo relacao-campo-titulo">
+            <label class="label" for="relacaoOferendaTitulo">Nome do evento ou função</label>
+            <input id="relacaoOferendaTitulo" type="text" value="Relação de oferenda" placeholder="Ex: Relação de oferenda" maxlength="120" />
+          </div>
+
+          <div class="relacao-campo relacao-campo-data">
+            <label class="label" for="relacaoOferendaData">Data da função</label>
+            <input id="relacaoOferendaData" type="date" />
+          </div>
+        </div>
+
+        <div class="relacao-resumo-grid" aria-live="polite">
+          <article class="relacao-resumo-card">
+            <span>Oferendas</span>
+            <strong id="relacaoTotalOferendas">0</strong>
+          </article>
+          <article class="relacao-resumo-card">
+            <span>Ofertas</span>
+            <strong id="relacaoTotalOfertas">0</strong>
+          </article>
+          <article class="relacao-resumo-card">
+            <span>Mesa do Obi</span>
+            <strong id="relacaoTotalMesaObi">0</strong>
+          </article>
+          <article class="relacao-resumo-card">
+            <span>Total de tipos</span>
+            <strong id="relacaoTotalGeral">0</strong>
+          </article>
+        </div>
+
+        <section class="relacao-tipos-resumo" id="relacaoOferendaTiposResumo">
+          <div class="relacao-tipos-resumo-titulo">Quantidade por tipo de oferenda/oferta</div>
+          <div class="relacao-tipos-vazio">Adicione pessoas para gerar o resumo automaticamente.</div>
+        </section>
+
+        <section class="relacao-cadastro-tipos" aria-labelledby="tituloCadastroTipoOferenda">
+          <div class="relacao-cadastro-tipos-head">
+            <div>
+              <h3 id="tituloCadastroTipoOferenda">Aqui você cadastra o nome das oferendas</h3>
+              <div class="hint">Digite um nome e clique em cadastrar. Ele entrará imediatamente no select de cada pessoa.</div>
+            </div>
+          </div>
+
+          <div class="relacao-cadastro-tipos-form">
+            <input id="novoTipoOferendaNome" type="text" maxlength="80" placeholder="Ex: Amolokum 16 ovos" />
+            <button class="btn-secondary" id="btnCadastrarTipoOferenda" type="button">+ Cadastrar no select</button>
+          </div>
+        </section>
+
+        <div class="relacao-table-head">
+          <div>
+            <h3>Pessoas da relação</h3>
+            <div class="hint">Uma pessoa pode receber vários tipos de oferenda/oferta. O complemento é escolhido uma única vez entre as três opções.</div>
+          </div>
+          <div class="relacao-table-actions">
+            <button class="btn-tertiary btn-mini" id="btnRecarregarTiposOferenda" type="button">↻ Atualizar tipos</button>
+            <button class="btn-secondary btn-mini" id="btnAdicionarPessoaRelacaoOferenda" type="button">+ Adicionar pessoa</button>
+          </div>
+        </div>
+
+        <div class="relacao-tabela-wrap">
+          <table class="relacao-tabela" id="relacaoOferendaTabela">
+            <thead>
+              <tr>
+                <th>Pessoa ou referência</th>
+                <th>Tipos de oferenda/oferta (seleção múltipla)</th>
+                <th>Complemento</th>
+                <th>Observação</th>
+                <th class="relacao-coluna-acao">Ação</th>
+              </tr>
+            </thead>
+            <tbody id="relacaoOferendaLinhas"></tbody>
+          </table>
+        </div>
+
+        <div class="relacao-editor-footer">
+          <div class="relacao-feedback" id="relacaoOferendaFeedback" role="status"></div>
+          <div class="actions-row relacao-actions-row">
+            <button type="button" id="btnNovaRelacaoOferenda">Nova relação</button>
+            <button class="btn-print" type="button" id="btnImprimirRelacaoOferenda">Imprimir</button>
+            <button class="btn-pdf" type="button" id="btnPdfRelacaoOferenda">PDF</button>
+            <button class="btn-secondary" type="button" id="btnSalvarRelacaoOferenda">Salvar relação</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card relacoes-salvas-card no-print">
+        <div class="section-head relacoes-section-head relacoes-salvas-head">
+          <div>
+            <h2>Relações salvas</h2>
+            <div class="hint">Abra uma relação para editar, imprimir ou gerar PDF.</div>
+          </div>
+          <button class="btn-tertiary btn-mini" id="btnAtualizarRelacoesSalvasOferenda" type="button">Atualizar</button>
+        </div>
+
+        <div class="relacoes-pesquisa-row">
+          <input id="pesquisaRelacoesOferenda" type="search" placeholder="Pesquisar por evento, pessoa ou tipo de oferenda/oferta..." />
+        </div>
+
+        <div id="relacoesOferendaSalvasBox" class="relacoes-salvas-lista">
+          <div class="relacoes-vazio">Nenhuma relação carregada.</div>
+        </div>
+      </section>
+
+      <section id="relacaoOferendaPrintArea" class="relacao-print-area" aria-hidden="true"></section>
+    </section>
+
+
+    <section id="relacaoEboPrintArea" class="relacao-print-area" aria-hidden="true"></section>
+  </div>
+</section>
 
 <!-- MODAL ALEATÓRIO -->
 <!-- ABA ALEATÓRIO -->
@@ -1564,9 +1831,12 @@
     signOut
   };
 
-  document.getElementById('btn-aleatorio').addEventListener('click', abrirTelaAleatorio);
+  // O botão Aleatório já usa onclick no HTML; não precisa de addEventListener aqui.
 </script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js" defer></script>
 <script src="./java.js" defer></script>
+<script src="./relacoes/relacoes.js?v=19" defer></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.12.0/mammoth.browser.min.js" defer></script>
 <script src="./importador_excel_modal.js" defer></script>
