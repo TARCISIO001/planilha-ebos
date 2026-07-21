@@ -6738,7 +6738,9 @@ const ids = [
   "oferendasScreen",
   "banhosScreen",
   "positivosScreen",
-  "listaScreen"
+  "listaScreen",
+  "relacoesScreen",
+  "aleatorioScreen"
 ];
 
   ids.forEach((id) => {
@@ -6764,6 +6766,8 @@ const ids = [
   esconderModalImpressaoListaCadastrada();
 }
 
+// Disponibiliza o controlador para os módulos carregados em outros arquivos.
+window.esconderTodasAsTelas = esconderTodasAsTelas;
 
 function montarFotosComLegenda(area, listId, fotosBase) {
   const config = getConfigFotosArea(area);
